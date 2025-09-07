@@ -1,4 +1,4 @@
-# 🎵 Spotify iPod - 우주에서 음악 감상하기
+# 🎵 dyn player - 음악 감상하기
 
 우주 배경에서 클래식한 iPod 클릭휠로 Spotify 음악을 재생할 수 있는 웹 애플리케이션입니다.
 
