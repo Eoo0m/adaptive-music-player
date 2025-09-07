@@ -583,9 +583,12 @@
             }
         }
 
+        // API Base URL - 로컬 개발용
+        const API_BASE_URL = 'https://9ab454e5fea4.ngrok-free.app';
+
         // Login function
         function login() {
-            window.location.href = '/login';
+            window.location.href = `${API_BASE_URL}/login`;
         }
 
         // Initialize Spotify Web Playback SDK
@@ -1002,7 +1005,7 @@
             startBtn.textContent = '추천 중...';
 
             try {
-                const response = await fetch('/recommend', {
+                const response = await fetch(`${API_BASE_URL}/recommend`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1088,7 +1091,7 @@
             searchBtn.textContent = '검색 중...';
 
             try {
-                const response = await fetch('/search-songs', {
+                const response = await fetch(`${API_BASE_URL}/search-songs`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ query: query })

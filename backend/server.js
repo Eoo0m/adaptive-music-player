@@ -13,7 +13,20 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// CORS 설정 - 프론트엔드 도메인 허용
+const corsOptions = {
+  origin: [
+    'https://dynplayer.win',
+    'http://localhost:3000',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Start Python recommendation service
