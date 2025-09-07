@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify iPod 클릭휠</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 50px;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Login screen */
+        .login-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+        }
+
+        .login-button {
+            background: #1db954;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 20px;
+        }
+
+        .login-button:hover {
+            background: #1ed760;
+        }
+
+        .track-info {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            font-size: 14px;
+            max-width: 300px;
+        }
+
+        .track-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .artist-name {
+            opacity: 0.8;
+            font-size: 12px;
+        }
+
+        /* 우주 배경 */
+        .space-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+            z-index: -2;
+        }
+
+        /* 반짝이는 별들 */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite;
+        }
+
+        .star.small {
+            width: 1px;
+            height: 1px;
+        }
+
+        .star.medium {
+            width: 2px;
+            height: 2px;
+        }
+
+        .star.large {
+            width: 3px;
+            height: 3px;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* 떠다니는 우주 먼지 */
+        .dust {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 10s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0px);
+            }
+            100% {
+                transform: translateY(-100px) translateX(50px);
+            }
+        }
+
+        .ipod-container {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #d5d5d5 0%, #b8b8b8 50%, #a8a8a8 100%);
+            border-radius: 6px;
+            box-shadow:
+                0 5px 12px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: floatTilt 4s ease-in-out infinite;
+            z-index: 1;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .ipod-container:active {
+            cursor: grabbing;
+        }
+
+        .ipod-container.playing {
+            animation: playingPulse 2s ease-in-out infinite;
+        }
+
+        .ipod-container.similar-mode {
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3), 0 0 20px rgba(34, 197, 94, 0.6);
+            animation: similarGlow 2s ease-in-out infinite;
+        }
+
+        .ipod-container.diverse-mode {
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3), 0 0 20px rgba(239, 68, 68, 0.6);
+            animation: diverseGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes similarGlow {
+            0%, 100% {
+                box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3), 0 0 15px rgba(34, 197, 94, 0.4);
+            }
+            50% {
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 25px rgba(34, 197, 94, 0.8);
+            }
+        }
+
+        @keyframes diverseGlow {
+            0%, 100% {
+                box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3), 0 0 15px rgba(239, 68, 68, 0.4);
+            }
+            50% {
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 25px rgba(239, 68, 68, 0.8);
+            }
+        }
+
+        @keyframes playingPulse {
+            0%, 100% {
+                transform: scale(1) rotate(0deg);
+                box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3), 0 0 0 rgba(29, 185, 84, 0);
+            }
+            50% {
+                transform: scale(1.05) rotate(1deg);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 20px rgba(29, 185, 84, 0.3);
+            }
+        }
+
+        @keyframes floatTilt {
+            0% { transform: rotate(0deg) translateY(0px); }
+            25% { transform: rotate(2deg) translateY(-3px); }
+            50% { transform: rotate(-1deg) translateY(-6px); }
+            75% { transform: rotate(1.5deg) translateY(-3px); }
+            100% { transform: rotate(0deg) translateY(0px); }
+        }
+
+        .clickwheel {
+            width: 90px;
+            height: 90px;
+            background: radial-gradient(circle, #1a1a1a 0%, #0a0a0a 70%, #000 100%);
+            border-radius: 50%;
+            position: relative;
+            box-shadow:
+                inset 0 2px 6px rgba(0, 0, 0, 0.8),
+                0 2px 3px rgba(0, 0, 0, 0.4);
+        }
+
+        .center-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #e5e5e5 0%, #c8c8c8 50%, #b8b8b8 100%);
+            border: 1px solid #999;
+            border-radius: 50%;
+            box-shadow:
+                0 2px 4px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        .control {
+            position: absolute;
+            color: #ccc;
+            font-size: 12px;
+            font-weight: 300;
+            user-select: none;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .control:hover {
+            color: #fff;
+        }
+
+        .control.active {
+            color: #1db954 !important;
+        }
+
+        .volume-up {
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .volume-down {
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .prev {
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 11px;
+        }
+
+        .next {
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 11px;
+        }
+
+        .play-pause {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #2d2d2d;
+            font-size: 18px;
+            pointer-events: none;
+            font-weight: bold;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+            font-family: Arial, sans-serif;
+        }
+
+        .control:active {
+            color: #fff;
+            transform: scale(0.95);
+        }
+
+        .center-button:active {
+            box-shadow:
+                inset 0 2px 3px rgba(0, 0, 0, 0.3),
+                0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        /* Song search interface */
+        .search-interface {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 16px 24px;
+            margin: 12px 0;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 18px;
+            outline: none;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .search-input:focus {
+            border-color: #1db954;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .search-button {
+            background: #1db954;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin: 0 5px;
+        }
+
+        .search-button:hover {
+            background: #1ed760;
+        }
+
+        .search-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .recommendation-list {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .recommendation-item {
+            background: rgba(255, 255, 255, 0.1);
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .recommendation-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .recommendation-item.selected {
+            background: rgba(29, 185, 84, 0.3);
+            border-color: #1db954;
+        }
+
+        .rec-title {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .rec-artist {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+
+        .close-search {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .loading {
+            color: #1db954;
+            font-style: italic;
+        }
+
+        .recommendation-controls {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="space-background"></div>
+    <div class="stars" id="stars"></div>
+
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <h1>🎵 Spotify iPod</h1>
+        <p>우주에서 음악을 감상하세요</p>
+        <button class="login-button" onclick="login()">Spotify로 로그인</button>
+        <div class="error-message" id="errorMessage"></div>
+    </div>
+
+    <!-- Initial Song Input Screen -->
+    <div class="search-interface hidden" id="initialSongInput">
+        <h2>🎵 어떤 음악을 좋아하시나요?</h2>
+        <p>좋아하는 노래 하나를 입력하시면<br>비슷한 곡들로 플레이리스트를 만들어드려요!</p>
+        <input type="text" class="search-input" id="initialSongTitle" placeholder="예: Shape of You, Blinding Lights...">
+        <input type="text" class="search-input" id="initialArtistName" placeholder="아티스트 (선택사항)">
+        <div>
+            <button class="search-button" onclick="startRecommendationPlaylist()" id="startBtn">시작하기</button>
+            <button class="search-button" onclick="searchInitialSongs()" id="initialSearchBtn">검색</button>
+        </div>
+        <div id="initialSearchResults"></div>
+    </div>
+
+    <!-- Song Search Interface -->
+    <div class="search-interface hidden" id="searchInterface">
+        <button class="close-search" onclick="hideSearchInterface()">×</button>
+        <h2>🎵 노래 추천 받기</h2>
+        <input type="text" class="search-input" id="songInput" placeholder="좋아하는 노래 제목을 입력하세요...">
+        <input type="text" class="search-input" id="artistInput" placeholder="아티스트 (선택사항)">
+        <div>
+            <button class="search-button" onclick="getRecommendations()" id="recommendBtn">추천 받기</button>
+            <button class="search-button" onclick="searchSongs()" id="searchBtn">검색</button>
+        </div>
+        <div id="searchResults"></div>
+    </div>
+
+    <!-- Track Info Display -->
+    <div class="track-info hidden" id="trackInfo">
+        <div class="track-name" id="trackName">노래 제목</div>
+        <div class="artist-name" id="artistName">아티스트</div>
+        <div class="recommendation-mode" id="recMode" style="font-size: 12px; opacity: 0.7; margin-top: 5px;">🎵 AI 추천 플레이리스트</div>
+    </div>
+
+    <div class="ipod-container" id="ipodContainer">
+        <div class="clickwheel">
+            <div class="control volume-up" id="volumeUp">+</div>
+            <div class="control volume-down" id="volumeDown">−</div>
+            <div class="control prev" id="prevBtn">⏮</div>
+            <div class="control next" id="nextBtn">⏭</div>
+
+            <div class="center-button" id="centerButton">
+                <div class="play-pause" id="playPauseIcon">▶</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <script>
+        // Global variables
+        let player;
+        let is_paused = true;
+        let current_track = null;
+        let device_id = null;
+        let access_token = null;
+        let refresh_token = null;
+        let randomTracks = [];
+        let currentTrackIndex = 0;
+        let recommendationTracks = [];
+        let isRecommendationMode = false;
+
+        // Playback tracking variables
+        let trackStartTime = null;
+        let trackDuration = null;
+        let playbackHistory = []; // Store recent play completion ratios
+        let maxHistoryLength = 3;
+
+        // Check for tokens in URL hash or localStorage
+        function initializeAuth() {
+            const hashParams = new URLSearchParams(window.location.hash.substr(1));
+            const storedToken = localStorage.getItem('spotify_access_token');
+            const storedRefresh = localStorage.getItem('spotify_refresh_token');
+
+            access_token = hashParams.get('access_token') || storedToken;
+            refresh_token = hashParams.get('refresh_token') || storedRefresh;
+
+            if (hashParams.get('error')) {
+                document.getElementById('errorMessage').textContent = '로그인에 실패했습니다: ' + hashParams.get('error');
+                return;
+            }
+
+            if (access_token) {
+                localStorage.setItem('spotify_access_token', access_token);
+                if (refresh_token) {
+                    localStorage.setItem('spotify_refresh_token', refresh_token);
+                }
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('initialSongInput').classList.remove('hidden');
+                window.location.hash = '';
+            }
+        }
+
+        // Login function
+        function login() {
+            window.location.href = '/login';
+        }
+
+        // Initialize Spotify Web Playback SDK
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            if (access_token) {
+                initializeSpotifyPlayer();
+            }
+        };
+
+        function initializeSpotifyPlayer() {
+            if (!access_token) return;
+
+            player = new Spotify.Player({
+                name: 'Spotify iPod Web Player',
+                getOAuthToken: cb => { cb(access_token); },
+                volume: 0.5
+            });
+
+            // Error handling
+            player.addListener('initialization_error', ({ message }) => {
+                console.error('초기화 오류:', message);
+            });
+
+            player.addListener('authentication_error', ({ message }) => {
+                console.error('인증 오류:', message);
+                refreshAccessToken();
+            });
+
+            player.addListener('account_error', ({ message }) => {
+                console.error('계정 오류:', message);
+                alert('Spotify Premium 계정이 필요합니다.');
+            });
+
+            player.addListener('playback_error', ({ message }) => {
+                console.error('재생 오류:', message);
+            });
+
+            // Playback status updates
+            player.addListener('player_state_changed', (state) => {
+                if (!state) return;
+                
+                console.log('🔴 Player state changed:', {position: state.position, paused: state.paused, track: state.track_window?.current_track?.name});
+
+                const previousTrack = current_track;
+                current_track = state.track_window.current_track;
+                is_paused = state.paused;
+
+                // Track new song start
+                if (previousTrack?.id !== current_track?.id && current_track) {
+                    trackStartTime = Date.now();
+                    trackDuration = current_track.duration_ms;
+                    console.log(`🎵 Started: ${current_track.name} (${Math.round(trackDuration/1000)}s)`);
+                }
+
+                // Log current playback position
+                if (current_track && trackStartTime && trackDuration) {
+                    const currentPosition = state.position || 0;
+                    const elapsedTime = Date.now() - trackStartTime;
+                    const progressPercent = ((currentPosition / trackDuration) * 100).toFixed(1);
+                    const currentSec = Math.round(currentPosition / 1000);
+                    const totalSec = Math.round(trackDuration / 1000);
+                    
+                    console.log(`⏯️ ${current_track.name} - ${currentSec}/${totalSec}s (${progressPercent}%) ${is_paused ? '[PAUSED]' : '[PLAYING]'}`);
+                }
+
+                // Track when song ends naturally (position 0 and paused)
+                if (state.position === 0 && state.paused && current_track && trackStartTime) {
+                    const diverseMode = recordTrackCompletion('auto');
+                    setTimeout(() => playNextRandomTrack(diverseMode), 1000);
+                } else {
+                    updateTrackInfo();
+                    updatePlayPauseIcon();
+                    updateIPodState();
+                }
+            });
+
+            // Ready
+            player.addListener('ready', ({ device_id: ready_device_id }) => {
+                console.log('🎵 Spotify Player Ready with Device ID', ready_device_id);
+                device_id = ready_device_id;
+                transferPlaybackToDevice(device_id);
+                
+                if (isRecommendationMode && randomTracks.length > 0) {
+                    setTimeout(() => playTrackAtIndex(0), 2000);
+                }
+            });
+
+            player.connect();
+        }
+
+        // Transfer playback to this device
+        async function transferPlaybackToDevice(device_id) {
+            try {
+                await fetch('https://api.spotify.com/v1/me/player', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${access_token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        device_ids: [device_id],
+                        play: false
+                    })
+                });
+            } catch (error) {
+                console.error('재생 장치 전환 오류:', error);
+            }
+        }
+
+        // Play track at specific index
+        async function playTrackAtIndex(index) {
+            if (!randomTracks[index] || !device_id) return;
+
+            const track = randomTracks[index];
+            let trackUri = track.uri || track.spotify_track?.uri || track.track?.uri;
+            
+            if (!trackUri) return;
+
+            try {
+                await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${access_token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ uris: [trackUri] })
+                });
+            } catch (error) {
+                console.error('트랙 재생 오류:', error);
+            }
+        }
+
+        // Play specific Spotify track by URI
+        async function playSpotifyTrack(trackUri) {
+            if (!device_id) return;
+
+            try {
+                await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${access_token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ uris: [trackUri] })
+                });
+            } catch (error) {
+                console.error('Spotify track playback error:', error);
+            }
+        }
+
+        // Calculate and record playback completion when track changes
+        function recordTrackCompletion(reason = 'auto', currentPosition = 0) {
+            console.log('🔴 recordTrackCompletion called:', {reason, currentPosition, current_track: current_track?.name, trackStartTime, trackDuration});
+            
+            if (current_track && trackStartTime && trackDuration) {
+                // Use actual Spotify position if available, otherwise use elapsed time
+                let completionRatio;
+                if (reason === 'manual' && currentPosition > 0) {
+                    completionRatio = (currentPosition / trackDuration) * 100;
+                } else {
+                    const playedDuration = Date.now() - trackStartTime;
+                    completionRatio = Math.min((playedDuration / trackDuration) * 100, 100);
+                }
+                
+                // Add to playback history
+                playbackHistory.push(completionRatio);
+                if (playbackHistory.length > maxHistoryLength) {
+                    playbackHistory.shift();
+                }
+                
+                const reasonText = reason === 'manual' ? '(skipped)' : '(finished)';
+                const playedSec = Math.round((completionRatio / 100) * (trackDuration / 1000));
+                const totalSec = Math.round(trackDuration / 1000);
+                console.log(`⏹️ ${reason === 'manual' ? 'Skipped' : 'Finished'}: ${current_track.name} - ${playedSec}/${totalSec}s (${completionRatio.toFixed(1)}%) ${reasonText}`);
+                
+                // Calculate recent average and determine next recommendation type
+                if (playbackHistory.length >= 3) {
+                    const recentAverage = playbackHistory.reduce((a, b) => a + b, 0) / playbackHistory.length;
+                    console.log(`📊 Recent 3-track average completion: ${recentAverage.toFixed(1)}%`);
+                    
+                    if (recentAverage < 50) {  // 임시로 높게 설정해서 테스트
+                        console.log(`🔀 LOW ENGAGEMENT DETECTED! Switching to DIVERSE recommendations...`);
+                        console.log(`🔴 DIVERSE MODE ACTIVATED - will show red glow`);
+                        return true; // Return true for diverse mode
+                    } else {
+                        console.log(`🎵 Normal engagement - continuing with SIMILAR recommendations`);
+                        console.log(`🟢 SIMILAR MODE ACTIVATED - will show green glow`);
+                    }
+                }
+            }
+            return false; // Return false for normal mode
+        }
+
+        // Play next track
+        async function playNextRandomTrack(diverseMode = false) {
+            console.log('🔴 playNextRandomTrack called with diverseMode:', diverseMode);
+            console.log('🔴 arguments.length:', arguments.length);
+            
+            // If not explicitly set, check if we should use diverse mode based on manual skip
+            if (!diverseMode && arguments.length === 0) {
+                console.log('🔴 Checking if should switch to diverse mode...');
+                // Get current playback state to know exact position when skipped
+                if (player) {
+                    try {
+                        const state = await player.getCurrentState();
+                        const currentPosition = state ? state.position : 0;
+                        diverseMode = recordTrackCompletion('manual', currentPosition);
+                    } catch (error) {
+                        diverseMode = recordTrackCompletion('manual');
+                    }
+                } else {
+                    diverseMode = recordTrackCompletion('manual');
+                }
+            }
+            if (isRecommendationMode && randomTracks.length > 0) {
+                if (currentTrackIndex < randomTracks.length - 1) {
+                    currentTrackIndex++;
+                    const nextTrack = randomTracks[currentTrackIndex];
+                    await playSpotifyTrack(nextTrack.uri || nextTrack.track?.uri);
+                    return;
+                }
+
+                if (current_track) {
+                    try {
+                        const endpoint = diverseMode ? '/recommend-diverse-tracks' : '/recommend-from-spotify-track';
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                spotify_track: current_track,
+                                access_token: access_token,
+                                diverse_mode: diverseMode
+                            })
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.spotify_tracks?.length > 0) {
+                                // Shuffle new dynamic recommendations
+                                randomTracks = shuffleArray(data.spotify_tracks);
+                                currentTrackIndex = 0;
+                                await playSpotifyTrack(randomTracks[0].uri);
+                                
+                                // Reset playback history when switching to diverse recommendations
+                                if (diverseMode) {
+                                    playbackHistory = [];
+                                    updateRecommendationMode('diverse');
+                                    console.log(`🔀 Diverse recommendations loaded, playback history reset`);
+                                } else {
+                                    updateRecommendationMode('similar');
+                                    console.log(`🎵 Similar recommendations loaded`);
+                                }
+                                return;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error getting dynamic recommendations:', error);
+                    }
+                }
+            }
+
+            if (randomTracks.length > 0) {
+                currentTrackIndex = (currentTrackIndex + 1) % randomTracks.length;
+                playTrackAtIndex(currentTrackIndex);
+            }
+        }
+
+        // Play previous track
+        async function playPreviousRandomTrack() {
+            // Record completion for manual skip (going backward)
+            let currentPosition = 0;
+            if (player) {
+                try {
+                    const state = await player.getCurrentState();
+                    currentPosition = state ? state.position : 0;
+                } catch (error) {
+                    // Ignore error, use 0 as default
+                }
+            }
+            const diverseMode = recordTrackCompletion('manual', currentPosition);
+            if (randomTracks.length === 0) return;
+            currentTrackIndex = currentTrackIndex === 0 ? randomTracks.length - 1 : currentTrackIndex - 1;
+            playTrackAtIndex(currentTrackIndex);
+        }
+
+        // Refresh access token
+        async function refreshAccessToken() {
+            if (!refresh_token) {
+                logout();
+                return;
+            }
+
+            try {
+                const response = await fetch('/refresh_token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refresh_token: refresh_token })
+                });
+
+                const data = await response.json();
+                if (data.access_token) {
+                    access_token = data.access_token;
+                    localStorage.setItem('spotify_access_token', access_token);
+                    if (data.refresh_token) {
+                        refresh_token = data.refresh_token;
+                        localStorage.setItem('spotify_refresh_token', refresh_token);
+                    }
+                } else {
+                    logout();
+                }
+            } catch (error) {
+                console.error('토큰 새로고침 오류:', error);
+                logout();
+            }
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('spotify_access_token');
+            localStorage.removeItem('spotify_refresh_token');
+            access_token = null;
+            refresh_token = null;
+            
+            if (player) player.disconnect();
+            
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('trackInfo').classList.add('hidden');
+        }
+
+        // Update track info display
+        function updateTrackInfo() {
+            if (current_track) {
+                document.getElementById('trackName').textContent = current_track.name;
+                document.getElementById('artistName').textContent = 
+                    current_track.artists.map(artist => artist.name).join(', ');
+                document.getElementById('trackInfo').classList.remove('hidden');
+            }
+        }
+
+        // Update play/pause icon
+        function updatePlayPauseIcon() {
+            document.getElementById('playPauseIcon').textContent = is_paused ? '▶' : '⏸';
+        }
+
+        // Update iPod visual state
+        function updateIPodState() {
+            const container = document.getElementById('ipodContainer');
+            if (!is_paused) {
+                container.classList.add('playing');
+            } else {
+                container.classList.remove('playing');
+            }
+        }
+
+        // Update recommendation mode visual feedback
+        function updateRecommendationMode(mode) {
+            const container = document.getElementById('ipodContainer');
+            
+            // Remove all mode classes
+            container.classList.remove('similar-mode', 'diverse-mode');
+            
+            // Add appropriate mode class
+            if (mode === 'similar') {
+                container.classList.add('similar-mode');
+                console.log('🟢 Visual: Similar mode activated (green glow)');
+            } else if (mode === 'diverse') {
+                container.classList.add('diverse-mode');
+                console.log('🔴 Visual: Diverse mode activated (red glow)');
+            }
+            
+            // Auto-remove after 3 seconds to return to normal state
+            setTimeout(() => {
+                container.classList.remove('similar-mode', 'diverse-mode');
+            }, 3000);
+        }
+
+        // iPod control functions
+        async function togglePlayPause() {
+            if (player) await player.togglePlay();
+        }
+
+        async function adjustVolume(delta) {
+            if (!player) return;
+            
+            try {
+                const state = await player.getCurrentState();
+                if (state) {
+                    const newVolume = Math.max(0, Math.min(1, state.volume + delta));
+                    await player.setVolume(newVolume);
+                    
+                    const control = delta > 0 ? 
+                        document.getElementById('volumeUp') : 
+                        document.getElementById('volumeDown');
+                    control.classList.add('active');
+                    setTimeout(() => control.classList.remove('active'), 200);
+                }
+            } catch (error) {
+                console.error('볼륨 조절 오류:', error);
+            }
+        }
+
+        // Initial song selection functions
+        async function startRecommendationPlaylist() {
+            const songTitle = document.getElementById('initialSongTitle').value.trim();
+            const artistName = document.getElementById('initialArtistName').value.trim();
+
+            if (!songTitle) {
+                alert('노래 제목을 입력해주세요.');
+                return;
+            }
+
+            const startBtn = document.getElementById('startBtn');
+            startBtn.disabled = true;
+            startBtn.textContent = '추천 중...';
+
+            try {
+                const response = await fetch('/recommend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        song_title: songTitle,
+                        artist_name: artistName || null,
+                        num_recommendations: 30
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    alert(data.error);
+                } else if (data.recommendations?.length > 0) {
+                    await setupInitialPlaylist(data.recommendations, data.original_song);
+                } else {
+                    alert('추천곡을 찾을 수 없습니다. 다른 노래를 시도해보세요.');
+                }
+            } catch (error) {
+                console.error('Initial recommendation error:', error);
+                alert('추천 시스템에 연결할 수 없습니다.');
+            } finally {
+                startBtn.disabled = false;
+                startBtn.textContent = '시작하기';
+            }
+        }
+
+        async function setupInitialPlaylist(recommendations, originalSong) {
+            try {
+                const response = await fetch('/find-spotify-tracks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tracks: recommendations,
+                        access_token: access_token
+                    })
+                });
+
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                const data = await response.json();
+
+                if (data.spotify_tracks?.length > 0) {
+                    // Shuffle the recommendations for random playback order
+                    randomTracks = shuffleArray(data.spotify_tracks);
+                    currentTrackIndex = 0;
+                    isRecommendationMode = true;
+                    
+                    // Reset playback history for new playlist
+                    playbackHistory = [];
+                    
+                    // Show green glow for initial similar recommendations
+                    updateRecommendationMode('similar');
+                    
+                    console.log(`🎵 Shuffled ${randomTracks.length} recommendations for random playback, history reset`);
+
+                    document.getElementById('initialSongInput').classList.add('hidden');
+                    document.getElementById('trackInfo').classList.remove('hidden');
+
+                    if (!player) {
+                        initializeSpotifyPlayer();
+                    } else {
+                        playTrackAtIndex(0);
+                    }
+                } else {
+                    alert('Spotify에서 추천곡들을 찾을 수 없습니다. 다른 노래를 시도해보세요.');
+                }
+            } catch (error) {
+                console.error('Error setting up playlist:', error);
+                alert('플레이리스트 생성 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        async function searchInitialSongs() {
+            const query = document.getElementById('initialSongTitle').value.trim();
+            if (!query) {
+                alert('검색어를 입력해주세요.');
+                return;
+            }
+
+            const searchBtn = document.getElementById('initialSearchBtn');
+            searchBtn.disabled = true;
+            searchBtn.textContent = '검색 중...';
+
+            try {
+                const response = await fetch('/search-songs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query })
+                });
+
+                const data = await response.json();
+                if (data.error) {
+                    document.getElementById('initialSearchResults').innerHTML = 
+                        `<div class="error-message">${data.error}</div>`;
+                } else {
+                    displayInitialSearchResults(data.results);
+                }
+            } catch (error) {
+                console.error('Initial search error:', error);
+                document.getElementById('initialSearchResults').innerHTML = 
+                    '<div class="error-message">검색 서비스에 연결할 수 없습니다.</div>';
+            } finally {
+                searchBtn.disabled = false;
+                searchBtn.textContent = '검색';
+            }
+        }
+
+        function displayInitialSearchResults(results) {
+            const resultsDiv = document.getElementById('initialSearchResults');
+            
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<div class="error-message">검색 결과가 없습니다.</div>';
+                return;
+            }
+
+            let html = '<div class="recommendation-list" style="max-height: 200px;">';
+            results.slice(0, 10).forEach((result, index) => {
+                html += `
+                    <div class="recommendation-item" onclick="selectInitialSong('${result.track.replace(/'/g, "\\'")}', '${result.artist.replace(/'/g, "\\'")}')">
+                        <div class="rec-title">${result.track}</div>
+                        <div class="rec-artist">${result.artist} - ${result.album}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        }
+
+        function selectInitialSong(songTitle, artistName) {
+            document.getElementById('initialSongTitle').value = songTitle;
+            document.getElementById('initialArtistName').value = artistName;
+            document.getElementById('initialSearchResults').innerHTML = '';
+        }
+
+        // Shuffle function using Fisher-Yates algorithm
+        function shuffleArray(array) {
+            const shuffled = [...array]; // Create a copy
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Space background functions
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 200; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const sizes = ['small', 'medium', 'large'];
+                star.classList.add(sizes[Math.floor(Math.random() * sizes.length)]);
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                star.style.animationDuration = (1 + Math.random() * 2) + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        function createDust() {
+            const dustParticle = document.createElement('div');
+            dustParticle.className = 'dust';
+            dustParticle.style.left = Math.random() * 100 + '%';
+            dustParticle.style.width = dustParticle.style.height = Math.random() * 3 + 1 + 'px';
+            dustParticle.style.animationDuration = (8 + Math.random() * 4) + 's';
+            dustParticle.style.animationDelay = Math.random() * 2 + 's';
+            document.body.appendChild(dustParticle);
+            setTimeout(() => dustParticle.remove(), 12000);
+        }
+
+        // Event listeners
+        document.getElementById('centerButton').addEventListener('click', togglePlayPause);
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            console.log('🔴 Next button clicked!');
+            // 강제로 diverse 모드 테스트
+            console.log('🔴 FORCING DIVERSE MODE FOR TEST');
+            updateRecommendationMode('diverse');
+            playNextRandomTrack();
+        });
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            console.log('🔴 Prev button clicked!');
+            playPreviousRandomTrack();
+        });
+        document.getElementById('volumeUp').addEventListener('click', () => adjustVolume(0.1));
+        document.getElementById('volumeDown').addEventListener('click', () => adjustVolume(-0.1));
+
+        // Drag functionality for iPod
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+        const ipodContainer = document.getElementById('ipodContainer');
+
+        ipodContainer.addEventListener('mousedown', (e) => {
+            // Don't start drag if clicking on controls
+            if (e.target.classList.contains('control') || e.target.classList.contains('center-button') || e.target.classList.contains('play-pause')) {
+                return;
+            }
+            
+            isDragging = true;
+            const rect = ipodContainer.getBoundingClientRect();
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+            
+            // Change cursor and disable animations while dragging
+            ipodContainer.style.cursor = 'grabbing';
+            ipodContainer.style.animation = 'none';
+            
+            // Prevent text selection while dragging
+            document.body.style.userSelect = 'none';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            const x = e.clientX - dragOffset.x;
+            const y = e.clientY - dragOffset.y;
+            
+            // Keep iPod within viewport bounds
+            const maxX = window.innerWidth - 120; // iPod width
+            const maxY = window.innerHeight - 120; // iPod height
+            
+            const constrainedX = Math.max(0, Math.min(x, maxX));
+            const constrainedY = Math.max(0, Math.min(y, maxY));
+            
+            ipodContainer.style.position = 'fixed';
+            ipodContainer.style.left = constrainedX + 'px';
+            ipodContainer.style.top = constrainedY + 'px';
+            ipodContainer.style.transform = 'none';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                ipodContainer.style.cursor = 'grab';
+                
+                // Re-enable animations after a short delay
+                setTimeout(() => {
+                    if (!isDragging) {
+                        ipodContainer.style.animation = '';
+                    }
+                }, 100);
+                
+                // Re-enable text selection
+                document.body.style.userSelect = '';
+            }
+        });
+
+        // Keyboard support
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('initialSongTitle').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') startRecommendationPlaylist();
+            });
+            
+            document.getElementById('initialArtistName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') startRecommendationPlaylist();
+            });
+        });
+
+        // Initialize
+        createStars();
+        setInterval(createDust, 2000);
+        initializeAuth();
+    </script>
+</body>
+</html>
