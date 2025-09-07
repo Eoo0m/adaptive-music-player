@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify iPod 클릭휠</title>
+    <title>adpative music player</title>
     <style>
         body {
             margin: 0;
@@ -116,8 +117,15 @@
         }
 
         @keyframes twinkle {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 1; }
+
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 1;
+            }
         }
 
         /* 떠다니는 우주 먼지 */
@@ -132,6 +140,7 @@
             0% {
                 transform: translateY(100vh) translateX(0px);
             }
+
             100% {
                 transform: translateY(-100px) translateX(50px);
             }
@@ -175,28 +184,37 @@
         }
 
         @keyframes similarGlow {
-            0%, 100% {
+
+            0%,
+            100% {
                 box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3), 0 0 15px rgba(34, 197, 94, 0.4);
             }
+
             50% {
                 box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 25px rgba(34, 197, 94, 0.8);
             }
         }
 
         @keyframes diverseGlow {
-            0%, 100% {
+
+            0%,
+            100% {
                 box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3), 0 0 15px rgba(239, 68, 68, 0.4);
             }
+
             50% {
                 box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 25px rgba(239, 68, 68, 0.8);
             }
         }
 
         @keyframes playingPulse {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: scale(1) rotate(0deg);
                 box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3), 0 0 0 rgba(29, 185, 84, 0);
             }
+
             50% {
                 transform: scale(1.05) rotate(1deg);
                 box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 20px rgba(29, 185, 84, 0.3);
@@ -204,11 +222,25 @@
         }
 
         @keyframes floatTilt {
-            0% { transform: rotate(0deg) translateY(0px); }
-            25% { transform: rotate(2deg) translateY(-3px); }
-            50% { transform: rotate(-1deg) translateY(-6px); }
-            75% { transform: rotate(1.5deg) translateY(-3px); }
-            100% { transform: rotate(0deg) translateY(0px); }
+            0% {
+                transform: rotate(0deg) translateY(0px);
+            }
+
+            25% {
+                transform: rotate(2deg) translateY(-3px);
+            }
+
+            50% {
+                transform: rotate(-1deg) translateY(-6px);
+            }
+
+            75% {
+                transform: rotate(1.5deg) translateY(-3px);
+            }
+
+            100% {
+                transform: rotate(0deg) translateY(0px);
+            }
         }
 
         .clickwheel {
@@ -453,7 +485,7 @@
 
     <!-- Login Screen -->
     <div class="login-screen" id="loginScreen">
-        <h1>🎵 Spotify iPod</h1>
+        <h1>🎵 adpative music player</h1>
         <p>우주에서 음악을 감상하세요</p>
         <button class="login-button" onclick="login()">Spotify로 로그인</button>
         <div class="error-message" id="errorMessage"></div>
@@ -462,7 +494,7 @@
     <!-- Initial Song Input Screen -->
     <div class="search-interface hidden" id="initialSongInput">
         <h2>🎵 어떤 음악을 좋아하시나요?</h2>
-        <p>좋아하는 노래 하나를 입력하시면<br>비슷한 곡들로 플레이리스트를 만들어드려요!</p>
+        <p>좋아하는 노래 하나를 입력하시면 <br>음악을 추천해드려요. </p>
         <input type="text" class="search-input" id="initialSongTitle" placeholder="예: Shape of You, Blinding Lights...">
         <input type="text" class="search-input" id="initialArtistName" placeholder="아티스트 (선택사항)">
         <div>
@@ -489,7 +521,8 @@
     <div class="track-info hidden" id="trackInfo">
         <div class="track-name" id="trackName">노래 제목</div>
         <div class="artist-name" id="artistName">아티스트</div>
-        <div class="recommendation-mode" id="recMode" style="font-size: 12px; opacity: 0.7; margin-top: 5px;">🎵 AI 추천 플레이리스트</div>
+        <div class="recommendation-mode" id="recMode" style="font-size: 12px; opacity: 0.7; margin-top: 5px;">🎵 AI 추천
+            플레이리스트</div>
     </div>
 
     <div class="ipod-container" id="ipodContainer">
@@ -593,8 +626,8 @@
             // Playback status updates
             player.addListener('player_state_changed', (state) => {
                 if (!state) return;
-                
-                console.log('🔴 Player state changed:', {position: state.position, paused: state.paused, track: state.track_window?.current_track?.name});
+
+                console.log('🔴 Player state changed:', { position: state.position, paused: state.paused, track: state.track_window?.current_track?.name });
 
                 const previousTrack = current_track;
                 current_track = state.track_window.current_track;
@@ -604,7 +637,7 @@
                 if (previousTrack?.id !== current_track?.id && current_track) {
                     trackStartTime = Date.now();
                     trackDuration = current_track.duration_ms;
-                    console.log(`🎵 Started: ${current_track.name} (${Math.round(trackDuration/1000)}s)`);
+                    console.log(`🎵 Started: ${current_track.name} (${Math.round(trackDuration / 1000)}s)`);
                 }
 
                 // Log current playback position
@@ -614,7 +647,7 @@
                     const progressPercent = ((currentPosition / trackDuration) * 100).toFixed(1);
                     const currentSec = Math.round(currentPosition / 1000);
                     const totalSec = Math.round(trackDuration / 1000);
-                    
+
                     console.log(`⏯️ ${current_track.name} - ${currentSec}/${totalSec}s (${progressPercent}%) ${is_paused ? '[PAUSED]' : '[PLAYING]'}`);
                 }
 
@@ -634,7 +667,7 @@
                 console.log('🎵 Spotify Player Ready with Device ID', ready_device_id);
                 device_id = ready_device_id;
                 transferPlaybackToDevice(device_id);
-                
+
                 if (isRecommendationMode && randomTracks.length > 0) {
                     setTimeout(() => playTrackAtIndex(0), 2000);
                 }
@@ -668,7 +701,7 @@
 
             const track = randomTracks[index];
             let trackUri = track.uri || track.spotify_track?.uri || track.track?.uri;
-            
+
             if (!trackUri) return;
 
             try {
@@ -705,8 +738,8 @@
 
         // Calculate and record playback completion when track changes
         function recordTrackCompletion(reason = 'auto', currentPosition = 0) {
-            console.log('🔴 recordTrackCompletion called:', {reason, currentPosition, current_track: current_track?.name, trackStartTime, trackDuration});
-            
+            console.log('🔴 recordTrackCompletion called:', { reason, currentPosition, current_track: current_track?.name, trackStartTime, trackDuration });
+
             if (current_track && trackStartTime && trackDuration) {
                 // Use actual Spotify position if available, otherwise use elapsed time
                 let completionRatio;
@@ -716,23 +749,23 @@
                     const playedDuration = Date.now() - trackStartTime;
                     completionRatio = Math.min((playedDuration / trackDuration) * 100, 100);
                 }
-                
+
                 // Add to playback history
                 playbackHistory.push(completionRatio);
                 if (playbackHistory.length > maxHistoryLength) {
                     playbackHistory.shift();
                 }
-                
+
                 const reasonText = reason === 'manual' ? '(skipped)' : '(finished)';
                 const playedSec = Math.round((completionRatio / 100) * (trackDuration / 1000));
                 const totalSec = Math.round(trackDuration / 1000);
                 console.log(`⏹️ ${reason === 'manual' ? 'Skipped' : 'Finished'}: ${current_track.name} - ${playedSec}/${totalSec}s (${completionRatio.toFixed(1)}%) ${reasonText}`);
-                
+
                 // Calculate recent average and determine next recommendation type
                 if (playbackHistory.length >= 3) {
                     const recentAverage = playbackHistory.reduce((a, b) => a + b, 0) / playbackHistory.length;
                     console.log(`📊 Recent 3-track average completion: ${recentAverage.toFixed(1)}%`);
-                    
+
                     if (recentAverage < 50) {  // 임시로 높게 설정해서 테스트
                         console.log(`🔀 LOW ENGAGEMENT DETECTED! Switching to DIVERSE recommendations...`);
                         console.log(`🔴 DIVERSE MODE ACTIVATED - will show red glow`);
@@ -750,7 +783,7 @@
         async function playNextRandomTrack(diverseMode = false) {
             console.log('🔴 playNextRandomTrack called with diverseMode:', diverseMode);
             console.log('🔴 arguments.length:', arguments.length);
-            
+
             // If not explicitly set, check if we should use diverse mode based on manual skip
             if (!diverseMode && arguments.length === 0) {
                 console.log('🔴 Checking if should switch to diverse mode...');
@@ -795,7 +828,7 @@
                                 randomTracks = shuffleArray(data.spotify_tracks);
                                 currentTrackIndex = 0;
                                 await playSpotifyTrack(randomTracks[0].uri);
-                                
+
                                 // Reset playback history when switching to diverse recommendations
                                 if (diverseMode) {
                                     playbackHistory = [];
@@ -875,9 +908,9 @@
             localStorage.removeItem('spotify_refresh_token');
             access_token = null;
             refresh_token = null;
-            
+
             if (player) player.disconnect();
-            
+
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('trackInfo').classList.add('hidden');
         }
@@ -886,7 +919,7 @@
         function updateTrackInfo() {
             if (current_track) {
                 document.getElementById('trackName').textContent = current_track.name;
-                document.getElementById('artistName').textContent = 
+                document.getElementById('artistName').textContent =
                     current_track.artists.map(artist => artist.name).join(', ');
                 document.getElementById('trackInfo').classList.remove('hidden');
             }
@@ -910,10 +943,10 @@
         // Update recommendation mode visual feedback
         function updateRecommendationMode(mode) {
             const container = document.getElementById('ipodContainer');
-            
+
             // Remove all mode classes
             container.classList.remove('similar-mode', 'diverse-mode');
-            
+
             // Add appropriate mode class
             if (mode === 'similar') {
                 container.classList.add('similar-mode');
@@ -922,7 +955,7 @@
                 container.classList.add('diverse-mode');
                 console.log('🔴 Visual: Diverse mode activated (red glow)');
             }
-            
+
             // Auto-remove after 3 seconds to return to normal state
             setTimeout(() => {
                 container.classList.remove('similar-mode', 'diverse-mode');
@@ -936,15 +969,15 @@
 
         async function adjustVolume(delta) {
             if (!player) return;
-            
+
             try {
                 const state = await player.getCurrentState();
                 if (state) {
                     const newVolume = Math.max(0, Math.min(1, state.volume + delta));
                     await player.setVolume(newVolume);
-                    
-                    const control = delta > 0 ? 
-                        document.getElementById('volumeUp') : 
+
+                    const control = delta > 0 ?
+                        document.getElementById('volumeUp') :
                         document.getElementById('volumeDown');
                     control.classList.add('active');
                     setTimeout(() => control.classList.remove('active'), 200);
@@ -1017,13 +1050,13 @@
                     randomTracks = shuffleArray(data.spotify_tracks);
                     currentTrackIndex = 0;
                     isRecommendationMode = true;
-                    
+
                     // Reset playback history for new playlist
                     playbackHistory = [];
-                    
+
                     // Show green glow for initial similar recommendations
                     updateRecommendationMode('similar');
-                    
+
                     console.log(`🎵 Shuffled ${randomTracks.length} recommendations for random playback, history reset`);
 
                     document.getElementById('initialSongInput').classList.add('hidden');
@@ -1063,14 +1096,14 @@
 
                 const data = await response.json();
                 if (data.error) {
-                    document.getElementById('initialSearchResults').innerHTML = 
+                    document.getElementById('initialSearchResults').innerHTML =
                         `<div class="error-message">${data.error}</div>`;
                 } else {
                     displayInitialSearchResults(data.results);
                 }
             } catch (error) {
                 console.error('Initial search error:', error);
-                document.getElementById('initialSearchResults').innerHTML = 
+                document.getElementById('initialSearchResults').innerHTML =
                     '<div class="error-message">검색 서비스에 연결할 수 없습니다.</div>';
             } finally {
                 searchBtn.disabled = false;
@@ -1080,7 +1113,7 @@
 
         function displayInitialSearchResults(results) {
             const resultsDiv = document.getElementById('initialSearchResults');
-            
+
             if (results.length === 0) {
                 resultsDiv.innerHTML = '<div class="error-message">검색 결과가 없습니다.</div>';
                 return;
@@ -1168,33 +1201,33 @@
             if (e.target.classList.contains('control') || e.target.classList.contains('center-button') || e.target.classList.contains('play-pause')) {
                 return;
             }
-            
+
             isDragging = true;
             const rect = ipodContainer.getBoundingClientRect();
             dragOffset.x = e.clientX - rect.left;
             dragOffset.y = e.clientY - rect.top;
-            
+
             // Change cursor and disable animations while dragging
             ipodContainer.style.cursor = 'grabbing';
             ipodContainer.style.animation = 'none';
-            
+
             // Prevent text selection while dragging
             document.body.style.userSelect = 'none';
         });
 
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
-            
+
             const x = e.clientX - dragOffset.x;
             const y = e.clientY - dragOffset.y;
-            
+
             // Keep iPod within viewport bounds
             const maxX = window.innerWidth - 120; // iPod width
             const maxY = window.innerHeight - 120; // iPod height
-            
+
             const constrainedX = Math.max(0, Math.min(x, maxX));
             const constrainedY = Math.max(0, Math.min(y, maxY));
-            
+
             ipodContainer.style.position = 'fixed';
             ipodContainer.style.left = constrainedX + 'px';
             ipodContainer.style.top = constrainedY + 'px';
@@ -1205,26 +1238,26 @@
             if (isDragging) {
                 isDragging = false;
                 ipodContainer.style.cursor = 'grab';
-                
+
                 // Re-enable animations after a short delay
                 setTimeout(() => {
                     if (!isDragging) {
                         ipodContainer.style.animation = '';
                     }
                 }, 100);
-                
+
                 // Re-enable text selection
                 document.body.style.userSelect = '';
             }
         });
 
         // Keyboard support
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('initialSongTitle').addEventListener('keypress', function(e) {
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('initialSongTitle').addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') startRecommendationPlaylist();
             });
-            
-            document.getElementById('initialArtistName').addEventListener('keypress', function(e) {
+
+            document.getElementById('initialArtistName').addEventListener('keypress', function (e) {
                 if (e.key === 'Enter') startRecommendationPlaylist();
             });
         });
@@ -1235,4 +1268,5 @@
         initializeAuth();
     </script>
 </body>
+
 </html>
