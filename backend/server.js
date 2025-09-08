@@ -115,7 +115,11 @@ app.get('/callback', async (req, res) => {
 
     if (tokenData.access_token) {
       // 프론트(index.html) 해시로 전달
-      res.redirect(`/#access_token=${tokenData.access_token}&refresh_token=${tokenData.refresh_token || ''}`);
+      // 기존: res.redirect(`/#access_token=${tokenData.access_token}&refresh_token=${tokenData.refresh_token}`);
+      res.redirect(
+        `https://dynplayer.win/#access_token=${tokenData.access_token}` +
+        (tokenData.refresh_token ? `&refresh_token=${tokenData.refresh_token}` : '')
+      );
     } else {
       res.redirect('/#error=invalid_token');
     }
