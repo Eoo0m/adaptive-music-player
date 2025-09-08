@@ -6,14 +6,13 @@ import sys
 import json
 
 class SongRecommender:
-    def __init__(self, meta_csv_path, embeddings_path, keys_path):
+    def __init__(self, meta_csv_path, embeddings_path):
         print("Loading recommendation data...")
         self.meta_df = pd.read_csv(meta_csv_path)
         self.embeddings = np.load(embeddings_path)
-        self.keys = np.load(keys_path)
 
-        # track_id를 인덱스로 매핑하는 딕셔너리 생성
-        self.track_id_to_idx = {track_id: idx for idx, track_id in enumerate(self.keys)}
+        # track_id를 인덱스로 매핑하는 딕셔너리 생성 (meta_df에서 직접)
+        self.track_id_to_idx = {track_id: idx for idx, track_id in enumerate(self.meta_df['track_id'])}
         print(f"Loaded {len(self.meta_df)} songs for recommendations")
 
     def find_track_id_by_title(self, song_title, artist_name=None):
@@ -75,13 +74,10 @@ class SongRecommender:
         # 추천 노래 정보 수집
         recommendations = []
         for idx in similar_indices:
-            similar_track_id = self.keys[idx]
-            track_info = self.meta_df[
-                self.meta_df["track_id"] == similar_track_id
-            ].iloc[0]
+            track_info = self.meta_df.iloc[idx]  # 직접 인덱스로 접근
             recommendations.append(
                 {
-                    "track_id": similar_track_id,
+                    "track_id": track_info["track_id"],
                     "track": track_info["track"],
                     "artist": track_info["artist"],
                     "album": track_info["album"],
@@ -162,11 +158,10 @@ class SongRecommender:
         # 해당 곡들의 pos_count 정보 수집
         diverse_candidates = []
         for idx in bottom_half_indices:
-            track_id = self.keys[idx]
-            track_info = self.meta_df[self.meta_df["track_id"] == track_id].iloc[0]
+            track_info = self.meta_df.iloc[idx]  # 직접 인덱스로 접근
             diverse_candidates.append({
                 "idx": idx,
-                "track_id": track_id,
+                "track_id": track_info["track_id"],
                 "track": track_info["track"],
                 "artist": track_info["artist"],
                 "album": track_info["album"],
@@ -292,8 +287,7 @@ def init_recommender():
     global recommender
     recommender = SongRecommender(
         meta_csv_path="contrastive_top5pct_win_meta.csv",
-        embeddings_path="contrastive_top5pct_win_embeddings.npy",
-        keys_path="contrastive_top5pct_win_keys.npy",
+        embeddings_path="contrastive_top5pct_win_embeddings.npy"
     )
 
 if __name__ == '__main__':
