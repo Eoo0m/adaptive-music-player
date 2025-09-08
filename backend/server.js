@@ -184,8 +184,8 @@ app.post('/search-songs', async (req, res) => {
   }
 });
 
-// (옵션) 현재 트랙 기반 추천
-app.post('/recommend-from-spotify-track', async (req, res) => {
+// 다양한 추천 (Diverse recommendations)
+app.post('/recommend-diverse-tracks', async (req, res) => {
   const { spotify_track, access_token } = req.body;
   if (!access_token || !spotify_track) {
     return res.status(400).json({ error: 'Missing access token or track info' });
@@ -198,61 +198,223 @@ app.post('/recommend-from-spotify-track', async (req, res) => {
     });
     if (!me.ok) return res.status(401).json({ error: 'Invalid or expired access token' });
 
-    // 로컬 검색 → 추천 → Spotify 검색 매칭
+    // 현재 트랙으로 로컬 검색하여 track_id 찾기
     const searchR = await fetch('http://127.0.0.1:5001/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: `${spotify_track.name} ${spotify_track.artists?.[0]?.name || ''}`.trim() })
     });
 
-    if (searchR.ok) {
-      const searchData = await searchR.json();
-      const best = (searchData.results || [])[0];
-      if (best) {
-        const recR = await fetch('http://127.0.0.1:5001/recommend', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ song_title: best.track, artist_name: best.artist, num_recommendations: 10 })
-        });
-        if (recR.ok) {
-          const recData = await recR.json();
-          const out = [];
-          for (const rec of (recData.recommendations || []).slice(0, 5)) {
-            const q = `track:"${rec.track}" artist:"${rec.artist}"`;
-            const s = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`, {
-              headers: { 'Authorization': `Bearer ${access_token}` }
+    let diverseRecommendations = [];
+    
+    // 최대 3번 재시도
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        if (searchR.ok) {
+          const searchData = await searchR.json();
+          const best = (searchData.results || [])[0];
+          
+          if (best) {
+            // 다양한 추천 요청
+            const diverseR = await fetch('http://127.0.0.1:5001/recommend-diverse', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                current_track_id: best.track_id, 
+                num_recommendations: 15 
+              })
             });
-            if (s.ok) {
-              const sj = await s.json();
-              const it = sj?.tracks?.items?.[0];
-              if (it) out.push({ ...rec, spotify_track: it, uri: it.uri, preview_url: it.preview_url });
+            
+            if (diverseR.ok) {
+              const diverseData = await diverseR.json();
+              const out = [];
+              
+              // Spotify에서 매칭 (최대 10개)
+              for (const rec of (diverseData.recommendations || []).slice(0, 10)) {
+                const q = `track:"${rec.track}" artist:"${rec.artist}"`;
+                const s = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`, {
+                  headers: { 'Authorization': `Bearer ${access_token}` }
+                });
+                
+                if (s.ok) {
+                  const sj = await s.json();
+                  const it = sj?.tracks?.items?.[0];
+                  if (it) out.push({ 
+                    ...rec, 
+                    spotify_track: it, 
+                    uri: it.uri, 
+                    preview_url: it.preview_url,
+                    track: it
+                  });
+                }
+              }
+              
+              if (out.length > 0) {
+                diverseRecommendations = out;
+                break; // 성공하면 종료
+              }
             }
           }
-          return res.json({ spotify_tracks: out, original_match: best });
         }
+
+        console.log(`🔄 Diverse recommendations attempt ${attempt} failed, retrying...`);
+        
+        // 마지막 시도가 아니면 잠시 대기
+        if (attempt < 3) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+      } catch (attemptError) {
+        console.error(`Attempt ${attempt} error:`, attemptError);
+        if (attempt === 3) throw attemptError;
       }
     }
 
-    // Fallback: Spotify 자체 추천
-    const rec = await fetch(`https://api.spotify.com/v1/recommendations?seed_tracks=${spotify_track.id}&limit=5`, {
-      headers: { 'Authorization': `Bearer ${access_token}` }
-    });
-    if (!rec.ok) return res.status(500).json({ error: 'Spotify recommendations failed' });
-    const recJ = await rec.json();
-    const mapped = (recJ.tracks || []).map(t => ({
-      track: t.name,
-      artist: t.artists.map(a => a.name).join(', '),
-      album: t.album.name,
-      spotify_track: t,
-      uri: t.uri,
-      preview_url: t.preview_url,
-      similarity: 0.8
-    }));
-    res.json({ spotify_tracks: mapped });
+    // 여전히 실패하면 Spotify 자체 추천으로 폴백
+    if (diverseRecommendations.length === 0) {
+      console.log('🔄 All attempts failed, using Spotify fallback...');
+      
+      const rec = await fetch(`https://api.spotify.com/v1/recommendations?seed_genres=pop,rock,electronic,hip-hop,jazz&limit=10`, {
+        headers: { 'Authorization': `Bearer ${access_token}` }
+      });
+      
+      if (rec.ok) {
+        const recJ = await rec.json();
+        diverseRecommendations = (recJ.tracks || []).map(t => ({
+          track: t.name,
+          artist: t.artists.map(a => a.name).join(', '),
+          album: t.album.name,
+          spotify_track: t,
+          uri: t.uri,
+          preview_url: t.preview_url,
+          similarity: 0.2, // 다양성을 나타내는 낮은 유사도
+          track: t
+        }));
+      }
+    }
+
+    return res.json({ spotify_tracks: diverseRecommendations });
 
   } catch (e) {
-    console.error('recommend-from-spotify-track error:', e);
-    res.status(500).json({ error: 'Failed to get recommendations' });
+    console.error('recommend-diverse-tracks error:', e);
+    res.status(500).json({ error: 'Failed to get diverse recommendations' });
+  }
+});
+
+// 유사한 추천 (Similar recommendations with retry logic)
+app.post('/recommend-similar-tracks', async (req, res) => {
+  const { spotify_track, access_token } = req.body;
+  if (!access_token || !spotify_track) {
+    return res.status(400).json({ error: 'Missing access token or track info' });
+  }
+
+  try {
+    // 토큰 검증
+    const me = await fetch('https://api.spotify.com/v1/me', {
+      headers: { 'Authorization': `Bearer ${access_token}` }
+    });
+    if (!me.ok) return res.status(401).json({ error: 'Invalid or expired access token' });
+
+    let similarRecommendations = [];
+    
+    // 최대 3번 재시도
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        // 현재 트랙으로 로컬 검색하여 추천받기
+        const searchR = await fetch('http://127.0.0.1:5001/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: `${spotify_track.name} ${spotify_track.artists?.[0]?.name || ''}`.trim() })
+        });
+
+        if (searchR.ok) {
+          const searchData = await searchR.json();
+          const best = (searchData.results || [])[0];
+          
+          if (best) {
+            const recR = await fetch('http://127.0.0.1:5001/recommend', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                song_title: best.track, 
+                artist_name: best.artist, 
+                num_recommendations: 15 
+              })
+            });
+            
+            if (recR.ok) {
+              const recData = await recR.json();
+              const out = [];
+              
+              // Spotify에서 매칭 (최대 10개)
+              for (const rec of (recData.recommendations || []).slice(0, 10)) {
+                const q = `track:"${rec.track}" artist:"${rec.artist}"`;
+                const s = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`, {
+                  headers: { 'Authorization': `Bearer ${access_token}` }
+                });
+                
+                if (s.ok) {
+                  const sj = await s.json();
+                  const it = sj?.tracks?.items?.[0];
+                  if (it) out.push({ 
+                    ...rec, 
+                    spotify_track: it, 
+                    uri: it.uri, 
+                    preview_url: it.preview_url,
+                    track: it
+                  });
+                }
+              }
+              
+              if (out.length > 0) {
+                similarRecommendations = out;
+                break; // 성공하면 종료
+              }
+            }
+          }
+        }
+
+        console.log(`🔄 Similar recommendations attempt ${attempt} failed, retrying...`);
+        
+        // 마지막 시도가 아니면 잠시 대기
+        if (attempt < 3) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+      } catch (attemptError) {
+        console.error(`Attempt ${attempt} error:`, attemptError);
+        if (attempt === 3) throw attemptError;
+      }
+    }
+
+    // 여전히 실패하면 Spotify 자체 추천으로 폴백
+    if (similarRecommendations.length === 0) {
+      console.log('🔄 All attempts failed, using Spotify fallback...');
+      
+      const rec = await fetch(`https://api.spotify.com/v1/recommendations?seed_tracks=${spotify_track.id}&limit=10`, {
+        headers: { 'Authorization': `Bearer ${access_token}` }
+      });
+      
+      if (rec.ok) {
+        const recJ = await rec.json();
+        similarRecommendations = (recJ.tracks || []).map(t => ({
+          track: t.name,
+          artist: t.artists.map(a => a.name).join(', '),
+          album: t.album.name,
+          spotify_track: t,
+          uri: t.uri,
+          preview_url: t.preview_url,
+          similarity: 0.8,
+          track: t
+        }));
+      }
+    }
+
+    return res.json({ spotify_tracks: similarRecommendations, original_match: null });
+
+  } catch (e) {
+    console.error('recommend-similar-tracks error:', e);
+    res.status(500).json({ error: 'Failed to get similar recommendations' });
   }
 });
 
