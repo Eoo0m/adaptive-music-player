@@ -17,6 +17,44 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             overflow: hidden;
             position: relative;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Mobile specific styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px;
+            }
+            
+            .ipod-container {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .clickwheel {
+                width: 75px;
+                height: 75px;
+            }
+            
+            .center-button {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .track-info {
+                max-width: 250px;
+                font-size: 12px;
+            }
+            
+            .search-interface {
+                width: 95%;
+                padding: 20px;
+            }
         }
 
         /* Login screen */
@@ -163,6 +201,7 @@
             z-index: 1;
             cursor: grab;
             user-select: none;
+            touch-action: none;
         }
 
         .ipod-container:active {
@@ -594,9 +633,19 @@
         // Initialize Spotify Web Playback SDK
         window.onSpotifyWebPlaybackSDKReady = () => {
             if (access_token) {
-                initializeSpotifyPlayer();
+                // Add delay for mobile browsers
+                if (isMobileDevice()) {
+                    setTimeout(() => initializeSpotifyPlayer(), 1000);
+                } else {
+                    initializeSpotifyPlayer();
+                }
             }
         };
+
+        // Mobile device detection
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
 
         function initializeSpotifyPlayer() {
             if (!access_token) return;
@@ -606,6 +655,24 @@
                 getOAuthToken: cb => { cb(access_token); },
                 volume: 0.5
             });
+
+            // Mobile-specific audio context handling
+            if (isMobileDevice()) {
+                // Add user interaction handler for audio context
+                const handleFirstInteraction = async () => {
+                    if (window.AudioContext || window.webkitAudioContext) {
+                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        if (audioContext.state === 'suspended') {
+                            await audioContext.resume();
+                        }
+                    }
+                    document.removeEventListener('touchstart', handleFirstInteraction);
+                    document.removeEventListener('click', handleFirstInteraction);
+                };
+                
+                document.addEventListener('touchstart', handleFirstInteraction, { once: true });
+                document.addEventListener('click', handleFirstInteraction, { once: true });
+            }
 
             // Error handling
             player.addListener('initialization_error', ({ message }) => {
@@ -968,6 +1035,13 @@
 
         // iPod control functions
         async function togglePlayPause() {
+            // Handle mobile audio context
+            if (window.AudioContext || window.webkitAudioContext) {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                }
+            }
             if (player) await player.togglePlay();
         }
 
@@ -1179,28 +1253,36 @@
             setTimeout(() => dustParticle.remove(), 12000);
         }
 
-        // Event listeners
-        document.getElementById('centerButton').addEventListener('click', togglePlayPause);
-        document.getElementById('nextBtn').addEventListener('click', () => {
+        // Event listeners (Mouse and Touch support)
+        function addTouchAndClickListener(element, handler) {
+            element.addEventListener('click', handler);
+            element.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handler(e);
+            }, { passive: false });
+        }
+
+        addTouchAndClickListener(document.getElementById('centerButton'), togglePlayPause);
+        addTouchAndClickListener(document.getElementById('nextBtn'), () => {
             console.log('🔴 Next button clicked!');
             // 강제로 diverse 모드 테스트
             console.log('🔴 FORCING DIVERSE MODE FOR TEST');
             updateRecommendationMode('diverse');
             playNextRandomTrack();
         });
-        document.getElementById('prevBtn').addEventListener('click', () => {
+        addTouchAndClickListener(document.getElementById('prevBtn'), () => {
             console.log('🔴 Prev button clicked!');
             playPreviousRandomTrack();
         });
-        document.getElementById('volumeUp').addEventListener('click', () => adjustVolume(0.1));
-        document.getElementById('volumeDown').addEventListener('click', () => adjustVolume(-0.1));
+        addTouchAndClickListener(document.getElementById('volumeUp'), () => adjustVolume(0.1));
+        addTouchAndClickListener(document.getElementById('volumeDown'), () => adjustVolume(-0.1));
 
-        // Drag functionality for iPod
+        // Drag functionality for iPod (Mouse and Touch support)
         let isDragging = false;
         let dragOffset = { x: 0, y: 0 };
         const ipodContainer = document.getElementById('ipodContainer');
 
-        ipodContainer.addEventListener('mousedown', (e) => {
+        function startDrag(e) {
             // Don't start drag if clicking on controls
             if (e.target.classList.contains('control') || e.target.classList.contains('center-button') || e.target.classList.contains('play-pause')) {
                 return;
@@ -1208,8 +1290,11 @@
 
             isDragging = true;
             const rect = ipodContainer.getBoundingClientRect();
-            dragOffset.x = e.clientX - rect.left;
-            dragOffset.y = e.clientY - rect.top;
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            dragOffset.x = clientX - rect.left;
+            dragOffset.y = clientY - rect.top;
 
             // Change cursor and disable animations while dragging
             ipodContainer.style.cursor = 'grabbing';
@@ -1217,13 +1302,21 @@
 
             // Prevent text selection while dragging
             document.body.style.userSelect = 'none';
-        });
+            
+            // Prevent default touch behavior
+            if (e.touches) {
+                e.preventDefault();
+            }
+        }
 
-        document.addEventListener('mousemove', (e) => {
+        function moveDrag(e) {
             if (!isDragging) return;
 
-            const x = e.clientX - dragOffset.x;
-            const y = e.clientY - dragOffset.y;
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            const x = clientX - dragOffset.x;
+            const y = clientY - dragOffset.y;
 
             // Keep iPod within viewport bounds
             const maxX = window.innerWidth - 120; // iPod width
@@ -1236,9 +1329,14 @@
             ipodContainer.style.left = constrainedX + 'px';
             ipodContainer.style.top = constrainedY + 'px';
             ipodContainer.style.transform = 'none';
-        });
+            
+            // Prevent default touch behavior
+            if (e.touches) {
+                e.preventDefault();
+            }
+        }
 
-        document.addEventListener('mouseup', () => {
+        function endDrag() {
             if (isDragging) {
                 isDragging = false;
                 ipodContainer.style.cursor = 'grab';
@@ -1253,7 +1351,17 @@
                 // Re-enable text selection
                 document.body.style.userSelect = '';
             }
-        });
+        }
+
+        // Mouse events
+        ipodContainer.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', moveDrag);
+        document.addEventListener('mouseup', endDrag);
+
+        // Touch events
+        ipodContainer.addEventListener('touchstart', startDrag, { passive: false });
+        document.addEventListener('touchmove', moveDrag, { passive: false });
+        document.addEventListener('touchend', endDrag);
 
         // Keyboard support
         document.addEventListener('DOMContentLoaded', function () {
