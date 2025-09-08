@@ -413,6 +413,22 @@
             margin-top: 20px;
         }
 
+        .mobile-notice {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(29, 185, 84, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            text-align: center;
+            max-width: 280px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+
         /* Song search interface */
         .search-interface {
             position: absolute;
@@ -650,15 +666,86 @@
             window.location.href = `${API_BASE_URL}/login`;
         }
 
+        // Mobile playback system (using Spotify app redirect)
+        let mobilePlaybackMode = false;
+        let currentSpotifyUri = null;
+
+        function initializeMobilePlayback() {
+            mobilePlaybackMode = true;
+            console.log('📱 모바일 재생 모드 활성화');
+            
+            // 모바일에서는 트랙 정보만 표시하고 Spotify 앱 연결 안내
+            updateTrackInfo();
+            
+            // 가상 플레이어 상태 설정
+            is_paused = true;
+            current_track = null;
+            updatePlayPauseIcon();
+            
+            // 모바일 안내 메시지 표시
+            showMobileNotice();
+        }
+
+        function showMobileNotice() {
+            const notice = document.createElement('div');
+            notice.className = 'mobile-notice';
+            notice.innerHTML = '📱 모바일 모드: 재생 버튼을 누르면 Spotify 앱으로 연결됩니다';
+            document.body.appendChild(notice);
+            
+            setTimeout(() => {
+                notice.style.opacity = '0';
+                notice.style.transition = 'opacity 0.5s';
+                setTimeout(() => notice.remove(), 500);
+            }, 4000);
+        }
+
+        function playTrackOnMobile(spotifyUri) {
+            if (!spotifyUri) return;
+            
+            currentSpotifyUri = spotifyUri;
+            const trackId = spotifyUri.split(':')[2];
+            
+            // 트랙 정보 업데이트를 위해 Spotify API에서 트랙 정보 가져오기
+            fetchTrackInfo(trackId).then(trackInfo => {
+                if (trackInfo) {
+                    current_track = trackInfo;
+                    updateTrackInfo();
+                    updateMediaSession();
+                    
+                    // 모바일에서는 Spotify 앱으로 리다이렉트
+                    const spotifyAppUrl = `spotify:track:${trackId}`;
+                    const spotifyWebUrl = `https://open.spotify.com/track/${trackId}`;
+                    
+                    // Spotify 앱이 있으면 앱으로, 없으면 웹으로
+                    setTimeout(() => {
+                        window.location.href = spotifyAppUrl;
+                        setTimeout(() => {
+                            window.open(spotifyWebUrl, '_blank');
+                        }, 500);
+                    }, 100);
+                }
+            });
+        }
+
+        async function fetchTrackInfo(trackId) {
+            try {
+                const response = await fetch(`https://api.spotify.com/v1/tracks/${trackId}`, {
+                    headers: { 'Authorization': `Bearer ${access_token}` }
+                });
+                
+                if (response.ok) {
+                    return await response.json();
+                }
+            } catch (error) {
+                console.error('트랙 정보 가져오기 실패:', error);
+            }
+            return null;
+        }
+
         // Initialize Spotify Web Playback SDK
         window.onSpotifyWebPlaybackSDKReady = () => {
             if (access_token) {
-                // Add delay for mobile browsers
-                if (isMobileDevice()) {
-                    setTimeout(() => initializeSpotifyPlayer(), 1000);
-                } else {
-                    initializeSpotifyPlayer();
-                }
+                initializeSpotifyPlayer();
             }
         };
 
@@ -667,8 +754,24 @@
             return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         }
 
+        // Check if Web Playback SDK is supported
+        function isWebPlaybackSupported() {
+            // Web Playback SDK는 데스크톱에서만 완전 지원
+            if (isMobileDevice()) {
+                return false;
+            }
+            return typeof Spotify !== 'undefined';
+        }
+
         function initializeSpotifyPlayer() {
             if (!access_token) return;
+
+            // 모바일에서는 Web Playback SDK 대신 redirect 방식 사용
+            if (!isWebPlaybackSupported()) {
+                console.log('📱 모바일 디바이스: Web Playback SDK 불가, 모바일 최적화 모드');
+                initializeMobilePlayback();
+                return;
+            }
 
             player = new Spotify.Player({
                 name: 'Spotify iPod Web Player',
@@ -793,12 +896,21 @@
 
         // Play track at specific index
         async function playTrackAtIndex(index) {
-            if (!randomTracks[index] || !device_id) return;
+            if (!randomTracks[index]) return;
 
             const track = randomTracks[index];
             let trackUri = track.uri || track.spotify_track?.uri || track.track?.uri;
 
             if (!trackUri) return;
+
+            // 모바일 모드인 경우
+            if (mobilePlaybackMode) {
+                playTrackOnMobile(trackUri);
+                return;
+            }
+
+            // 데스크톱 모드인 경우
+            if (!device_id) return;
 
             try {
                 await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
@@ -816,6 +928,13 @@
 
         // Play specific Spotify track by URI
         async function playSpotifyTrack(trackUri) {
+            // 모바일 모드인 경우
+            if (mobilePlaybackMode) {
+                playTrackOnMobile(trackUri);
+                return;
+            }
+
+            // 데스크톱 모드인 경우
             if (!device_id) return;
 
             try {
@@ -879,6 +998,15 @@
         async function playNextRandomTrack(diverseMode = false) {
             console.log('🔴 playNextRandomTrack called with diverseMode:', diverseMode);
             console.log('🔴 arguments.length:', arguments.length);
+
+            // 모바일 모드인 경우 간단한 다음 트랙 재생
+            if (mobilePlaybackMode) {
+                if (randomTracks.length > 0) {
+                    currentTrackIndex = (currentTrackIndex + 1) % randomTracks.length;
+                    playTrackAtIndex(currentTrackIndex);
+                }
+                return;
+            }
 
             // If not explicitly set, check if we should use diverse mode based on manual skip
             if (!diverseMode && arguments.length === 0) {
@@ -951,6 +1079,14 @@
 
         // Play previous track
         async function playPreviousRandomTrack() {
+            // 모바일 모드인 경우 간단한 이전 트랙 재생
+            if (mobilePlaybackMode) {
+                if (randomTracks.length === 0) return;
+                currentTrackIndex = currentTrackIndex === 0 ? randomTracks.length - 1 : currentTrackIndex - 1;
+                playTrackAtIndex(currentTrackIndex);
+                return;
+            }
+
             // Record completion for manual skip (going backward)
             let currentPosition = 0;
             if (player) {
@@ -1106,6 +1242,19 @@
 
         // iPod control functions
         async function togglePlayPause() {
+            // 모바일 모드인 경우
+            if (mobilePlaybackMode) {
+                if (currentSpotifyUri) {
+                    playTrackOnMobile(currentSpotifyUri);
+                } else if (randomTracks.length > 0) {
+                    playTrackAtIndex(currentTrackIndex);
+                } else {
+                    alert('재생할 곡이 없습니다. 먼저 음악을 검색해주세요.');
+                }
+                return;
+            }
+
+            // 데스크톱 모드인 경우
             // Handle mobile audio context
             if (window.AudioContext || window.webkitAudioContext) {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
