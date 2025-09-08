@@ -907,14 +907,13 @@
                 if (current_track) {
                     try {
                         const endpoint = diverseMode ? `${API_BASE_URL}/recommend-diverse-tracks`
-                            : `${API_BASE_URL}/recommend-from-spotify-track`;
+                            : `${API_BASE_URL}/recommend-similar-tracks`;
                         const response = await fetch(endpoint, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 spotify_track: current_track,
-                                access_token: access_token,
-                                diverse_mode: diverseMode
+                                access_token: access_token
                             })
                         });
 
