@@ -46,6 +46,23 @@
                 height: 40px;
             }
             
+            .control {
+                font-size: 14px;
+                font-weight: bold;
+            }
+            
+            .volume-up, .volume-down {
+                font-size: 16px;
+            }
+            
+            .prev, .next {
+                font-size: 16px;
+            }
+            
+            .play-pause {
+                font-size: 16px;
+            }
+            
             .track-info {
                 max-width: 250px;
                 font-size: 12px;
@@ -315,10 +332,11 @@
             position: absolute;
             color: #ccc;
             font-size: 12px;
-            font-weight: 300;
+            font-weight: 400;
             user-select: none;
             cursor: pointer;
             transition: color 0.2s;
+            font-family: Arial, sans-serif;
         }
 
         .control:hover {
@@ -349,14 +367,16 @@
             left: 8px;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 11px;
+            font-size: 14px;
+            font-weight: bold;
         }
 
         .next {
             right: 8px;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 11px;
+            font-size: 14px;
+            font-weight: bold;
         }
 
         .play-pause {
@@ -568,8 +588,8 @@
         <div class="clickwheel">
             <div class="control volume-up" id="volumeUp">+</div>
             <div class="control volume-down" id="volumeDown">−</div>
-            <div class="control prev" id="prevBtn">⏮</div>
-            <div class="control next" id="nextBtn">⏭</div>
+            <div class="control prev" id="prevBtn">‹‹</div>
+            <div class="control next" id="nextBtn">››</div>
 
             <div class="center-button" id="centerButton">
                 <div class="play-pause" id="playPauseIcon">▶</div>
@@ -666,6 +686,12 @@
                             await audioContext.resume();
                         }
                     }
+                    
+                    // Initialize Media Session on first interaction
+                    if ('mediaSession' in navigator) {
+                        console.log('📱 Media Session API available - enabling background playback');
+                    }
+                    
                     document.removeEventListener('touchstart', handleFirstInteraction);
                     document.removeEventListener('click', handleFirstInteraction);
                 };
@@ -993,12 +1019,58 @@
                 document.getElementById('artistName').textContent =
                     current_track.artists.map(artist => artist.name).join(', ');
                 document.getElementById('trackInfo').classList.remove('hidden');
+                
+                // Update Media Session for background playback
+                updateMediaSession();
+            }
+        }
+
+        // Media Session API for background playback and lock screen controls
+        function updateMediaSession() {
+            if ('mediaSession' in navigator && current_track) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: current_track.name,
+                    artist: current_track.artists.map(artist => artist.name).join(', '),
+                    album: current_track.album?.name || 'Unknown Album',
+                    artwork: current_track.album?.images?.map(img => ({
+                        src: img.url,
+                        sizes: `${img.width}x${img.height}`,
+                        type: 'image/jpeg'
+                    })) || []
+                });
+
+                // Set up media session action handlers
+                navigator.mediaSession.setActionHandler('play', async () => {
+                    await togglePlayPause();
+                });
+
+                navigator.mediaSession.setActionHandler('pause', async () => {
+                    await togglePlayPause();
+                });
+
+                navigator.mediaSession.setActionHandler('previoustrack', async () => {
+                    await playPreviousRandomTrack();
+                });
+
+                navigator.mediaSession.setActionHandler('nexttrack', async () => {
+                    await playNextRandomTrack();
+                });
+
+                // Set playback state
+                navigator.mediaSession.playbackState = is_paused ? 'paused' : 'playing';
+                
+                console.log('📱 Media Session updated for background playback');
             }
         }
 
         // Update play/pause icon
         function updatePlayPauseIcon() {
-            document.getElementById('playPauseIcon').textContent = is_paused ? '▶' : '⏸';
+            document.getElementById('playPauseIcon').textContent = is_paused ? '▶' : '‖';
+            
+            // Update Media Session playback state
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = is_paused ? 'paused' : 'playing';
+            }
         }
 
         // Update iPod visual state
@@ -1373,6 +1445,30 @@
                 if (e.key === 'Enter') startRecommendationPlaylist();
             });
         });
+
+        // Page Visibility API to handle background behavior
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('📱 Page hidden - maintaining background playback');
+                // Keep audio context active
+                if (window.AudioContext || window.webkitAudioContext) {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume().catch(console.error);
+                    }
+                }
+            } else {
+                console.log('📱 Page visible - foreground mode');
+            }
+        });
+
+        // Prevent page from being suspended on mobile
+        if (isMobileDevice()) {
+            // Keep a minimal interval running to prevent suspension
+            setInterval(() => {
+                // Empty function to keep page active
+            }, 10000);
+        }
 
         // Initialize
         createStars();
