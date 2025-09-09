@@ -201,7 +201,26 @@ recommender = None
 
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({"status": "healthy"})
+    return jsonify({
+        "status": "healthy",
+        "data_loaded": len(recommender.meta_df) if recommender else 0,
+        "embeddings_shape": recommender.embeddings.shape if recommender else None
+    })
+
+@app.route('/debug', methods=['GET'])
+def debug():
+    if not recommender:
+        return jsonify({"error": "Recommender not initialized"})
+    
+    # Get a sample of tracks for debugging
+    sample_tracks = recommender.meta_df.head(5)[['track_id', 'track', 'artist']].to_dict('records')
+    
+    return jsonify({
+        "total_tracks": len(recommender.meta_df),
+        "embeddings_shape": recommender.embeddings.shape,
+        "sample_tracks": sample_tracks,
+        "track_id_mapping_count": len(recommender.track_id_to_idx)
+    })
 
 @app.route('/recommend', methods=['POST'])
 def recommend():

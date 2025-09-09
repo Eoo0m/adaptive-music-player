@@ -752,9 +752,12 @@
                 if (playbackHistory.length >= 3) {
                     const recentAverage = playbackHistory.reduce((a, b) => a + b, 0) / playbackHistory.length;
 
-                    if (recentAverage < 50) {
-                        return true; // Return true for diverse mode
-                    }
+                    // Temporarily disable diverse mode due to server issues
+                    // if (recentAverage < 50) {
+                    //     return true; // Return true for diverse mode
+                    // }
+                    
+                    console.log(`📊 Engagement: ${recentAverage.toFixed(1)}% (diverse mode disabled)`);
                 }
             }
             return false; // Return false for normal mode
@@ -851,7 +854,58 @@
             }
 
             if (randomTracks.length > 0) {
-                currentTrackIndex = (currentTrackIndex + 1) % randomTracks.length;
+                currentTrackIndex = currentTrackIndex + 1;
+                
+                // If we've reached the end of current playlist, get new recommendations based on last track
+                if (currentTrackIndex >= randomTracks.length) {
+                    console.log('🎵 Playlist finished! Getting new recommendations based on last track...');
+                    
+                    if (current_track) {
+                        try {
+                            const response = await fetch(`${API_BASE_URL}/recommend-similar-tracks`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    spotify_track: current_track,
+                                    access_token: access_token
+                                })
+                            });
+
+                            if (response.ok) {
+                                const data = await response.json();
+                                if (data.spotify_tracks?.length > 0) {
+                                    // Create new playlist with 10 tracks
+                                    randomTracks = data.spotify_tracks.slice(0, 10);
+                                    currentTrackIndex = 0;
+                                    
+                                    console.log(`🎵 New 10-track playlist based on: ${current_track.name}`);
+                                    console.log(`📋 New tracks:`);
+                                    randomTracks.forEach((track, index) => {
+                                        const trackInfo = track.spotify_track || track.track || track;
+                                        const name = trackInfo.name || track.track || 'Unknown Track';
+                                        const artists = trackInfo.artists ? 
+                                            trackInfo.artists.map(a => a.name).join(', ') : 
+                                            track.artist || 'Unknown Artist';
+                                        const similarityText = track.similarity ? 
+                                            ` (${(track.similarity * 100).toFixed(1)}% similar)` : '';
+                                        
+                                        console.log(`  ${String(index + 1).padStart(2, '0')}. ${name} - ${artists}${similarityText}`);
+                                    });
+                                    
+                                    await playSpotifyTrack(randomTracks[0].uri || randomTracks[0].track?.uri);
+                                    return;
+                                }
+                            }
+                        } catch (error) {
+                            console.error('❌ Failed to get new recommendations:', error);
+                        }
+                    }
+                    
+                    // Fallback: restart from beginning if new recommendations fail
+                    console.log('⚠️ New recommendations failed, restarting playlist from beginning');
+                    currentTrackIndex = 0;
+                }
+                
                 playTrackAtIndex(currentTrackIndex);
             }
         }
@@ -1108,8 +1162,8 @@
                 const data = await response.json();
 
                 if (data.spotify_tracks?.length > 0) {
-                    // Shuffle the recommendations for random playback order
-                    randomTracks = shuffleArray(data.spotify_tracks);
+                    // Take only first 10 tracks for initial playlist
+                    randomTracks = data.spotify_tracks.slice(0, 10);
                     currentTrackIndex = 0;
                     isRecommendationMode = true;
 
@@ -1119,10 +1173,10 @@
                     // Show green glow for initial similar recommendations
                     updateRecommendationMode('similar');
 
-                    // Initial playlist created - show first 10 tracks
+                    // Initial playlist created - show all 10 tracks
                     console.log(`🎵 Initial playlist created: ${randomTracks.length} tracks`);
-                    console.log(`📋 First 10 tracks:`);
-                    randomTracks.slice(0, 10).forEach((track, index) => {
+                    console.log(`📋 Playlist tracks:`);
+                    randomTracks.forEach((track, index) => {
                         const trackInfo = track.spotify_track || track.track || track;
                         const name = trackInfo.name || track.track || 'Unknown Track';
                         const artists = trackInfo.artists ? 
