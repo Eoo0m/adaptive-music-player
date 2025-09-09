@@ -192,29 +192,40 @@ app.post('/recommend-diverse-tracks', async (req, res) => {
   }
 
   try {
+    console.log('🔀 DIVERSE REQUEST:', {
+      track_name: spotify_track.name,
+      artist: spotify_track.artists?.[0]?.name,
+      has_access_token: !!access_token
+    });
+
     // 토큰 검증
     const me = await fetch('https://api.spotify.com/v1/me', {
       headers: { 'Authorization': `Bearer ${access_token}` }
     });
-    if (!me.ok) return res.status(401).json({ error: 'Invalid or expired access token' });
-
-    // 현재 트랙으로 로컬 검색하여 track_id 찾기
-    const searchR = await fetch('http://127.0.0.1:5001/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: `${spotify_track.name} ${spotify_track.artists?.[0]?.name || ''}`.trim() })
-    });
+    if (!me.ok) {
+      console.error('🔀 Token validation failed');
+      return res.status(401).json({ error: 'Invalid or expired access token' });
+    }
 
     let diverseRecommendations = [];
     
     // 최대 3번 재시도
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
+        // 현재 트랙으로 로컬 검색하여 track_id 찾기 (매 시도마다 새로운 요청)
+        const searchR = await fetch('http://127.0.0.1:5001/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: `${spotify_track.name} ${spotify_track.artists?.[0]?.name || ''}`.trim() })
+        });
+
         if (searchR.ok) {
           const searchData = await searchR.json();
           const best = (searchData.results || [])[0];
           
           if (best) {
+            console.log('🔀 Found matching track:', { track_id: best.track_id, track: best.track });
+            
             // 다양한 추천 요청
             const diverseR = await fetch('http://127.0.0.1:5001/recommend-diverse', {
               method: 'POST',
@@ -225,8 +236,11 @@ app.post('/recommend-diverse-tracks', async (req, res) => {
               })
             });
             
+            console.log('🔀 Diverse service response status:', diverseR.status);
+            
             if (diverseR.ok) {
               const diverseData = await diverseR.json();
+              console.log('🔀 Got diverse recommendations:', diverseData.recommendations?.length || 0);
               const out = [];
               
               // Spotify에서 매칭 (최대 10개)
@@ -253,8 +267,16 @@ app.post('/recommend-diverse-tracks', async (req, res) => {
                 diverseRecommendations = out;
                 break; // 성공하면 종료
               }
+            } else {
+              const errorText = await diverseR.text();
+              console.error(`🔀 Diverse service error (attempt ${attempt}):`, diverseR.status, errorText);
             }
+          } else {
+            console.log(`🔀 No matching track found in local DB (attempt ${attempt})`);
           }
+        } else {
+          const errorText = await searchR.text();
+          console.error(`🔀 Search service error (attempt ${attempt}):`, searchR.status, errorText);
         }
 
         console.log(`🔄 Diverse recommendations attempt ${attempt} failed, retrying...`);
