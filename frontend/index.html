@@ -697,6 +697,34 @@
 
             if (!trackUri || !device_id) return;
 
+            // 🎵 DEBUG: Display current track info
+            const trackInfo = track.spotify_track || track.track || track;
+            const name = trackInfo.name || track.track || 'Unknown Track';
+            const artists = trackInfo.artists ? 
+                trackInfo.artists.map(a => a.name).join(', ') : 
+                track.artist || 'Unknown Artist';
+            
+            console.log(`\n▶️ NOW PLAYING [${index + 1}/${randomTracks.length}]:`);
+            console.log(`🎵 ${name} - ${artists}`);
+            console.log(`🔗 URI: ${trackUri}`);
+            if (track.similarity) console.log(`🎯 Similarity: ${(track.similarity * 100).toFixed(1)}%`);
+            if (track.pos_count) console.log(`🔥 Popularity: ${track.pos_count} plays`);
+            
+            // Show next few tracks
+            if (randomTracks.length > index + 1) {
+                console.log(`📋 COMING UP NEXT:`);
+                for (let i = 1; i <= Math.min(3, randomTracks.length - index - 1); i++) {
+                    const nextTrack = randomTracks[index + i];
+                    const nextInfo = nextTrack.spotify_track || nextTrack.track || nextTrack;
+                    const nextName = nextInfo.name || nextTrack.track || 'Unknown';
+                    const nextArtists = nextInfo.artists ? 
+                        nextInfo.artists.map(a => a.name).join(', ') : 
+                        nextTrack.artist || 'Unknown Artist';
+                    console.log(`  ${i}. ${nextName} - ${nextArtists}`);
+                }
+            }
+            console.log(``);
+
             try {
                 await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
                     method: 'PUT',
@@ -731,8 +759,6 @@
 
         // Calculate and record playback completion when track changes
         function recordTrackCompletion(reason = 'auto', currentPosition = 0) {
-            console.log('🔴 recordTrackCompletion called:', { reason, currentPosition, current_track: current_track?.name, trackStartTime, trackDuration });
-
             if (current_track && trackStartTime && trackDuration) {
                 // Use actual Spotify position if available, otherwise use elapsed time
                 let completionRatio;
@@ -749,23 +775,19 @@
                     playbackHistory.shift();
                 }
 
-                const reasonText = reason === 'manual' ? '(skipped)' : '(finished)';
-                const playedSec = Math.round((completionRatio / 100) * (trackDuration / 1000));
-                const totalSec = Math.round(trackDuration / 1000);
-                console.log(`⏹️ ${reason === 'manual' ? 'Skipped' : 'Finished'}: ${current_track.name} - ${playedSec}/${totalSec}s (${completionRatio.toFixed(1)}%) ${reasonText}`);
+                // 🎵 SIMPLE DEBUG: Show listening completion when skipping
+                if (reason === 'manual') {
+                    const playedSec = Math.round((completionRatio / 100) * (trackDuration / 1000));
+                    const totalSec = Math.round(trackDuration / 1000);
+                    console.log(`⏭️ SKIPPED: ${current_track.name} | Listened: ${playedSec}s/${totalSec}s (${completionRatio.toFixed(1)}%)`);
+                }
 
                 // Calculate recent average and determine next recommendation type
                 if (playbackHistory.length >= 3) {
                     const recentAverage = playbackHistory.reduce((a, b) => a + b, 0) / playbackHistory.length;
-                    console.log(`📊 Recent 3-track average completion: ${recentAverage.toFixed(1)}%`);
 
-                    if (recentAverage < 50) {  // 임시로 높게 설정해서 테스트
-                        console.log(`🔀 LOW ENGAGEMENT DETECTED! Switching to DIVERSE recommendations...`);
-                        console.log(`🔴 DIVERSE MODE ACTIVATED - will show red glow`);
+                    if (recentAverage < 50) {
                         return true; // Return true for diverse mode
-                    } else {
-                        console.log(`🎵 Normal engagement - continuing with SIMILAR recommendations`);
-                        console.log(`🟢 SIMILAR MODE ACTIVATED - will show green glow`);
                     }
                 }
             }
@@ -774,8 +796,11 @@
 
         // Play next track
         async function playNextRandomTrack(diverseMode = false) {
-            console.log('🔴 playNextRandomTrack called with diverseMode:', diverseMode);
-            console.log('🔴 arguments.length:', arguments.length);
+            console.log('\n⏭️ ===== NEXT TRACK REQUESTED =====');
+            console.log(`🔴 diverseMode: ${diverseMode}`);
+            console.log(`📊 Current playlist length: ${randomTracks.length}`);
+            console.log(`📍 Current index: ${currentTrackIndex}/${randomTracks.length - 1}`);
+            console.log(`📋 Current track: ${current_track?.name || 'None'} - ${current_track?.artists?.map(a => a.name).join(', ') || 'Unknown'}`);
 
             // If not explicitly set, check if we should use diverse mode based on manual skip
             if (!diverseMode && arguments.length === 0) {
@@ -822,6 +847,27 @@
                                 currentTrackIndex = 0;
                                 await playSpotifyTrack(randomTracks[0].uri);
 
+                                // 🎵 DEBUG: Display new dynamic playlist in console
+                                const modeText = diverseMode ? 'DIVERSE' : 'SIMILAR';
+                                const modeEmoji = diverseMode ? '🔀' : '🎵';
+                                console.log(`\n${modeEmoji} ===== ${modeText} PLAYLIST LOADED =====`);
+                                console.log(`📊 Total tracks: ${randomTracks.length}`);
+                                console.log(`🎯 Based on: ${current_track?.name || 'Current Track'} - ${current_track?.artists?.map(a => a.name).join(', ') || 'Unknown Artist'}`);
+                                console.log(`📋 NEW PLAYLIST CONTENTS:`);
+                                randomTracks.forEach((track, index) => {
+                                    const trackInfo = track.spotify_track || track.track || track;
+                                    const name = trackInfo.name || track.track || 'Unknown Track';
+                                    const artists = trackInfo.artists ? 
+                                        trackInfo.artists.map(a => a.name).join(', ') : 
+                                        track.artist || 'Unknown Artist';
+                                    const similarity = track.similarity ? `${(track.similarity * 100).toFixed(1)}%` : 'N/A';
+                                    const popularity = track.pos_count ? `🔥${track.pos_count}` : '';
+                                    
+                                    console.log(`  ${String(index + 1).padStart(2, '0')}. ${name} - ${artists} (${similarity} similar) ${popularity}`);
+                                });
+                                console.log(`🎯 Playing next: ${randomTracks[0]?.spotify_track?.name || randomTracks[0]?.track || 'Unknown'}`);
+                                console.log(`==========================================\n`);
+
                                 // Reset playback history when switching to diverse recommendations
                                 if (diverseMode) {
                                     playbackHistory = [];
@@ -848,6 +894,10 @@
 
         // Play previous track
         async function playPreviousRandomTrack() {
+            console.log('\n⏮️ ===== PREVIOUS TRACK REQUESTED =====');
+            console.log(`📊 Current playlist length: ${randomTracks.length}`);
+            console.log(`📍 Current index: ${currentTrackIndex}/${randomTracks.length - 1}`);
+            console.log(`📋 Current track: ${current_track?.name || 'None'} - ${current_track?.artists?.map(a => a.name).join(', ') || 'Unknown'}`);
             // Record completion for manual skip (going backward)
             let currentPosition = 0;
             if (player) {
@@ -1096,7 +1146,26 @@
                     // Show green glow for initial similar recommendations
                     updateRecommendationMode('similar');
 
-                    console.log(`🎵 Shuffled ${randomTracks.length} recommendations for random playback, history reset`);
+                    // 🎵 DEBUG: Display initial playlist in console
+                    console.log(`\n🎵 ===== INITIAL PLAYLIST CREATED =====`);
+                    console.log(`📊 Total tracks: ${randomTracks.length}`);
+                    console.log(`🔀 Shuffled order for random playback`);
+                    console.log(`📋 PLAYLIST CONTENTS:`);
+                    randomTracks.forEach((track, index) => {
+                        const trackInfo = track.spotify_track || track.track || track;
+                        const name = trackInfo.name || track.track || 'Unknown Track';
+                        const artists = trackInfo.artists ? 
+                            trackInfo.artists.map(a => a.name).join(', ') : 
+                            track.artist || 'Unknown Artist';
+                        const album = trackInfo.album?.name || track.album || 'Unknown Album';
+                        const duration = trackInfo.duration_ms ? 
+                            `${Math.floor(trackInfo.duration_ms / 60000)}:${String(Math.floor((trackInfo.duration_ms % 60000) / 1000)).padStart(2, '0')}` : 
+                            'Unknown';
+                        
+                        console.log(`  ${String(index + 1).padStart(2, '0')}. ${name} - ${artists} [${album}] (${duration})`);
+                    });
+                    console.log(`🎯 Starting with track: ${randomTracks[0]?.spotify_track?.name || randomTracks[0]?.track || 'Unknown'}`);
+                    console.log(`=======================================\n`);
 
                     document.getElementById('initialSongInput').classList.add('hidden');
                     document.getElementById('trackInfo').classList.remove('hidden');
@@ -1179,11 +1248,13 @@
 
         // Shuffle function using Fisher-Yates algorithm
         function shuffleArray(array) {
+            console.log(`🔀 Shuffling ${array.length} tracks...`);
             const shuffled = [...array]; // Create a copy
             for (let i = shuffled.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
+            console.log(`✓ Shuffle complete - randomized order created`);
             return shuffled;
         }
 
@@ -1304,6 +1375,51 @@
             });
         });
 
+
+        // 🎵 DEBUG: Playlist status function
+        function showPlaylistStatus() {
+            if (randomTracks.length === 0) {
+                console.log('🚫 No playlist loaded');
+                return;
+            }
+            
+            console.log(`\n📊 ===== PLAYLIST STATUS =====`);
+            console.log(`📍 Position: ${currentTrackIndex + 1}/${randomTracks.length}`);
+            console.log(`🎵 Current: ${current_track?.name || 'None'} - ${current_track?.artists?.map(a => a.name).join(', ') || 'Unknown'}`);
+            console.log(`📋 Remaining tracks: ${randomTracks.length - currentTrackIndex - 1}`);
+            console.log(`📊 Playback history: ${playbackHistory.length} entries`);
+            if (playbackHistory.length > 0) {
+                const avgCompletion = playbackHistory.reduce((a, b) => a + b, 0) / playbackHistory.length;
+                console.log(`📊 Average completion: ${avgCompletion.toFixed(1)}%`);
+            }
+            console.log(`🎯 Recommendation mode: ${isRecommendationMode ? 'ON' : 'OFF'}`);
+            console.log(`============================\n`);
+        }
+        
+        // Make it available in console
+        window.showPlaylistStatus = showPlaylistStatus;
+        window.showPlaylist = () => {
+            if (randomTracks.length === 0) {
+                console.log('🚫 No playlist loaded');
+                return;
+            }
+            console.log(`\n📋 ===== FULL PLAYLIST =====`);
+            randomTracks.forEach((track, index) => {
+                const trackInfo = track.spotify_track || track.track || track;
+                const name = trackInfo.name || track.track || 'Unknown Track';
+                const artists = trackInfo.artists ? 
+                    trackInfo.artists.map(a => a.name).join(', ') : 
+                    track.artist || 'Unknown Artist';
+                const current = index === currentTrackIndex ? ' ← CURRENT' : '';
+                const played = index < currentTrackIndex ? ' ✓' : '';
+                console.log(`  ${String(index + 1).padStart(2, '0')}. ${name} - ${artists}${current}${played}`);
+            });
+            console.log(`===========================\n`);
+        };
+        
+        console.log('🎵 DEBUG: Playlist debugging enabled!');
+        console.log('📝 Use showPlaylistStatus() to see current status');
+        console.log('📝 Use showPlaylist() to see full playlist');
 
         // Initialize
         createStars();
