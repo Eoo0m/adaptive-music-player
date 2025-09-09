@@ -620,8 +620,6 @@
             player.addListener('player_state_changed', (state) => {
                 if (!state) return;
 
-                console.log('🔴 Player state changed:', { position: state.position, paused: state.paused, track: state.track_window?.current_track?.name });
-
                 const previousTrack = current_track;
                 current_track = state.track_window.current_track;
                 is_paused = state.paused;
@@ -630,18 +628,6 @@
                 if (previousTrack?.id !== current_track?.id && current_track) {
                     trackStartTime = Date.now();
                     trackDuration = current_track.duration_ms;
-                    console.log(`🎵 Started: ${current_track.name} (${Math.round(trackDuration / 1000)}s)`);
-                }
-
-                // Log current playback position
-                if (current_track && trackStartTime && trackDuration) {
-                    const currentPosition = state.position || 0;
-                    const elapsedTime = Date.now() - trackStartTime;
-                    const progressPercent = ((currentPosition / trackDuration) * 100).toFixed(1);
-                    const currentSec = Math.round(currentPosition / 1000);
-                    const totalSec = Math.round(trackDuration / 1000);
-
-                    console.log(`⏯️ ${current_track.name} - ${currentSec}/${totalSec}s (${progressPercent}%) ${is_paused ? '[PAUSED]' : '[PLAYING]'}`);
                 }
 
                 // Track when song ends naturally (position 0 and paused)
@@ -1108,8 +1094,20 @@
                     // Show green glow for initial similar recommendations
                     updateRecommendationMode('similar');
 
-                    // Initial playlist created
+                    // Initial playlist created - show first 10 tracks
                     console.log(`🎵 Initial playlist created: ${randomTracks.length} tracks`);
+                    console.log(`📋 First 10 tracks:`);
+                    randomTracks.slice(0, 10).forEach((track, index) => {
+                        const trackInfo = track.spotify_track || track.track || track;
+                        const name = trackInfo.name || track.track || 'Unknown Track';
+                        const artists = trackInfo.artists ? 
+                            trackInfo.artists.map(a => a.name).join(', ') : 
+                            track.artist || 'Unknown Artist';
+                        const similarityText = track.similarity ? 
+                            ` (${(track.similarity * 100).toFixed(1)}% similar)` : '';
+                        
+                        console.log(`  ${String(index + 1).padStart(2, '0')}. ${name} - ${artists}${similarityText}`);
+                    });
                     console.log(`🎯 Starting: ${randomTracks[0]?.spotify_track?.name || randomTracks[0]?.track || 'Unknown'}`);
 
                     document.getElementById('initialSongInput').classList.add('hidden');
