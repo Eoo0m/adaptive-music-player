@@ -17,71 +17,9 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             overflow: hidden;
             position: relative;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
             user-select: none;
         }
 
-        /* Mobile specific styles */
-        @media (max-width: 768px) {
-            body {
-                padding: 20px;
-                padding-bottom: 200px; /* 모바일 플레이어를 위한 공간 확보 */
-            }
-            
-            .ipod-container {
-                width: 100px;
-                height: 100px;
-                position: relative;
-                top: -50px; /* 웹 플레이어가 표시될 때 iPod를 위로 이동 */
-            }
-            
-            .clickwheel {
-                width: 75px;
-                height: 75px;
-            }
-            
-            .center-button {
-                width: 40px;
-                height: 40px;
-            }
-            
-            .control {
-                font-size: 14px;
-                font-weight: bold;
-            }
-            
-            .volume-up, .volume-down {
-                font-size: 16px;
-            }
-            
-            .prev, .next {
-                font-size: 16px;
-            }
-            
-            .play-pause {
-                font-size: 16px;
-            }
-            
-            .track-info {
-                max-width: 250px;
-                font-size: 12px;
-                top: 10px; /* 위치 조정 */
-            }
-            
-            .search-interface {
-                width: 95%;
-                padding: 20px;
-            }
-
-            /* 모바일 플레이어가 활성화된 경우 iPod 위치 조정 */
-            .ipod-container.mobile-player-active {
-                top: -80px;
-            }
-        }
 
         /* Login screen */
         .login-screen {
@@ -227,7 +165,6 @@
             z-index: 1;
             cursor: grab;
             user-select: none;
-            touch-action: none;
         }
 
         .ipod-container:active {
@@ -422,228 +359,6 @@
             margin-top: 20px;
         }
 
-        .mobile-notice {
-            position: absolute;
-            bottom: 200px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(29, 185, 84, 0.9);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 20px;
-            font-size: 12px;
-            text-align: center;
-            max-width: 280px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
-        }
-
-        .player-toggle {
-            position: fixed;
-            bottom: 180px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-            border-radius: 25px;
-            background: rgba(29, 185, 84, 0.9);
-            color: white;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            z-index: 1001;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .player-toggle:hover {
-            background: rgba(29, 185, 84, 1);
-            transform: scale(1.1);
-        }
-
-        .player-toggle.visible {
-            display: flex;
-        }
-
-        /* 사이드 슬라이딩 플레이어 */
-        .side-player {
-            position: fixed;
-            right: -320px;
-            top: 20%;
-            width: 300px;
-            height: 400px;
-            background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
-            border-radius: 20px 0 0 20px;
-            box-shadow: -8px 0 24px rgba(0, 0, 0, 0.3);
-            z-index: 2000;
-            transition: right 0.3s ease;
-            color: white;
-            overflow: hidden;
-            border: 2px solid rgba(29, 185, 84, 0.3);
-        }
-
-        .side-player.active {
-            right: 0;
-        }
-
-        .side-player-handle {
-            position: absolute;
-            left: -50px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 50px;
-            height: 80px;
-            background: linear-gradient(135deg, #1db954 0%, #1ed760 100%);
-            border-radius: 10px 0 0 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: -4px 0 12px rgba(0, 0, 0, 0.2);
-        }
-
-        .side-player-content {
-            padding: 20px;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .side-track-info {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .side-track-title {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .side-track-artist {
-            font-size: 14px;
-            opacity: 0.8;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .side-album-art {
-            width: 120px;
-            height: 120px;
-            border-radius: 12px;
-            margin: 0 auto 15px;
-            background: #333;
-            background-size: cover;
-            background-position: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .side-controls {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            margin: 20px 0;
-        }
-
-        .side-control-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 18px;
-        }
-
-        .side-control-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
-        }
-
-        .side-control-btn.play-btn {
-            width: 60px;
-            height: 60px;
-            background: #1db954;
-            border-color: #1db954;
-        }
-
-        .side-progress {
-            margin: 15px 0;
-        }
-
-        .side-progress-bar {
-            width: 100%;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .side-progress-fill {
-            height: 100%;
-            background: #1db954;
-            width: 0%;
-            transition: width 0.1s ease;
-        }
-
-        .side-queue {
-            flex-grow: 1;
-            margin-top: 20px;
-            overflow-y: auto;
-        }
-
-        .side-queue-title {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            opacity: 0.8;
-        }
-
-        .side-queue-item {
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .side-queue-item:hover {
-            background: rgba(255, 255, 255, 0.05);
-            padding-left: 10px;
-        }
-
-        .side-queue-item.current {
-            color: #1db954;
-            font-weight: bold;
-        }
-
-        .queue-item-title {
-            font-size: 12px;
-            font-weight: 500;
-            margin-bottom: 2px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .queue-item-artist {
-            font-size: 10px;
-            opacity: 0.7;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
 
         /* Song search interface */
         .search-interface {
@@ -761,12 +476,6 @@
             font-style: italic;
         }
 
-        .recommendation-controls {
-            margin-top: 15px;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-        }
     </style>
 </head>
 
@@ -795,18 +504,6 @@
         <div id="initialSearchResults"></div>
     </div>
 
-    <!-- Song Search Interface -->
-    <div class="search-interface hidden" id="searchInterface">
-        <button class="close-search" onclick="hideSearchInterface()">×</button>
-        <h2>🎵 노래 추천 받기</h2>
-        <input type="text" class="search-input" id="songInput" placeholder="좋아하는 노래 제목을 입력하세요...">
-        <input type="text" class="search-input" id="artistInput" placeholder="아티스트 (선택사항)">
-        <div>
-            <button class="search-button" onclick="getRecommendations()" id="recommendBtn">추천 받기</button>
-            <button class="search-button" onclick="searchSongs()" id="searchBtn">검색</button>
-        </div>
-        <div id="searchResults"></div>
-    </div>
 
     <!-- Track Info Display -->
     <div class="track-info hidden" id="trackInfo">
@@ -829,41 +526,6 @@
         </div>
     </div>
 
-    <!-- 사이드 슬라이딩 플레이어 -->
-    <div class="side-player" id="sidePlayer">
-        <div class="side-player-handle" onclick="toggleSidePlayer()">
-            <span id="sidePlayerIcon">♫</span>
-        </div>
-        <div class="side-player-content">
-            <div class="side-track-info">
-                <div class="side-album-art" id="sideAlbumArt"></div>
-                <div class="side-track-title" id="sideTrackTitle">곡 선택</div>
-                <div class="side-track-artist" id="sideTrackArtist">아티스트</div>
-            </div>
-
-            <div class="side-controls">
-                <div class="side-control-btn" onclick="playPreviousRandomTrack()">‹‹</div>
-                <div class="side-control-btn play-btn" onclick="togglePlayPause()" id="sidePlayBtn">▶</div>
-                <div class="side-control-btn" onclick="playNextRandomTrack()">››</div>
-            </div>
-
-            <div class="side-progress">
-                <div class="side-progress-bar">
-                    <div class="side-progress-fill" id="sideProgressFill"></div>
-                </div>
-            </div>
-
-            <div class="side-queue">
-                <div class="side-queue-title">다음 곡</div>
-                <div id="sideQueueList">
-                    <div class="side-queue-item">
-                        <div class="queue-item-title">곡을 선택하세요</div>
-                        <div class="queue-item-artist">추천 시스템 활성화</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <script>
@@ -876,7 +538,6 @@
         let refresh_token = null;
         let randomTracks = [];
         let currentTrackIndex = 0;
-        let recommendationTracks = [];
         let isRecommendationMode = false;
 
         // Playback tracking variables
@@ -918,346 +579,6 @@
             window.location.href = `${API_BASE_URL}/login`;
         }
 
-        // Mobile playback system (using Spotify app redirect)
-        let mobilePlaybackMode = false;
-        let currentSpotifyUri = null;
-
-        function initializeMobilePlayback() {
-            mobilePlaybackMode = true;
-            console.log('📱 모바일 사이드 플레이어 모드 활성화');
-            
-            // 사이드 플레이어 초기화
-            initializeSidePlayer();
-            
-            // 가상 플레이어 상태 설정
-            is_paused = true;
-            current_track = null;
-            updatePlayPauseIcon();
-            
-            // 모바일 안내 메시지 표시
-            showMobileNotice();
-        }
-
-        function initializeSidePlayer() {
-            console.log('🎵 사이드 플레이어 초기화');
-            updateSidePlayerQueue();
-            addSwipeGestures();
-        }
-
-        function toggleSidePlayer() {
-            const sidePlayer = document.getElementById('sidePlayer');
-            const icon = document.getElementById('sidePlayerIcon');
-            
-            if (sidePlayer.classList.contains('active')) {
-                sidePlayer.classList.remove('active');
-                icon.innerHTML = '♫';
-            } else {
-                sidePlayer.classList.add('active');
-                icon.innerHTML = '✕';
-                updateSidePlayerInfo();
-                updateSidePlayerQueue();
-            }
-        }
-
-        function updateSidePlayerInfo() {
-            if (!current_track) return;
-            
-            const title = document.getElementById('sideTrackTitle');
-            const artist = document.getElementById('sideTrackArtist');
-            const albumArt = document.getElementById('sideAlbumArt');
-            const playBtn = document.getElementById('sidePlayBtn');
-            
-            if (title) title.textContent = current_track.name || '알 수 없는 제목';
-            if (artist) artist.textContent = current_track.artists?.map(a => a.name).join(', ') || '알 수 없는 아티스트';
-            if (playBtn) playBtn.innerHTML = is_paused ? '▶' : '⏸';
-            
-            if (albumArt && current_track.album?.images?.length > 0) {
-                const imageUrl = current_track.album.images[0].url;
-                albumArt.style.backgroundImage = `url(${imageUrl})`;
-            }
-        }
-
-        function updateSidePlayerQueue() {
-            const queueList = document.getElementById('sideQueueList');
-            if (!queueList || !randomTracks || randomTracks.length === 0) {
-                if (queueList) {
-                    queueList.innerHTML = `
-                        <div class="side-queue-item">
-                            <div class="queue-item-title">곡을 선택하세요</div>
-                            <div class="queue-item-artist">추천 시스템 활성화</div>
-                        </div>
-                    `;
-                }
-                return;
-            }
-            
-            const nextTracks = [];
-            for (let i = 1; i <= 5; i++) {
-                const nextIndex = (currentTrackIndex + i) % randomTracks.length;
-                const track = randomTracks[nextIndex];
-                if (track) {
-                    nextTracks.push(track);
-                }
-            }
-            
-            queueList.innerHTML = nextTracks.map((track, index) => {
-                const trackInfo = track.spotify_track || track.track || track;
-                const name = trackInfo.name || track.track || '알 수 없는 제목';
-                const artists = trackInfo.artists ? 
-                    trackInfo.artists.map(a => a.name).join(', ') : 
-                    track.artist || '알 수 없는 아티스트';
-                
-                return `
-                    <div class="side-queue-item" onclick="jumpToQueueTrack(${index + 1})">
-                        <div class="queue-item-title">${name}</div>
-                        <div class="queue-item-artist">${artists}</div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function jumpToQueueTrack(offset) {
-            if (randomTracks.length === 0) return;
-            
-            const newIndex = (currentTrackIndex + offset) % randomTracks.length;
-            currentTrackIndex = newIndex;
-            playTrackAtIndex(currentTrackIndex);
-        }
-
-        function createMobileWebPlayer() {
-            // 모바일 웹 플레이어 컨테이너 생성
-            const playerContainer = document.createElement('div');
-            playerContainer.id = 'mobileWebPlayer';
-            playerContainer.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 90%;
-                max-width: 400px;
-                height: 152px;
-                border-radius: 12px;
-                overflow: hidden;
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-                z-index: 1000;
-                display: none;
-                border: 2px solid rgba(29, 185, 84, 0.3);
-            `;
-            document.body.appendChild(playerContainer);
-
-            // 플레이어 토글 버튼 생성
-            const toggleButton = document.createElement('button');
-            toggleButton.className = 'player-toggle';
-            toggleButton.innerHTML = '−';
-            toggleButton.title = '플레이어 숨기기/표시';
-            toggleButton.onclick = toggleMobilePlayer;
-            document.body.appendChild(toggleButton);
-        }
-
-        function toggleMobilePlayer() {
-            const playerContainer = document.getElementById('mobileWebPlayer');
-            const toggleButton = document.querySelector('.player-toggle');
-            
-            if (!playerContainer || !toggleButton) return;
-            
-            const isVisible = playerContainer.style.display !== 'none';
-            
-            if (isVisible) {
-                // 플레이어 숨기기
-                playerContainer.style.transform = 'translateX(-50%) translateY(200px)';
-                playerContainer.style.opacity = '0';
-                setTimeout(() => {
-                    playerContainer.style.display = 'none';
-                }, 300);
-                toggleButton.innerHTML = '+';
-                toggleButton.title = '플레이어 표시';
-            } else {
-                // 플레이어 표시
-                playerContainer.style.display = 'block';
-                setTimeout(() => {
-                    playerContainer.style.opacity = '1';
-                    playerContainer.style.transform = 'translateX(-50%) translateY(0)';
-                }, 10);
-                toggleButton.innerHTML = '−';
-                toggleButton.title = '플레이어 숨기기';
-            }
-        }
-
-        function showMobileNotice() {
-            const notice = document.createElement('div');
-            notice.className = 'mobile-notice';
-            notice.innerHTML = '📱 모바일 모드: 화면 우측 탭에서 사이드 플레이어를 열 수 있습니다';
-            document.body.appendChild(notice);
-            
-            setTimeout(() => {
-                notice.style.opacity = '0';
-                notice.style.transition = 'opacity 0.5s';
-                setTimeout(() => notice.remove(), 500);
-            }, 4000);
-            
-            // 3초 후 사이드 플레이어 잠깐 보여주기
-            setTimeout(() => {
-                const sidePlayer = document.getElementById('sidePlayer');
-                if (sidePlayer && !sidePlayer.classList.contains('active')) {
-                    sidePlayer.style.right = '-250px'; // 살짝 보여주기
-                    setTimeout(() => {
-                        sidePlayer.style.right = '-320px'; // 다시 숨기기
-                    }, 1000);
-                }
-            }, 3000);
-        }
-
-        function playTrackOnMobile(spotifyUri) {
-            if (!spotifyUri) return;
-            
-            currentSpotifyUri = spotifyUri;
-            const trackId = spotifyUri.split(':')[2];
-            
-            // 트랙 정보 업데이트를 위해 Spotify API에서 트랙 정보 가져오기
-            fetchTrackInfo(trackId).then(trackInfo => {
-                if (trackInfo) {
-                    current_track = trackInfo;
-                    updateTrackInfo();
-                    updateMediaSession();
-                    updateSidePlayerInfo();
-                    updateSidePlayerQueue();
-                    
-                    // Spotify 앱으로 재생 (백그라운드에서)
-                    const spotifyAppUrl = `spotify:track:${trackId}`;
-                    const spotifyWebUrl = `https://open.spotify.com/track/${trackId}`;
-                    
-                    // 숨겨진 iframe을 통해 Spotify 웹 열기 (앱 자동 실행용)
-                    const hiddenFrame = document.createElement('iframe');
-                    hiddenFrame.style.display = 'none';
-                    hiddenFrame.src = spotifyWebUrl;
-                    document.body.appendChild(hiddenFrame);
-                    
-                    setTimeout(() => {
-                        document.body.removeChild(hiddenFrame);
-                    }, 3000);
-                    
-                    // 사이드 플레이어 자동 표시 (처음 재생시에만)
-                    const sidePlayer = document.getElementById('sidePlayer');
-                    if (sidePlayer && !sidePlayer.classList.contains('active')) {
-                        setTimeout(() => {
-                            toggleSidePlayer();
-                        }, 500);
-                    }
-                }
-            });
-        }
-
-        function loadSpotifyWebPlayer(trackId) {
-            const playerContainer = document.getElementById('mobileWebPlayer');
-            const toggleButton = document.querySelector('.player-toggle');
-            
-            if (!playerContainer) return;
-            
-            // Spotify 웹 플레이어 임베드 생성
-            const embedUrl = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0`;
-            
-            playerContainer.innerHTML = `
-                <iframe
-                    style="border-radius:12px"
-                    src="${embedUrl}"
-                    width="100%"
-                    height="152"
-                    frameBorder="0"
-                    allowfullscreen=""
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy">
-                </iframe>
-            `;
-            
-            // 플레이어 표시
-            playerContainer.style.display = 'block';
-            playerContainer.style.transition = 'all 0.3s ease';
-            
-            // 토글 버튼 표시
-            if (toggleButton) {
-                toggleButton.classList.add('visible');
-                toggleButton.innerHTML = '−';
-                toggleButton.title = '플레이어 숨기기';
-            }
-
-            // iPod 컨테이너에 클래스 추가 (레이아웃 조정을 위해)
-            const ipodContainer = document.getElementById('ipodContainer');
-            if (ipodContainer) {
-                ipodContainer.classList.add('mobile-player-active');
-            }
-            
-            // 애니메이션 효과
-            playerContainer.style.opacity = '0';
-            playerContainer.style.transform = 'translateX(-50%) translateY(20px)';
-            setTimeout(() => {
-                playerContainer.style.opacity = '1';
-                playerContainer.style.transform = 'translateX(-50%) translateY(0)';
-            }, 100);
-            
-            // 자동 재생 활성화를 위한 사용자 제스처 감지
-            document.addEventListener('touchstart', enableAutoplay, { once: true });
-            document.addEventListener('click', enableAutoplay, { once: true });
-        }
-
-        function enableAutoplay() {
-            console.log('📱 사용자 제스처 감지 - 자동재생 활성화');
-        }
-
-        // 사이드 플레이어 스와이프 제스처
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchEndX = 0;
-        let touchEndY = 0;
-
-        function addSwipeGestures() {
-            const sidePlayer = document.getElementById('sidePlayer');
-            if (!sidePlayer) return;
-
-            sidePlayer.addEventListener('touchstart', (e) => {
-                touchStartX = e.changedTouches[0].screenX;
-                touchStartY = e.changedTouches[0].screenY;
-            });
-
-            sidePlayer.addEventListener('touchend', (e) => {
-                touchEndX = e.changedTouches[0].screenX;
-                touchEndY = e.changedTouches[0].screenY;
-                handleSwipe();
-            });
-        }
-
-        function handleSwipe() {
-            const deltaX = touchEndX - touchStartX;
-            const deltaY = touchEndY - touchStartY;
-            const minSwipeDistance = 50;
-
-            // 수평 스와이프가 수직 스와이프보다 클 때
-            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
-                if (deltaX > 0) {
-                    // 오른쪽 스와이프 - 다음 곡
-                    console.log('👉 오른쪽 스와이프 - 다음 곡');
-                    playNextRandomTrack();
-                } else {
-                    // 왼쪽 스와이프 - 이전 곡
-                    console.log('👈 왼쪽 스와이프 - 이전 곡');
-                    playPreviousRandomTrack();
-                }
-            }
-        }
-
-        async function fetchTrackInfo(trackId) {
-            try {
-                const response = await fetch(`https://api.spotify.com/v1/tracks/${trackId}`, {
-                    headers: { 'Authorization': `Bearer ${access_token}` }
-                });
-                
-                if (response.ok) {
-                    return await response.json();
-                }
-            } catch (error) {
-                console.error('트랙 정보 가져오기 실패:', error);
-            }
-            return null;
-        }
 
         // Initialize Spotify Web Playback SDK
         window.onSpotifyWebPlaybackSDKReady = () => {
@@ -1266,29 +587,8 @@
             }
         };
 
-        // Mobile device detection
-        function isMobileDevice() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        }
-
-        // Check if Web Playback SDK is supported
-        function isWebPlaybackSupported() {
-            // Web Playback SDK는 데스크톱에서만 완전 지원
-            if (isMobileDevice()) {
-                return false;
-            }
-            return typeof Spotify !== 'undefined';
-        }
-
         function initializeSpotifyPlayer() {
             if (!access_token) return;
-
-            // 모바일에서는 Web Playback SDK 대신 redirect 방식 사용
-            if (!isWebPlaybackSupported()) {
-                console.log('📱 모바일 디바이스: Web Playback SDK 불가, 모바일 최적화 모드');
-                initializeMobilePlayback();
-                return;
-            }
 
             player = new Spotify.Player({
                 name: 'Spotify iPod Web Player',
@@ -1296,29 +596,6 @@
                 volume: 0.5
             });
 
-            // Mobile-specific audio context handling
-            if (isMobileDevice()) {
-                // Add user interaction handler for audio context
-                const handleFirstInteraction = async () => {
-                    if (window.AudioContext || window.webkitAudioContext) {
-                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                        if (audioContext.state === 'suspended') {
-                            await audioContext.resume();
-                        }
-                    }
-                    
-                    // Initialize Media Session on first interaction
-                    if ('mediaSession' in navigator) {
-                        console.log('📱 Media Session API available - enabling background playback');
-                    }
-                    
-                    document.removeEventListener('touchstart', handleFirstInteraction);
-                    document.removeEventListener('click', handleFirstInteraction);
-                };
-                
-                document.addEventListener('touchstart', handleFirstInteraction, { once: true });
-                document.addEventListener('click', handleFirstInteraction, { once: true });
-            }
 
             // Error handling
             player.addListener('initialization_error', ({ message }) => {
@@ -1418,16 +695,7 @@
             const track = randomTracks[index];
             let trackUri = track.uri || track.spotify_track?.uri || track.track?.uri;
 
-            if (!trackUri) return;
-
-            // 모바일 모드인 경우
-            if (mobilePlaybackMode) {
-                playTrackOnMobile(trackUri);
-                return;
-            }
-
-            // 데스크톱 모드인 경우
-            if (!device_id) return;
+            if (!trackUri || !device_id) return;
 
             try {
                 await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
@@ -1445,13 +713,6 @@
 
         // Play specific Spotify track by URI
         async function playSpotifyTrack(trackUri) {
-            // 모바일 모드인 경우
-            if (mobilePlaybackMode) {
-                playTrackOnMobile(trackUri);
-                return;
-            }
-
-            // 데스크톱 모드인 경우
             if (!device_id) return;
 
             try {
@@ -1515,15 +776,6 @@
         async function playNextRandomTrack(diverseMode = false) {
             console.log('🔴 playNextRandomTrack called with diverseMode:', diverseMode);
             console.log('🔴 arguments.length:', arguments.length);
-
-            // 모바일 모드인 경우 간단한 다음 트랙 재생
-            if (mobilePlaybackMode) {
-                if (randomTracks.length > 0) {
-                    currentTrackIndex = (currentTrackIndex + 1) % randomTracks.length;
-                    playTrackAtIndex(currentTrackIndex);
-                }
-                return;
-            }
 
             // If not explicitly set, check if we should use diverse mode based on manual skip
             if (!diverseMode && arguments.length === 0) {
@@ -1596,14 +848,6 @@
 
         // Play previous track
         async function playPreviousRandomTrack() {
-            // 모바일 모드인 경우 간단한 이전 트랙 재생
-            if (mobilePlaybackMode) {
-                if (randomTracks.length === 0) return;
-                currentTrackIndex = currentTrackIndex === 0 ? randomTracks.length - 1 : currentTrackIndex - 1;
-                playTrackAtIndex(currentTrackIndex);
-                return;
-            }
-
             // Record completion for manual skip (going backward)
             let currentPosition = 0;
             if (player) {
@@ -1759,26 +1003,6 @@
 
         // iPod control functions
         async function togglePlayPause() {
-            // 모바일 모드인 경우
-            if (mobilePlaybackMode) {
-                if (currentSpotifyUri) {
-                    playTrackOnMobile(currentSpotifyUri);
-                } else if (randomTracks.length > 0) {
-                    playTrackAtIndex(currentTrackIndex);
-                } else {
-                    alert('재생할 곡이 없습니다. 먼저 음악을 검색해주세요.');
-                }
-                return;
-            }
-
-            // 데스크톱 모드인 경우
-            // Handle mobile audio context
-            if (window.AudioContext || window.webkitAudioContext) {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioContext.state === 'suspended') {
-                    await audioContext.resume();
-                }
-            }
             if (player) await player.togglePlay();
         }
 
@@ -1990,31 +1214,20 @@
             setTimeout(() => dustParticle.remove(), 12000);
         }
 
-        // Event listeners (Mouse and Touch support)
-        function addTouchAndClickListener(element, handler) {
-            element.addEventListener('click', handler);
-            element.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                handler(e);
-            }, { passive: false });
-        }
-
-        addTouchAndClickListener(document.getElementById('centerButton'), togglePlayPause);
-        addTouchAndClickListener(document.getElementById('nextBtn'), () => {
+        // Event listeners
+        document.getElementById('centerButton').addEventListener('click', togglePlayPause);
+        document.getElementById('nextBtn').addEventListener('click', () => {
             console.log('🔴 Next button clicked!');
-            // 강제로 diverse 모드 테스트
-            console.log('🔴 FORCING DIVERSE MODE FOR TEST');
-            updateRecommendationMode('diverse');
             playNextRandomTrack();
         });
-        addTouchAndClickListener(document.getElementById('prevBtn'), () => {
+        document.getElementById('prevBtn').addEventListener('click', () => {
             console.log('🔴 Prev button clicked!');
             playPreviousRandomTrack();
         });
-        addTouchAndClickListener(document.getElementById('volumeUp'), () => adjustVolume(0.1));
-        addTouchAndClickListener(document.getElementById('volumeDown'), () => adjustVolume(-0.1));
+        document.getElementById('volumeUp').addEventListener('click', () => adjustVolume(0.1));
+        document.getElementById('volumeDown').addEventListener('click', () => adjustVolume(-0.1));
 
-        // Drag functionality for iPod (Mouse and Touch support)
+        // Drag functionality for iPod
         let isDragging = false;
         let dragOffset = { x: 0, y: 0 };
         const ipodContainer = document.getElementById('ipodContainer');
@@ -2027,11 +1240,9 @@
 
             isDragging = true;
             const rect = ipodContainer.getBoundingClientRect();
-            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
             
-            dragOffset.x = clientX - rect.left;
-            dragOffset.y = clientY - rect.top;
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
 
             // Change cursor and disable animations while dragging
             ipodContainer.style.cursor = 'grabbing';
@@ -2039,21 +1250,13 @@
 
             // Prevent text selection while dragging
             document.body.style.userSelect = 'none';
-            
-            // Prevent default touch behavior
-            if (e.touches) {
-                e.preventDefault();
-            }
         }
 
         function moveDrag(e) {
             if (!isDragging) return;
-
-            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
             
-            const x = clientX - dragOffset.x;
-            const y = clientY - dragOffset.y;
+            const x = e.clientX - dragOffset.x;
+            const y = e.clientY - dragOffset.y;
 
             // Keep iPod within viewport bounds
             const maxX = window.innerWidth - 120; // iPod width
@@ -2066,11 +1269,6 @@
             ipodContainer.style.left = constrainedX + 'px';
             ipodContainer.style.top = constrainedY + 'px';
             ipodContainer.style.transform = 'none';
-            
-            // Prevent default touch behavior
-            if (e.touches) {
-                e.preventDefault();
-            }
         }
 
         function endDrag() {
@@ -2095,11 +1293,6 @@
         document.addEventListener('mousemove', moveDrag);
         document.addEventListener('mouseup', endDrag);
 
-        // Touch events
-        ipodContainer.addEventListener('touchstart', startDrag, { passive: false });
-        document.addEventListener('touchmove', moveDrag, { passive: false });
-        document.addEventListener('touchend', endDrag);
-
         // Keyboard support
         document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('initialSongTitle').addEventListener('keypress', function (e) {
@@ -2111,29 +1304,6 @@
             });
         });
 
-        // Page Visibility API to handle background behavior
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                console.log('📱 Page hidden - maintaining background playback');
-                // Keep audio context active
-                if (window.AudioContext || window.webkitAudioContext) {
-                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    if (audioContext.state === 'suspended') {
-                        audioContext.resume().catch(console.error);
-                    }
-                }
-            } else {
-                console.log('📱 Page visible - foreground mode');
-            }
-        });
-
-        // Prevent page from being suspended on mobile
-        if (isMobileDevice()) {
-            // Keep a minimal interval running to prevent suspension
-            setInterval(() => {
-                // Empty function to keep page active
-            }, 10000);
-        }
 
         // Initialize
         createStars();
