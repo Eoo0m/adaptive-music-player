@@ -296,8 +296,13 @@ app.post('/recommend-diverse-tracks', async (req, res) => {
     return res.json({ spotify_tracks: diverseRecommendations });
 
   } catch (e) {
-    console.error('recommend-diverse-tracks error:', e);
-    res.status(500).json({ error: 'Failed to get diverse recommendations' });
+    console.error('🔀 recommend-diverse-tracks error:', e);
+    console.error('🔀 Error stack:', e.stack);
+    console.error('🔀 Request body:', req.body);
+    res.status(500).json({ 
+      error: 'Failed to get diverse recommendations', 
+      details: e.message 
+    });
   }
 });
 
