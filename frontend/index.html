@@ -781,6 +781,18 @@
                 if (currentTrackIndex < randomTracks.length - 1) {
                     currentTrackIndex++;
                     const nextTrack = randomTracks[currentTrackIndex];
+                    
+                    // Show track info when moving to next track in playlist
+                    const trackInfo = nextTrack.spotify_track || nextTrack.track || nextTrack;
+                    const name = trackInfo.name || nextTrack.track || 'Unknown Track';
+                    const artists = trackInfo.artists ? 
+                        trackInfo.artists.map(a => a.name).join(', ') : 
+                        nextTrack.artist || 'Unknown Artist';
+                    const similarityText = nextTrack.similarity ? 
+                        ` (${(nextTrack.similarity * 100).toFixed(1)}% similar)` : '';
+                    
+                    console.log(`▶️ [${currentTrackIndex + 1}/${randomTracks.length}] ${name} - ${artists}${similarityText}`);
+                    
                     await playSpotifyTrack(nextTrack.uri || nextTrack.track?.uri);
                     return;
                 }
@@ -859,6 +871,19 @@
             const diverseMode = recordTrackCompletion('manual', currentPosition);
             if (randomTracks.length === 0) return;
             currentTrackIndex = currentTrackIndex === 0 ? randomTracks.length - 1 : currentTrackIndex - 1;
+            
+            // Show track info when moving to previous track
+            const prevTrack = randomTracks[currentTrackIndex];
+            const trackInfo = prevTrack.spotify_track || prevTrack.track || prevTrack;
+            const name = trackInfo.name || prevTrack.track || 'Unknown Track';
+            const artists = trackInfo.artists ? 
+                trackInfo.artists.map(a => a.name).join(', ') : 
+                prevTrack.artist || 'Unknown Artist';
+            const similarityText = prevTrack.similarity ? 
+                ` (${(prevTrack.similarity * 100).toFixed(1)}% similar)` : '';
+            
+            console.log(`▶️ [${currentTrackIndex + 1}/${randomTracks.length}] ${name} - ${artists}${similarityText}`);
+            
             playTrackAtIndex(currentTrackIndex);
         }
 
