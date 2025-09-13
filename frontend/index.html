@@ -610,6 +610,27 @@
             } catch (e) { console.error('재생 장치 전환 오류:', e); }
         }
 
+        // ===== Debug logging helpers (★ 추가) =====
+        function fmtSeed(seed) {
+            if (!seed) return 'Unknown seed';
+            const title = seed.name || seed.track || 'Unknown';
+            const artist = (seed.artists ? seed.artists.map(a => a.name).join(', ') : seed.artist) || 'Unknown Artist';
+            return `${title} — ${artist}`;
+        }
+        function fmtRecItem(trackObj, idx) {
+            const t = trackObj.spotify_track || trackObj.track || trackObj;
+            const name = t?.name || trackObj.track || 'Unknown Track';
+            const artists = (t?.artists ? t.artists.map(a => a.name).join(', ') : trackObj.artist) || 'Unknown Artist';
+            const sim = (trackObj.similarity ?? t?.similarity ?? null);
+            const simTxt = (typeof sim === 'number') ? `  [sim=${(sim * 100).toFixed(1)}%]` : '';
+            return `${String(idx + 1).padStart(2, '0')}. ${name} — ${artists}${simTxt}`;
+        }
+        function logRecommendationList(kind, seedTrack, list) {
+            console.log(`\n📦 ${kind} RECS (n=${list.length})  |  seed: ${fmtSeed(seedTrack)}`);
+            for (let i = 0; i < list.length; i++) console.log('   ' + fmtRecItem(list[i], i));
+            console.log('—'.repeat(48) + '\n');
+        }
+
         // ===== Helpers =====
         function shouldUseDiverse() {
             if (playbackHistory.length < 3) return false;
@@ -617,7 +638,6 @@
             const avg = last3.reduce((a, b) => a + b, 0) / 3;
             return avg < 10; // 10% "미만"일 때 발동
         }
-
 
         function getSeed() {
             // 가장 신뢰도 높은 순서: 현재 재생중 > 방금 전 곡 > 플레이리스트 마지막 항목
@@ -726,6 +746,9 @@
                     playbackHistory = [];
                     updateRecommendationMode('diverse');
 
+                    // ★ 디버그: 시드 + 추천목록(유사도 포함)
+                    logRecommendationList('DIVERSE', seed, randomTracks);
+
                     await playSpotifyTrack(randomTracks[0].uri || randomTracks[0].track?.uri);
                     console.log(`🔴 DIVERSE playlist loaded: ${randomTracks.length} tracks`);
                     return;
@@ -769,6 +792,9 @@
                 currentTrackIndex = 0;
                 isRecommendationMode = true;
                 updateRecommendationMode('similar');
+
+                // ★ 디버그: 시드 + 추천목록(유사도 포함)
+                logRecommendationList('SIMILAR', seed, randomTracks);
 
                 await playSpotifyTrack(randomTracks[0].uri || randomTracks[0].track?.uri);
                 console.log(`🟢 SIMILAR playlist loaded: ${randomTracks.length} tracks`);
@@ -901,6 +927,9 @@
                     isRecommendationMode = true;
                     playbackHistory = [];
                     updateRecommendationMode('similar');
+
+                    // ★ 디버그: 시드(originalSong) + 추천목록(유사도 포함)
+                    logRecommendationList('SIMILAR', originalSong?.spotify_track || originalSong, randomTracks);
 
                     console.log(`🎵 Initial playlist created: ${randomTracks.length} tracks`);
                     document.getElementById('initialSongInput').classList.add('hidden');
