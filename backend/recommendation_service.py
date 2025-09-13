@@ -354,8 +354,8 @@ def init_recommender():
     global recommender
     try:
         recommender = SongRecommender(
-            meta_csv_path="/ABS/PATH/contrastive_top5pct_win_meta.csv",
-            embeddings_path="/ABS/PATH/contrastive_top5pct_win_embeddings.npy",
+            meta_csv_path="contrastive_top5pct_win_meta.csv",
+            embeddings_path="contrastive_top5pct_win_embeddings.npy",
         )
     except Exception as e:
         print(f"[FATAL] init_recommender failed: {e}", file=sys.stderr)
