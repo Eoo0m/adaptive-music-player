@@ -615,8 +615,9 @@
             if (playbackHistory.length < 3) return false;
             const last3 = playbackHistory.slice(-3);
             const avg = last3.reduce((a, b) => a + b, 0) / 3;
-            return avg <= 10; // 최근 3곡 평균 완료율 ≤ 10%
+            return avg < 10; // 10% "미만"일 때 발동
         }
+
 
         function getSeed() {
             // 가장 신뢰도 높은 순서: 현재 재생중 > 방금 전 곡 > 플레이리스트 마지막 항목
@@ -681,26 +682,24 @@
         }
 
         async function playNextRandomTrack() {
-            // 0) 현재 플레이리스트에 다음 곡이 남아있다면 그대로 진행
-            if (isRecommendationMode && randomTracks.length > 0 && currentTrackIndex < randomTracks.length - 1) {
-                currentTrackIndex++;
-                await playTrackAtIndex(currentTrackIndex);
-                return;
-            }
-
-            // 1) 여기서부터는 "플레이리스트 끝" 또는 "비어있음" —> 새 추천 받아오기
             const seed = getSeed();
             if (!seed) { console.warn('⚠️ 시드 트랙을 찾을 수 없습니다.'); return; }
 
             const wantDiverse = shouldUseDiverse();
-            console.log(`🎯 New playlist request | seed="${seed.name || seed.id}" | diverse=${wantDiverse}`);
 
-            try {
-                if (wantDiverse && seed.id) {
-                    // (A) Diverse: track_id 기반
-                    console.log('🔴 Requesting DIVERSE…');
+            // ✅ 조건 충족 시: 기존 플레이리스트 즉시 비우고 다이버스 추천
+            if (wantDiverse && seed.id) {
+                try {
+                    console.log('🔴 Low engagement detected (<10%). Clearing playlist & requesting DIVERSE…');
+                    // 현재 리스트 비우기
+                    randomTracks = [];
+                    currentTrackIndex = 0;
+                    isRecommendationMode = false;
+
+                    // 1) 먼 추천(트랙 ID 기반)
                     const r1 = await fetch(`${API_BASE_URL}/recommend-diverse`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ current_track_id: seed.id, num_recommendations: 10 })
                     });
                     if (!r1.ok) { console.error('❌ recommend-diverse', r1.status, await r1.text()); throw new Error('diverse_failed'); }
@@ -708,8 +707,10 @@
                     const recs = d1.recommendations || [];
                     if (recs.length === 0) throw new Error('diverse_empty');
 
+                    // 2) Spotify URI 매핑
                     const r2 = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ tracks: recs, access_token })
                     });
                     if (!r2.ok) { console.error('❌ find-spotify-tracks', r2.status, await r2.text()); throw new Error('find_spotify_failed'); }
@@ -720,48 +721,59 @@
                     randomTracks = spts.slice(0, 10);
                     currentTrackIndex = 0;
                     isRecommendationMode = true;
-                    playbackHistory = []; // 루프 방지
+
+                    // 루프 방지: 참여도 리셋
+                    playbackHistory = [];
                     updateRecommendationMode('diverse');
+
                     await playSpotifyTrack(randomTracks[0].uri || randomTracks[0].track?.uri);
                     console.log(`🔴 DIVERSE playlist loaded: ${randomTracks.length} tracks`);
                     return;
-
-                } else {
-                    // (B) Similar: 제목/아티스트 기반
-                    console.log('🟢 Requesting SIMILAR…');
-                    const title = seed?.name || '';
-                    const artist = seed?.artists?.[0]?.name || '';
-                    const r1 = await fetch(`${API_BASE_URL}/recommend`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ song_title: title, artist_name: artist || null, num_recommendations: 30 })
-                    });
-                    if (!r1.ok) { console.error('❌ recommend', r1.status, await r1.text()); throw new Error('similar_failed'); }
-                    const d1 = await r1.json();
-                    const recs = d1.recommendations || [];
-                    if (recs.length === 0) throw new Error('similar_empty');
-
-                    const r2 = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ tracks: recs, access_token })
-                    });
-                    if (!r2.ok) { console.error('❌ find-spotify-tracks', r2.status, await r2.text()); throw new Error('find_spotify_failed'); }
-                    const d2 = await r2.json();
-                    const spts = d2.spotify_tracks || [];
-                    if (spts.length === 0) throw new Error('find_spotify_empty');
-
-                    randomTracks = spts.slice(0, 10);
-                    currentTrackIndex = 0;
-                    isRecommendationMode = true;
-                    updateRecommendationMode('similar');
-                    await playSpotifyTrack(randomTracks[0].uri || randomTracks[0].track?.uri);
-                    console.log(`🟢 SIMILAR playlist loaded: ${randomTracks.length} tracks`);
-                    return;
+                } catch (e) {
+                    console.error('⚠️ Diverse fetch failed, no playlist present:', e?.message || e);
+                    return; // 비운 뒤 실패 시 억지 재생 안 함(원하면 여기서 유사 추천으로 폴백 가능)
                 }
-            } catch (e) {
-                console.error('⚠️ New recommendations failed, restarting from beginning:', e?.message || e);
-                // 안전 복구: 기존 리스트가 있으면 처음부터 재생
+            }
+
+            // ⬇️ 평상시 동작: 현재 리스트에 다음 곡이 있으면 그거 재생
+            if (isRecommendationMode && randomTracks.length > 0 && currentTrackIndex < randomTracks.length - 1) {
+                currentTrackIndex++;
+                await playTrackAtIndex(currentTrackIndex);
+                return;
+            }
+
+            // ⬇️ 리스트가 끝났거나 비어있을 때: 유사 추천으로 새 리스트 구성
+            try {
+                console.log('🟢 Requesting SIMILAR…');
+                const title = seed?.name || '';
+                const artist = seed?.artists?.[0]?.name || '';
+                const r1 = await fetch(`${API_BASE_URL}/recommend`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ song_title: title, artist_name: artist || null, num_recommendations: 30 })
+                });
+                if (!r1.ok) { console.error('❌ recommend', r1.status, await r1.text()); throw new Error('similar_failed'); }
+                const d1 = await r1.json();
+                const recs = d1.recommendations || [];
+                if (recs.length === 0) throw new Error('similar_empty');
+
+                const r2 = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tracks: recs, access_token })
+                });
+                if (!r2.ok) { console.error('❌ find-spotify-tracks', r2.status, await r2.text()); throw new Error('find_spotify_failed'); }
+                const d2 = await r2.json();
+                const spts = d2.spotify_tracks || [];
+                if (spts.length === 0) throw new Error('find_spotify_empty');
+
+                randomTracks = spts.slice(0, 10);
                 currentTrackIndex = 0;
-                if (randomTracks.length > 0) await playTrackAtIndex(0);
+                isRecommendationMode = true;
+                updateRecommendationMode('similar');
+
+                await playSpotifyTrack(randomTracks[0].uri || randomTracks[0].track?.uri);
+                console.log(`🟢 SIMILAR playlist loaded: ${randomTracks.length} tracks`);
+            } catch (e) {
+                console.error('⚠️ Similar fetch failed:', e?.message || e);
             }
         }
 
