@@ -2,10 +2,11 @@
 <html lang="ko">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>adpative music player</title>
     <style>
+        /* --- 기존 스타일 그대로 --- */
         body {
             margin: 0;
             padding: 50px;
@@ -20,8 +21,6 @@
             user-select: none;
         }
 
-
-        /* Login screen */
         .login-screen {
             position: absolute;
             top: 0;
@@ -46,7 +45,7 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: background .3s;
             margin-top: 20px;
         }
 
@@ -71,11 +70,10 @@
         }
 
         .artist-name {
-            opacity: 0.8;
+            opacity: .8;
             font-size: 12px;
         }
 
-        /* 우주 배경 */
         .space-background {
             position: fixed;
             top: 0;
@@ -86,7 +84,6 @@
             z-index: -2;
         }
 
-        /* 반짝이는 별들 */
         .stars {
             position: fixed;
             top: 0;
@@ -122,29 +119,28 @@
 
             0%,
             100% {
-                opacity: 0.3;
+                opacity: .3
             }
 
             50% {
-                opacity: 1;
+                opacity: 1
             }
         }
 
-        /* 떠다니는 우주 먼지 */
         .dust {
             position: absolute;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, .1);
             border-radius: 50%;
             animation: float 10s infinite linear;
         }
 
         @keyframes float {
             0% {
-                transform: translateY(100vh) translateX(0px);
+                transform: translateY(100vh) translateX(0)
             }
 
             100% {
-                transform: translateY(-100px) translateX(50px);
+                transform: translateY(-100px) translateX(50px)
             }
         }
 
@@ -153,10 +149,7 @@
             height: 120px;
             background: linear-gradient(135deg, #d5d5d5 0%, #b8b8b8 50%, #a8a8a8 100%);
             border-radius: 6px;
-            box-shadow:
-                0 5px 12px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.6),
-                inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+            box-shadow: 0 5px 12px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -1px 0 rgba(0, 0, 0, .3);
             position: relative;
             display: flex;
             justify-content: center;
@@ -176,12 +169,12 @@
         }
 
         .ipod-container.similar-mode {
-            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3), 0 0 20px rgba(34, 197, 94, 0.6);
+            box-shadow: 0 5px 12px rgba(0, 0, 0, .3), 0 0 20px rgba(34, 197, 94, .6);
             animation: similarGlow 2s ease-in-out infinite;
         }
 
         .ipod-container.diverse-mode {
-            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3), 0 0 20px rgba(239, 68, 68, 0.6);
+            box-shadow: 0 5px 12px rgba(0, 0, 0, .3), 0 0 20px rgba(239, 68, 68, .6);
             animation: diverseGlow 2s ease-in-out infinite;
         }
 
@@ -189,11 +182,11 @@
 
             0%,
             100% {
-                box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3), 0 0 15px rgba(34, 197, 94, 0.4);
+                box-shadow: 0 5px 12px rgba(0, 0, 0, .3), 0 0 15px rgba(34, 197, 94, .4)
             }
 
             50% {
-                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 25px rgba(34, 197, 94, 0.8);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, .4), 0 0 25px rgba(34, 197, 94, .8)
             }
         }
 
@@ -201,11 +194,11 @@
 
             0%,
             100% {
-                box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3), 0 0 15px rgba(239, 68, 68, 0.4);
+                box-shadow: 0 5px 12px rgba(0, 0, 0, .3), 0 0 15px rgba(239, 68, 68, .4)
             }
 
             50% {
-                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 25px rgba(239, 68, 68, 0.8);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, .4), 0 0 25px rgba(239, 68, 68, .8)
             }
         }
 
@@ -214,34 +207,34 @@
             0%,
             100% {
                 transform: scale(1) rotate(0deg);
-                box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3), 0 0 0 rgba(29, 185, 84, 0);
+                box-shadow: 0 5px 12px rgba(0, 0, 0, .3), 0 0 0 rgba(29, 185, 84, 0)
             }
 
             50% {
                 transform: scale(1.05) rotate(1deg);
-                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 20px rgba(29, 185, 84, 0.3);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, .4), 0 0 20px rgba(29, 185, 84, .3)
             }
         }
 
         @keyframes floatTilt {
             0% {
-                transform: rotate(0deg) translateY(0px);
+                transform: rotate(0) translateY(0)
             }
 
             25% {
-                transform: rotate(2deg) translateY(-3px);
+                transform: rotate(2deg) translateY(-3px)
             }
 
             50% {
-                transform: rotate(-1deg) translateY(-6px);
+                transform: rotate(-1deg) translateY(-6px)
             }
 
             75% {
-                transform: rotate(1.5deg) translateY(-3px);
+                transform: rotate(1.5deg) translateY(-3px)
             }
 
             100% {
-                transform: rotate(0deg) translateY(0px);
+                transform: rotate(0) translateY(0)
             }
         }
 
@@ -251,9 +244,7 @@
             background: radial-gradient(circle, #1a1a1a 0%, #0a0a0a 70%, #000 100%);
             border-radius: 50%;
             position: relative;
-            box-shadow:
-                inset 0 2px 6px rgba(0, 0, 0, 0.8),
-                0 2px 3px rgba(0, 0, 0, 0.4);
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, .8), 0 2px 3px rgba(0, 0, 0, .4);
         }
 
         .center-button {
@@ -266,12 +257,9 @@
             background: linear-gradient(135deg, #e5e5e5 0%, #c8c8c8 50%, #b8b8b8 100%);
             border: 1px solid #999;
             border-radius: 50%;
-            box-shadow:
-                0 2px 4px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.8),
-                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .8), inset 0 -1px 0 rgba(0, 0, 0, .1);
             cursor: pointer;
-            transition: transform 0.1s ease;
+            transition: transform .1s ease;
         }
 
         .control {
@@ -281,7 +269,7 @@
             font-weight: 400;
             user-select: none;
             cursor: pointer;
-            transition: color 0.2s;
+            transition: color .2s;
             font-family: Arial, sans-serif;
         }
 
@@ -334,19 +322,17 @@
             font-size: 18px;
             pointer-events: none;
             font-weight: bold;
-            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 1px 1px rgba(0, 0, 0, .3);
             font-family: Arial, sans-serif;
         }
 
         .control:active {
             color: #fff;
-            transform: scale(0.95);
+            transform: scale(.95);
         }
 
         .center-button:active {
-            box-shadow:
-                inset 0 2px 3px rgba(0, 0, 0, 0.3),
-                0 1px 2px rgba(0, 0, 0, 0.2);
+            box-shadow: inset 0 2px 3px rgba(0, 0, 0, .3), 0 1px 2px rgba(0, 0, 0, .2);
         }
 
         .hidden {
@@ -368,17 +354,17 @@
             gap: 8px;
             color: white;
             text-decoration: none;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, .1);
             padding: 10px 15px;
             border-radius: 20px;
             font-size: 14px;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all .3s ease;
+            border: 1px solid rgba(255, 255, 255, .2);
             backdrop-filter: blur(10px);
         }
 
         .github-link:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, .2);
             transform: translateY(-2px);
             text-decoration: none;
             color: white;
@@ -390,22 +376,20 @@
             fill: currentColor;
         }
 
-
-        /* Song search interface */
         .search-interface {
             position: absolute;
             top: 50px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, .9);
             padding: 30px;
             border-radius: 15px;
             color: white;
             text-align: center;
             max-width: 400px;
             width: 90%;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
+            border: 1px solid rgba(255, 255, 255, .1);
             backdrop-filter: blur(10px);
         }
 
@@ -413,13 +397,13 @@
             width: 100%;
             padding: 16px 24px;
             margin: 12px 0;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, .3);
             border-radius: 30px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, .1);
             color: white;
             font-size: 18px;
             outline: none;
-            transition: border-color 0.3s;
+            transition: border-color .3s;
             box-sizing: border-box;
         }
 
@@ -428,7 +412,7 @@
         }
 
         .search-input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
+            color: rgba(255, 255, 255, .6);
         }
 
         .search-button {
@@ -440,7 +424,7 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: background .3s;
             margin: 0 5px;
         }
 
@@ -461,21 +445,21 @@
         }
 
         .recommendation-item {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, .1);
             margin: 10px 0;
             padding: 15px;
             border-radius: 10px;
             cursor: pointer;
-            transition: background 0.3s;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background .3s;
+            border: 1px solid rgba(255, 255, 255, .1);
         }
 
         .recommendation-item:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, .2);
         }
 
         .recommendation-item.selected {
-            background: rgba(29, 185, 84, 0.3);
+            background: rgba(29, 185, 84, .3);
             border-color: #1db954;
         }
 
@@ -486,7 +470,7 @@
         }
 
         .rec-artist {
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, .8);
             font-size: 14px;
         }
 
@@ -506,7 +490,6 @@
             color: #1db954;
             font-style: italic;
         }
-
     </style>
 </head>
 
@@ -514,15 +497,13 @@
     <div class="space-background"></div>
     <div class="stars" id="stars"></div>
 
-    <!-- GitHub Link -->
     <a href="https://github.com/Eoo0m" target="_blank" class="github-link">
         <svg class="github-logo" viewBox="0 0 16 16">
-            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59..." />
         </svg>
         Eoo0m
     </a>
 
-    <!-- Login Screen -->
     <div class="login-screen" id="loginScreen">
         <h1>🎵 adpative music player</h1>
         <p>동적인 음악을 추천을 즐겨보세요</p>
@@ -530,7 +511,6 @@
         <div class="error-message" id="errorMessage"></div>
     </div>
 
-    <!-- Initial Song Input Screen -->
     <div class="search-interface hidden" id="initialSongInput">
         <h2>🎵 어떤 음악을 좋아하시나요?</h2>
         <p>좋아하는 노래 하나를 입력하시면 <br>음악을 추천해드려요. </p>
@@ -543,13 +523,11 @@
         <div id="initialSearchResults"></div>
     </div>
 
-
-    <!-- Track Info Display -->
     <div class="track-info hidden" id="trackInfo">
         <div class="track-name" id="trackName">노래 제목</div>
         <div class="artist-name" id="artistName">아티스트</div>
-        <div class="recommendation-mode" id="recMode" style="font-size: 12px; opacity: 0.7; margin-top: 5px;">🎵 AI 추천
-            플레이리스트</div>
+        <div class="recommendation-mode" id="recMode" style="font-size:12px;opacity:.7;margin-top:5px;">🎵 AI 추천 플레이리스트
+        </div>
     </div>
 
     <div class="ipod-container" id="ipodContainer">
@@ -558,39 +536,29 @@
             <div class="control volume-down" id="volumeDown">−</div>
             <div class="control prev" id="prevBtn">‹‹</div>
             <div class="control next" id="nextBtn">››</div>
-
             <div class="center-button" id="centerButton">
                 <div class="play-pause" id="playPauseIcon">▶</div>
             </div>
         </div>
     </div>
 
-
     <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <script>
-        // Global variables
-        let player;
-        let is_paused = true;
-        let current_track = null;
-        let device_id = null;
-        let access_token = null;
-        let refresh_token = null;
-        let randomTracks = [];
-        let currentTrackIndex = 0;
-        let isRecommendationMode = false;
+        // ====== Global ======
+        let player, is_paused = true, current_track = null, device_id = null;
+        let access_token = null, refresh_token = null;
+        let randomTracks = [], currentTrackIndex = 0, isRecommendationMode = false;
 
-        // Playback tracking variables
-        let trackStartTime = null;
-        let trackDuration = null;
-        let playbackHistory = []; // Store recent play completion ratios
-        let maxHistoryLength = 3;
+        // Playback tracking
+        let trackStartTime = null, trackDuration = null;
+        let playbackHistory = []; // 최근 완료율 저장
+        const maxHistoryLength = 3;
 
-        // Check for tokens in URL hash or localStorage
+        // ====== Auth ======
         function initializeAuth() {
             const hashParams = new URLSearchParams(window.location.hash.substr(1));
             const storedToken = localStorage.getItem('spotify_access_token');
             const storedRefresh = localStorage.getItem('spotify_refresh_token');
-
             access_token = hashParams.get('access_token') || storedToken;
             refresh_token = hashParams.get('refresh_token') || storedRefresh;
 
@@ -598,78 +566,46 @@
                 document.getElementById('errorMessage').textContent = '로그인에 실패했습니다: ' + hashParams.get('error');
                 return;
             }
-
             if (access_token) {
                 localStorage.setItem('spotify_access_token', access_token);
-                if (refresh_token) {
-                    localStorage.setItem('spotify_refresh_token', refresh_token);
-                }
+                if (refresh_token) localStorage.setItem('spotify_refresh_token', refresh_token);
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('initialSongInput').classList.remove('hidden');
                 window.location.hash = '';
             }
         }
 
-        // API Base URL
         const API_BASE_URL = 'https://api.dynplayer.win';
+        function login() { window.location.href = `${API_BASE_URL}/login`; }
 
-        // Login function
-        function login() {
-            window.location.href = `${API_BASE_URL}/login`;
-        }
-
-
-        // Initialize Spotify Web Playback SDK
-        window.onSpotifyWebPlaybackSDKReady = () => {
-            if (access_token) {
-                initializeSpotifyPlayer();
-            }
-        };
+        // ====== Spotify SDK ======
+        window.onSpotifyWebPlaybackSDKReady = () => { if (access_token) initializeSpotifyPlayer(); };
 
         function initializeSpotifyPlayer() {
             if (!access_token) return;
 
             player = new Spotify.Player({
                 name: 'Spotify iPod Web Player',
-                getOAuthToken: cb => { cb(access_token); },
+                getOAuthToken: cb => cb(access_token),
                 volume: 0.5
             });
 
+            player.addListener('initialization_error', ({ message }) => console.error('초기화 오류:', message));
+            player.addListener('authentication_error', ({ message }) => { console.error('인증 오류:', message); refreshAccessToken(); });
+            player.addListener('account_error', ({ message }) => { console.error('계정 오류:', message); alert('Spotify Premium 계정이 필요합니다.'); });
+            player.addListener('playback_error', ({ message }) => console.error('재생 오류:', message));
 
-            // Error handling
-            player.addListener('initialization_error', ({ message }) => {
-                console.error('초기화 오류:', message);
-            });
-
-            player.addListener('authentication_error', ({ message }) => {
-                console.error('인증 오류:', message);
-                refreshAccessToken();
-            });
-
-            player.addListener('account_error', ({ message }) => {
-                console.error('계정 오류:', message);
-                alert('Spotify Premium 계정이 필요합니다.');
-            });
-
-            player.addListener('playback_error', ({ message }) => {
-                console.error('재생 오류:', message);
-            });
-
-            // Playback status updates
             player.addListener('player_state_changed', (state) => {
                 if (!state) return;
-
                 const previousTrack = current_track;
                 current_track = state.track_window.current_track;
                 is_paused = state.paused;
 
-                // Track new song start
                 if (previousTrack?.id !== current_track?.id && current_track) {
                     trackStartTime = Date.now();
                     trackDuration = current_track.duration_ms;
                 }
 
-                // Track when song ends naturally (position 0 and paused)
                 if (state.position === 0 && state.paused && current_track && trackStartTime) {
                     const diverseMode = recordTrackCompletion('auto');
                     setTimeout(() => playNextRandomTrack(diverseMode), 1000);
@@ -680,807 +616,438 @@
                 }
             });
 
-            // Ready
             player.addListener('ready', ({ device_id: ready_device_id }) => {
                 console.log('🎵 Spotify Player Ready with Device ID', ready_device_id);
                 device_id = ready_device_id;
                 transferPlaybackToDevice(device_id);
-
-                if (isRecommendationMode && randomTracks.length > 0) {
-                    setTimeout(() => playTrackAtIndex(0), 2000);
-                }
+                if (isRecommendationMode && randomTracks.length > 0) setTimeout(() => playTrackAtIndex(0), 2000);
             });
 
             player.connect();
         }
 
-        // Transfer playback to this device
         async function transferPlaybackToDevice(device_id) {
             try {
                 await fetch('https://api.spotify.com/v1/me/player', {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${access_token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        device_ids: [device_id],
-                        play: false
-                    })
+                    headers: { 'Authorization': `Bearer ${access_token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ device_ids: [device_id], play: false })
                 });
-            } catch (error) {
-                console.error('재생 장치 전환 오류:', error);
-            }
+            } catch (e) { console.error('재생 장치 전환 오류:', e); }
         }
 
-        // Play track at specific index
+        // ====== Helpers (새로 추가) ======
+        function shouldUseDiverse() {
+            if (playbackHistory.length < 3) return false;
+            const last3 = playbackHistory.slice(-3);
+            const avg = last3.reduce((a, b) => a + b, 0) / 3;
+            return avg <= 10; // 최근 3곡 평균 완료율 ≤ 10%
+        }
+
+        function getSeedTrack() {
+            if (current_track?.id) {
+                return { spotify_track: current_track, track_id: current_track.id };
+            }
+            const lastIdx = Math.min(currentTrackIndex, randomTracks.length - 1);
+            const last = randomTracks[lastIdx] || randomTracks[randomTracks.length - 1];
+            if (!last) return { spotify_track: null, track_id: null };
+            const t = last.spotify_track || last.track || last;
+            return { spotify_track: t, track_id: t.id || last.track_id || null };
+        }
+
+        // ====== Playback / UI ======
         async function playTrackAtIndex(index) {
             if (!randomTracks[index]) return;
-
             const track = randomTracks[index];
-            let trackUri = track.uri || track.spotify_track?.uri || track.track?.uri;
-
+            const trackUri = track.uri || track.spotify_track?.uri || track.track?.uri;
             if (!trackUri || !device_id) return;
 
-            // Simple track info for debugging (reduced logging)
-            const trackInfo = track.spotify_track || track.track || track;
-            const name = trackInfo.name || track.track || 'Unknown Track';
-            const artists = trackInfo.artists ? 
-                trackInfo.artists.map(a => a.name).join(', ') : 
-                track.artist || 'Unknown Artist';
-            
-            // Show similarity if available
-            const similarityText = track.similarity ? 
-                ` (${(track.similarity * 100).toFixed(1)}% similar)` : '';
-            
+            const t = track.spotify_track || track.track || track;
+            const name = t.name || track.track || 'Unknown Track';
+            const artists = t.artists ? t.artists.map(a => a.name).join(', ') : track.artist || 'Unknown Artist';
+            const similarityText = track.similarity ? ` (${(track.similarity * 100).toFixed(1)}% similar)` : '';
             console.log(`▶️ [${index + 1}/${randomTracks.length}] ${name} - ${artists}${similarityText}`);
 
             try {
                 await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${access_token}`,
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Authorization': `Bearer ${access_token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ uris: [trackUri] })
                 });
-            } catch (error) {
-                console.error('트랙 재생 오류:', error);
-            }
+            } catch (e) { console.error('트랙 재생 오류:', e); }
         }
 
-        // Play specific Spotify track by URI
         async function playSpotifyTrack(trackUri) {
             if (!device_id) return;
-
             try {
                 await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${access_token}`,
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Authorization': `Bearer ${access_token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ uris: [trackUri] })
                 });
-            } catch (error) {
-                console.error('Spotify track playback error:', error);
-            }
+            } catch (e) { console.error('Spotify track playback error:', e); }
         }
 
-        // Calculate and record playback completion when track changes
         function recordTrackCompletion(reason = 'auto', currentPosition = 0) {
             if (current_track && trackStartTime && trackDuration) {
-                // Use actual Spotify position if available, otherwise use elapsed time
                 let completionRatio;
                 if (reason === 'manual' && currentPosition > 0) {
                     completionRatio = (currentPosition / trackDuration) * 100;
                 } else {
-                    const playedDuration = Date.now() - trackStartTime;
-                    completionRatio = Math.min((playedDuration / trackDuration) * 100, 100);
+                    const played = Date.now() - trackStartTime;
+                    completionRatio = Math.min((played / trackDuration) * 100, 100);
                 }
-
-                // Add to playback history
                 playbackHistory.push(completionRatio);
-                if (playbackHistory.length > maxHistoryLength) {
-                    playbackHistory.shift();
-                }
+                if (playbackHistory.length > maxHistoryLength) playbackHistory.shift();
 
-                // Skip completion logging removed to reduce console noise
-
-                // Calculate recent average and determine next recommendation type
                 if (playbackHistory.length >= 3) {
                     const recentAverage = playbackHistory.reduce((a, b) => a + b, 0) / playbackHistory.length;
-
-                    // Temporarily disable diverse mode due to server issues
-                    // if (recentAverage < 50) {
-                    //     return true; // Return true for diverse mode
-                    // }
-                    
-                    console.log(`📊 Engagement: ${recentAverage.toFixed(1)}% (diverse mode disabled)`);
+                    console.log(`📊 Engagement: ${recentAverage.toFixed(1)}%`);
                 }
             }
-            return false; // Return false for normal mode
+            return false; // 실제 다이버스 선택은 shouldUseDiverse()가 담당
         }
 
-        // Play next track
         async function playNextRandomTrack(diverseMode = false) {
-            // If not explicitly set, check if we should use diverse mode based on manual skip
+            // 수동 스킵 시에도 기록 + 최신 기준으로 다이버스 여부 재평가
             if (!diverseMode && arguments.length === 0) {
-                // Get current playback state to know exact position when skipped
-                if (player) {
-                    try {
-                        const state = await player.getCurrentState();
-                        const currentPosition = state ? state.position : 0;
-                        diverseMode = recordTrackCompletion('manual', currentPosition);
-                    } catch (error) {
-                        diverseMode = recordTrackCompletion('manual');
-                    }
-                } else {
-                    diverseMode = recordTrackCompletion('manual');
-                }
+                try {
+                    const state = await player.getCurrentState();
+                    const pos = state ? state.position : 0;
+                    recordTrackCompletion('manual', pos);
+                } catch { recordTrackCompletion('manual'); }
+                diverseMode = shouldUseDiverse();
             }
+
             if (isRecommendationMode && randomTracks.length > 0) {
                 if (currentTrackIndex < randomTracks.length - 1) {
                     currentTrackIndex++;
                     const nextTrack = randomTracks[currentTrackIndex];
-                    
-                    // Show track info when moving to next track in playlist
-                    const trackInfo = nextTrack.spotify_track || nextTrack.track || nextTrack;
-                    const name = trackInfo.name || nextTrack.track || 'Unknown Track';
-                    const artists = trackInfo.artists ? 
-                        trackInfo.artists.map(a => a.name).join(', ') : 
-                        nextTrack.artist || 'Unknown Artist';
-                    const similarityText = nextTrack.similarity ? 
-                        ` (${(nextTrack.similarity * 100).toFixed(1)}% similar)` : '';
-                    
+                    const t = nextTrack.spotify_track || nextTrack.track || nextTrack;
+                    const name = t.name || nextTrack.track || 'Unknown Track';
+                    const artists = t.artists ? t.artists.map(a => a.name).join(', ') : nextTrack.artist || 'Unknown Artist';
+                    const similarityText = nextTrack.similarity ? ` (${(nextTrack.similarity * 100).toFixed(1)}% similar)` : '';
                     console.log(`▶️ [${currentTrackIndex + 1}/${randomTracks.length}] ${name} - ${artists}${similarityText}`);
-                    
                     await playSpotifyTrack(nextTrack.uri || nextTrack.track?.uri);
                     return;
                 }
 
-                if (current_track) {
-                    try {
-                        const endpoint = diverseMode ? `${API_BASE_URL}/recommend-diverse-tracks`
-                            : `${API_BASE_URL}/recommend-similar-tracks`;
-                        
-                        console.log(`🎆 Loading ${diverseMode ? 'DIVERSE' : 'SIMILAR'} recommendations...`);
-                        
-                        const response = await fetch(endpoint, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                spotify_track: current_track,
-                                access_token: access_token
-                            })
+                // ====== 플레이리스트가 끝났을 때: 새 추천 받아오기 (수정 포인트) ======
+                console.log('🎵 Playlist finished! Getting new recommendations based on last track...');
+                const seed = getSeedTrack();
+                if (!seed.spotify_track && !seed.track_id) {
+                    console.warn('⚠️ No seed track found. Restarting from beginning.');
+                    currentTrackIndex = 0;
+                    playTrackAtIndex(currentTrackIndex);
+                    return;
+                }
+
+                const wantDiverse = shouldUseDiverse();
+                try {
+                    if (wantDiverse && seed.track_id) {
+                        console.log('🔴 Requesting DIVERSE recommendations…');
+                        const r1 = await fetch(`${API_BASE_URL}/recommend-diverse`, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ current_track_id: seed.track_id, num_recommendations: 10 })
                         });
-                        
-                        if (response.ok) {
-                            const data = await response.json();
-                            if (data.spotify_tracks?.length > 0) {
-                                // Shuffle new dynamic recommendations
-                                randomTracks = shuffleArray(data.spotify_tracks);
-                                currentTrackIndex = 0;
-                                await playSpotifyTrack(randomTracks[0].uri);
+                        if (!r1.ok) { console.error('❌ recommend-diverse error', r1.status, await r1.text()); throw new Error('diverse_failed'); }
+                        const d1 = await r1.json();
+                        const recs = d1.recommendations || [];
+                        if (recs.length === 0) throw new Error('diverse_empty');
 
-                                // New playlist loaded
-                                const modeEmoji = diverseMode ? '🔀' : '🎵';
-                                console.log(`${modeEmoji} ${diverseMode ? 'DIVERSE' : 'SIMILAR'} playlist: ${randomTracks.length} tracks`);
-                                console.log(`🎯 Next: ${randomTracks[0]?.spotify_track?.name || randomTracks[0]?.track || 'Unknown'}`);
+                        const r2 = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ tracks: recs, access_token: access_token })
+                        });
+                        if (!r2.ok) { console.error('❌ find-spotify-tracks error', r2.status, await r2.text()); throw new Error('find_spotify_failed'); }
+                        const d2 = await r2.json();
+                        const spts = d2.spotify_tracks || [];
+                        if (spts.length === 0) throw new Error('find_spotify_empty');
 
-                                // Reset playback history when switching to diverse recommendations
-                                if (diverseMode) {
-                                    playbackHistory = [];
-                                    updateRecommendationMode('diverse');
-                                } else {
-                                    updateRecommendationMode('similar');
-                                }
-                                return;
-                            }
-                        } else {
-                            // Handle error response
-                            const errorData = await response.text();
-                            console.error(`❌ ${diverseMode ? 'DIVERSE' : 'SIMILAR'} API Error:`, {
-                                status: response.status,
-                                statusText: response.statusText,
-                                error: errorData
-                            });
-                        }
-                    } catch (error) {
-                        console.error(`❌ ${diverseMode ? 'DIVERSE' : 'SIMILAR'} Network Error:`, error);
+                        randomTracks = spts.slice(0, 10);
+                        currentTrackIndex = 0;
+                        playbackHistory = []; // 루프 방지
+                        updateRecommendationMode('diverse');
+                        await playSpotifyTrack(randomTracks[0].uri || randomTracks[0].track?.uri);
+                        console.log(`🔴 DIVERSE playlist loaded: ${randomTracks.length} tracks`);
+                        return;
+
+                    } else {
+                        console.log('🟢 Requesting SIMILAR recommendations…');
+                        const r = await fetch(`${API_BASE_URL}/recommend-similar-tracks`, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ spotify_track: seed.spotify_track, access_token: access_token })
+                        });
+                        if (!r.ok) { console.error('❌ recommend-similar-tracks error', r.status, await r.text()); throw new Error('similar_failed'); }
+                        const d = await r.json();
+                        const spts = d.spotify_tracks || [];
+                        if (spts.length === 0) throw new Error('similar_empty');
+
+                        randomTracks = spts.slice(0, 10);
+                        currentTrackIndex = 0;
+                        updateRecommendationMode('similar');
+                        await playSpotifyTrack(randomTracks[0].uri || randomTracks[0].track?.uri);
+                        console.log(`🟢 SIMILAR playlist loaded: ${randomTracks.length} tracks`);
+                        return;
                     }
+                } catch (e) {
+                    console.error('⚠️ New recommendations failed, will restart from beginning:', e?.message || e);
+                    currentTrackIndex = 0;
                 }
             }
 
+            // fallback: 아직 플레이리스트가 없거나 뭔가 꼬였을 때
             if (randomTracks.length > 0) {
-                currentTrackIndex = currentTrackIndex + 1;
-                
-                // If we've reached the end of current playlist, get new recommendations based on last track
-                if (currentTrackIndex >= randomTracks.length) {
-                    console.log('🎵 Playlist finished! Getting new recommendations based on last track...');
-                    
-                    if (current_track) {
-                        try {
-                            const response = await fetch(`${API_BASE_URL}/recommend-similar-tracks`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    spotify_track: current_track,
-                                    access_token: access_token
-                                })
-                            });
-
-                            if (response.ok) {
-                                const data = await response.json();
-                                if (data.spotify_tracks?.length > 0) {
-                                    // Create new playlist with 10 tracks
-                                    randomTracks = data.spotify_tracks.slice(0, 10);
-                                    currentTrackIndex = 0;
-                                    
-                                    console.log(`🎵 New 10-track playlist based on: ${current_track.name}`);
-                                    console.log(`📋 New tracks:`);
-                                    randomTracks.forEach((track, index) => {
-                                        const trackInfo = track.spotify_track || track.track || track;
-                                        const name = trackInfo.name || track.track || 'Unknown Track';
-                                        const artists = trackInfo.artists ? 
-                                            trackInfo.artists.map(a => a.name).join(', ') : 
-                                            track.artist || 'Unknown Artist';
-                                        const similarityText = track.similarity ? 
-                                            ` (${(track.similarity * 100).toFixed(1)}% similar)` : '';
-                                        
-                                        console.log(`  ${String(index + 1).padStart(2, '0')}. ${name} - ${artists}${similarityText}`);
-                                    });
-                                    
-                                    await playSpotifyTrack(randomTracks[0].uri || randomTracks[0].track?.uri);
-                                    return;
-                                }
-                            }
-                        } catch (error) {
-                            console.error('❌ Failed to get new recommendations:', error);
-                        }
-                    }
-                    
-                    // Fallback: restart from beginning if new recommendations fail
-                    console.log('⚠️ New recommendations failed, restarting playlist from beginning');
-                    currentTrackIndex = 0;
-                }
-                
+                currentTrackIndex = Math.min(currentTrackIndex + 1, randomTracks.length - 1);
                 playTrackAtIndex(currentTrackIndex);
             }
         }
 
-        // Play previous track
         async function playPreviousRandomTrack() {
-            // Record completion for manual skip (going backward)
-            let currentPosition = 0;
+            let pos = 0;
             if (player) {
-                try {
-                    const state = await player.getCurrentState();
-                    currentPosition = state ? state.position : 0;
-                } catch (error) {
-                    // Ignore error, use 0 as default
-                }
+                try { const state = await player.getCurrentState(); pos = state ? state.position : 0; } catch { }
             }
-            const diverseMode = recordTrackCompletion('manual', currentPosition);
+            recordTrackCompletion('manual', pos);
             if (randomTracks.length === 0) return;
             currentTrackIndex = currentTrackIndex === 0 ? randomTracks.length - 1 : currentTrackIndex - 1;
-            
-            // Show track info when moving to previous track
             const prevTrack = randomTracks[currentTrackIndex];
-            const trackInfo = prevTrack.spotify_track || prevTrack.track || prevTrack;
-            const name = trackInfo.name || prevTrack.track || 'Unknown Track';
-            const artists = trackInfo.artists ? 
-                trackInfo.artists.map(a => a.name).join(', ') : 
-                prevTrack.artist || 'Unknown Artist';
-            const similarityText = prevTrack.similarity ? 
-                ` (${(prevTrack.similarity * 100).toFixed(1)}% similar)` : '';
-            
+            const t = prevTrack.spotify_track || prevTrack.track || prevTrack;
+            const name = t.name || prevTrack.track || 'Unknown Track';
+            const artists = t.artists ? t.artists.map(a => a.name).join(', ') : prevTrack.artist || 'Unknown Artist';
+            const similarityText = prevTrack.similarity ? ` (${(prevTrack.similarity * 100).toFixed(1)}% similar)` : '';
             console.log(`▶️ [${currentTrackIndex + 1}/${randomTracks.length}] ${name} - ${artists}${similarityText}`);
-            
             playTrackAtIndex(currentTrackIndex);
         }
 
-        // Refresh access token
         async function refreshAccessToken() {
-            if (!refresh_token) {
-                logout();
-                return;
-            }
-
+            if (!refresh_token) { logout(); return; }
             try {
-                const response = await fetch('/refresh_token', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ refresh_token: refresh_token })
-                });
-
-                const data = await response.json();
-                if (data.access_token) {
-                    access_token = data.access_token;
-                    localStorage.setItem('spotify_access_token', access_token);
-                    if (data.refresh_token) {
-                        refresh_token = data.refresh_token;
-                        localStorage.setItem('spotify_refresh_token', refresh_token);
-                    }
-                } else {
-                    logout();
-                }
-            } catch (error) {
-                console.error('토큰 새로고침 오류:', error);
-                logout();
-            }
+                const r = await fetch('/refresh_token', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token }) });
+                const d = await r.json();
+                if (d.access_token) {
+                    access_token = d.access_token; localStorage.setItem('spotify_access_token', access_token);
+                    if (d.refresh_token) { refresh_token = d.refresh_token; localStorage.setItem('spotify_refresh_token', refresh_token); }
+                } else { logout(); }
+            } catch (e) { console.error('토큰 새로고침 오류:', e); logout(); }
         }
 
-        // Logout function
         function logout() {
             localStorage.removeItem('spotify_access_token');
             localStorage.removeItem('spotify_refresh_token');
-            access_token = null;
-            refresh_token = null;
-
+            access_token = null; refresh_token = null;
             if (player) player.disconnect();
-
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('trackInfo').classList.add('hidden');
         }
 
-        // Update track info display
         function updateTrackInfo() {
-            if (current_track) {
-                document.getElementById('trackName').textContent = current_track.name;
-                document.getElementById('artistName').textContent =
-                    current_track.artists.map(artist => artist.name).join(', ');
-                document.getElementById('trackInfo').classList.remove('hidden');
-                
-                // Update Media Session for background playback
-                updateMediaSession();
-            }
+            if (!current_track) return;
+            document.getElementById('trackName').textContent = current_track.name;
+            document.getElementById('artistName').textContent = current_track.artists.map(a => a.name).join(', ');
+            document.getElementById('trackInfo').classList.remove('hidden');
+            updateMediaSession();
         }
 
-        // Media Session API for background playback and lock screen controls
         function updateMediaSession() {
-            if ('mediaSession' in navigator && current_track) {
-                navigator.mediaSession.metadata = new MediaMetadata({
-                    title: current_track.name,
-                    artist: current_track.artists.map(artist => artist.name).join(', '),
-                    album: current_track.album?.name || 'Unknown Album',
-                    artwork: current_track.album?.images?.map(img => ({
-                        src: img.url,
-                        sizes: `${img.width}x${img.height}`,
-                        type: 'image/jpeg'
-                    })) || []
-                });
-
-                // Set up media session action handlers
-                navigator.mediaSession.setActionHandler('play', async () => {
-                    await togglePlayPause();
-                });
-
-                navigator.mediaSession.setActionHandler('pause', async () => {
-                    await togglePlayPause();
-                });
-
-                navigator.mediaSession.setActionHandler('previoustrack', async () => {
-                    await playPreviousRandomTrack();
-                });
-
-                navigator.mediaSession.setActionHandler('nexttrack', async () => {
-                    await playNextRandomTrack();
-                });
-
-                // Set playback state
-                navigator.mediaSession.playbackState = is_paused ? 'paused' : 'playing';
-                
-                console.log('📱 Media Session updated for background playback');
-            }
+            if (!('mediaSession' in navigator) || !current_track) return;
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: current_track.name,
+                artist: current_track.artists.map(a => a.name).join(', '),
+                album: current_track.album?.name || 'Unknown Album',
+                artwork: current_track.album?.images?.map(img => ({ src: img.url, sizes: `${img.width}x${img.height}`, type: 'image/jpeg' })) || []
+            });
+            navigator.mediaSession.setActionHandler('play', async () => { await togglePlayPause(); });
+            navigator.mediaSession.setActionHandler('pause', async () => { await togglePlayPause(); });
+            navigator.mediaSession.setActionHandler('previoustrack', async () => { await playPreviousRandomTrack(); });
+            navigator.mediaSession.setActionHandler('nexttrack', async () => { await playNextRandomTrack(); });
+            navigator.mediaSession.playbackState = is_paused ? 'paused' : 'playing';
+            console.log('📱 Media Session updated for background playback');
         }
 
-        // Update play/pause icon
         function updatePlayPauseIcon() {
             document.getElementById('playPauseIcon').textContent = is_paused ? '▶' : '‖';
-            
-            // Update Media Session playback state
-            if ('mediaSession' in navigator) {
-                navigator.mediaSession.playbackState = is_paused ? 'paused' : 'playing';
-            }
+            if ('mediaSession' in navigator) navigator.mediaSession.playbackState = is_paused ? 'paused' : 'playing';
         }
 
-        // Update iPod visual state
         function updateIPodState() {
-            const container = document.getElementById('ipodContainer');
-            if (!is_paused) {
-                container.classList.add('playing');
-            } else {
-                container.classList.remove('playing');
-            }
+            const el = document.getElementById('ipodContainer');
+            if (!is_paused) el.classList.add('playing'); else el.classList.remove('playing');
         }
 
-        // Update recommendation mode visual feedback
         function updateRecommendationMode(mode) {
-            const container = document.getElementById('ipodContainer');
-
-            // Remove all mode classes
-            container.classList.remove('similar-mode', 'diverse-mode');
-
-            // Add appropriate mode class
-            if (mode === 'similar') {
-                container.classList.add('similar-mode');
-                console.log('🟢 Visual: Similar mode activated (green glow)');
-            } else if (mode === 'diverse') {
-                container.classList.add('diverse-mode');
-                console.log('🔴 Visual: Diverse mode activated (red glow)');
-            }
-
-            // Auto-remove after 3 seconds to return to normal state
-            setTimeout(() => {
-                container.classList.remove('similar-mode', 'diverse-mode');
-            }, 3000);
+            const el = document.getElementById('ipodContainer');
+            el.classList.remove('similar-mode', 'diverse-mode');
+            if (mode === 'similar') { el.classList.add('similar-mode'); console.log('🟢 Visual: Similar mode'); }
+            else if (mode === 'diverse') { el.classList.add('diverse-mode'); console.log('🔴 Visual: Diverse mode'); }
+            setTimeout(() => { el.classList.remove('similar-mode', 'diverse-mode'); }, 3000);
         }
 
-        // iPod control functions
-        async function togglePlayPause() {
-            if (player) await player.togglePlay();
-        }
-
+        async function togglePlayPause() { if (player) await player.togglePlay(); }
         async function adjustVolume(delta) {
             if (!player) return;
-
             try {
                 const state = await player.getCurrentState();
                 if (state) {
-                    const newVolume = Math.max(0, Math.min(1, state.volume + delta));
-                    await player.setVolume(newVolume);
-
-                    const control = delta > 0 ?
-                        document.getElementById('volumeUp') :
-                        document.getElementById('volumeDown');
-                    control.classList.add('active');
-                    setTimeout(() => control.classList.remove('active'), 200);
+                    const newV = Math.max(0, Math.min(1, state.volume + delta));
+                    await player.setVolume(newV);
+                    const control = delta > 0 ? document.getElementById('volumeUp') : document.getElementById('volumeDown');
+                    control.classList.add('active'); setTimeout(() => control.classList.remove('active'), 200);
                 }
-            } catch (error) {
-                console.error('볼륨 조절 오류:', error);
-            }
+            } catch (e) { console.error('볼륨 조절 오류:', e); }
         }
 
-        // Initial song selection functions
+        // ====== Initial flow (검색/추천) ======
         async function startRecommendationPlaylist() {
             const songTitle = document.getElementById('initialSongTitle').value.trim();
             const artistName = document.getElementById('initialArtistName').value.trim();
+            if (!songTitle) { alert('노래 제목을 입력해주세요.'); return; }
 
-            if (!songTitle) {
-                alert('노래 제목을 입력해주세요.');
-                return;
-            }
-
-            const startBtn = document.getElementById('startBtn');
-            startBtn.disabled = true;
-            startBtn.textContent = '추천 중...';
-
+            const btn = document.getElementById('startBtn');
+            btn.disabled = true; btn.textContent = '추천 중...';
             try {
-                const response = await fetch(`${API_BASE_URL}/recommend`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        song_title: songTitle,
-                        artist_name: artistName || null,
-                        num_recommendations: 30
-                    })
+                const r = await fetch(`${API_BASE_URL}/recommend`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ song_title: songTitle, artist_name: artistName || null, num_recommendations: 30 })
                 });
-
-                const data = await response.json();
-
-                if (data.error) {
-                    alert(data.error);
-                } else if (data.recommendations?.length > 0) {
-                    await setupInitialPlaylist(data.recommendations, data.original_song);
-                } else {
-                    alert('추천곡을 찾을 수 없습니다. 다른 노래를 시도해보세요.');
-                }
-            } catch (error) {
-                console.error('Initial recommendation error:', error);
-                alert('추천 시스템에 연결할 수 없습니다.');
-            } finally {
-                startBtn.disabled = false;
-                startBtn.textContent = '시작하기';
-            }
+                const d = await r.json();
+                if (d.error) { alert(d.error); }
+                else if (d.recommendations?.length > 0) { await setupInitialPlaylist(d.recommendations, d.original_song); }
+                else { alert('추천곡을 찾을 수 없습니다. 다른 노래를 시도해보세요.'); }
+            } catch (e) { console.error('Initial recommendation error:', e); alert('추천 시스템에 연결할 수 없습니다.'); }
+            finally { btn.disabled = false; btn.textContent = '시작하기'; }
         }
 
         async function setupInitialPlaylist(recommendations, originalSong) {
             try {
-                const response = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        tracks: recommendations,
-                        access_token: access_token
-                    })
+                const r = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tracks: recommendations, access_token })
                 });
+                if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+                const d = await r.json();
 
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-                const data = await response.json();
-
-                if (data.spotify_tracks?.length > 0) {
-                    // Take only first 10 tracks for initial playlist
-                    randomTracks = data.spotify_tracks.slice(0, 10);
+                if (d.spotify_tracks?.length > 0) {
+                    randomTracks = d.spotify_tracks.slice(0, 10);
                     currentTrackIndex = 0;
                     isRecommendationMode = true;
-
-                    // Reset playback history for new playlist
-                    playbackHistory = [];
-
-                    // Show green glow for initial similar recommendations
+                    playbackHistory = []; // 초기화
                     updateRecommendationMode('similar');
 
-                    // Initial playlist created - show all 10 tracks
                     console.log(`🎵 Initial playlist created: ${randomTracks.length} tracks`);
-                    console.log(`📋 Playlist tracks:`);
-                    randomTracks.forEach((track, index) => {
-                        const trackInfo = track.spotify_track || track.track || track;
-                        const name = trackInfo.name || track.track || 'Unknown Track';
-                        const artists = trackInfo.artists ? 
-                            trackInfo.artists.map(a => a.name).join(', ') : 
-                            track.artist || 'Unknown Artist';
-                        const similarityText = track.similarity ? 
-                            ` (${(track.similarity * 100).toFixed(1)}% similar)` : '';
-                        
-                        console.log(`  ${String(index + 1).padStart(2, '0')}. ${name} - ${artists}${similarityText}`);
-                    });
-                    console.log(`🎯 Starting: ${randomTracks[0]?.spotify_track?.name || randomTracks[0]?.track || 'Unknown'}`);
-
                     document.getElementById('initialSongInput').classList.add('hidden');
                     document.getElementById('trackInfo').classList.remove('hidden');
 
-                    if (!player) {
-                        initializeSpotifyPlayer();
-                    } else {
-                        playTrackAtIndex(0);
-                    }
+                    if (!player) initializeSpotifyPlayer();
+                    else playTrackAtIndex(0);
                 } else {
                     alert('Spotify에서 추천곡들을 찾을 수 없습니다. 다른 노래를 시도해보세요.');
                 }
-            } catch (error) {
-                console.error('Error setting up playlist:', error);
-                alert('플레이리스트 생성 중 오류가 발생했습니다: ' + error.message);
-            }
+            } catch (e) { console.error('Error setting up playlist:', e); alert('플레이리스트 생성 중 오류가 발생했습니다: ' + e.message); }
         }
 
         async function searchInitialSongs() {
             const query = document.getElementById('initialSongTitle').value.trim();
-            if (!query) {
-                alert('검색어를 입력해주세요.');
-                return;
-            }
-
-            const searchBtn = document.getElementById('initialSearchBtn');
-            searchBtn.disabled = true;
-            searchBtn.textContent = '검색 중...';
-
+            if (!query) { alert('검색어를 입력해주세요.'); return; }
+            const btn = document.getElementById('initialSearchBtn');
+            btn.disabled = true; btn.textContent = '검색 중...';
             try {
-                const response = await fetch(`${API_BASE_URL}/search-songs`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query: query })
+                const r = await fetch(`${API_BASE_URL}/search-songs`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query })
                 });
-
-                const data = await response.json();
-                if (data.error) {
-                    document.getElementById('initialSearchResults').innerHTML =
-                        `<div class="error-message">${data.error}</div>`;
-                } else {
-                    displayInitialSearchResults(data.results);
-                }
-            } catch (error) {
-                console.error('Initial search error:', error);
-                document.getElementById('initialSearchResults').innerHTML =
-                    '<div class="error-message">검색 서비스에 연결할 수 없습니다.</div>';
-            } finally {
-                searchBtn.disabled = false;
-                searchBtn.textContent = '검색';
-            }
+                const d = await r.json();
+                if (d.error) { document.getElementById('initialSearchResults').innerHTML = `<div class="error-message">${d.error}</div>`; }
+                else { displayInitialSearchResults(d.results); }
+            } catch (e) {
+                console.error('Initial search error:', e);
+                document.getElementById('initialSearchResults').innerHTML = '<div class="error-message">검색 서비스에 연결할 수 없습니다.</div>';
+            } finally { btn.disabled = false; btn.textContent = '검색'; }
         }
 
         function displayInitialSearchResults(results) {
-            const resultsDiv = document.getElementById('initialSearchResults');
-
-            if (results.length === 0) {
-                resultsDiv.innerHTML = '<div class="error-message">검색 결과가 없습니다.</div>';
-                return;
-            }
-
-            let html = '<div class="recommendation-list" style="max-height: 200px;">';
-            results.slice(0, 10).forEach((result, index) => {
+            const div = document.getElementById('initialSearchResults');
+            if (results.length === 0) { div.innerHTML = '<div class="error-message">검색 결과가 없습니다.</div>'; return; }
+            let html = '<div class="recommendation-list" style="max-height:200px;">';
+            results.slice(0, 10).forEach(r => {
                 html += `
-                    <div class="recommendation-item" onclick="selectInitialSong('${result.track.replace(/'/g, "\\'")}', '${result.artist.replace(/'/g, "\\'")}')">
-                        <div class="rec-title">${result.track}</div>
-                        <div class="rec-artist">${result.artist} - ${result.album}</div>
-                    </div>
-                `;
+          <div class="recommendation-item" onclick="selectInitialSong('${r.track.replace(/'/g, "\\'")}','${r.artist.replace(/'/g, "\\'")}')">
+            <div class="rec-title">${r.track}</div>
+            <div class="rec-artist">${r.artist} - ${r.album}</div>
+          </div>`;
             });
             html += '</div>';
-            resultsDiv.innerHTML = html;
+            div.innerHTML = html;
         }
-
         function selectInitialSong(songTitle, artistName) {
             document.getElementById('initialSongTitle').value = songTitle;
             document.getElementById('initialArtistName').value = artistName;
             document.getElementById('initialSearchResults').innerHTML = '';
         }
 
-        // Shuffle function using Fisher-Yates algorithm
-        function shuffleArray(array) {
-            const shuffled = [...array]; // Create a copy
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-            return shuffled;
-        }
+        // ====== Visual bits ======
+        function shuffleArray(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[a[i], a[j]] = [a[j], a[i]]; } return a; }
+        function createStars() { const box = document.getElementById('stars'); for (let i = 0; i < 200; i++) { const s = document.createElement('div'); s.className = 'star'; const sizes = ['small', 'medium', 'large']; s.classList.add(sizes[Math.floor(Math.random() * sizes.length)]); s.style.left = Math.random() * 100 + '%'; s.style.top = Math.random() * 100 + '%'; s.style.animationDelay = Math.random() * 2 + 's'; s.style.animationDuration = (1 + Math.random() * 2) + 's'; box.appendChild(s); } }
+        function createDust() { const d = document.createElement('div'); d.className = 'dust'; d.style.left = Math.random() * 100 + '%'; d.style.width = d.style.height = Math.random() * 3 + 1 + 'px'; d.style.animationDuration = (8 + Math.random() * 4) + 's'; d.style.animationDelay = Math.random() * 2 + 's'; document.body.appendChild(d); setTimeout(() => d.remove(), 12000); }
 
-        // Space background functions
-        function createStars() {
-            const starsContainer = document.getElementById('stars');
-            for (let i = 0; i < 200; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                const sizes = ['small', 'medium', 'large'];
-                star.classList.add(sizes[Math.floor(Math.random() * sizes.length)]);
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                star.style.animationDelay = Math.random() * 2 + 's';
-                star.style.animationDuration = (1 + Math.random() * 2) + 's';
-                starsContainer.appendChild(star);
-            }
-        }
-
-        function createDust() {
-            const dustParticle = document.createElement('div');
-            dustParticle.className = 'dust';
-            dustParticle.style.left = Math.random() * 100 + '%';
-            dustParticle.style.width = dustParticle.style.height = Math.random() * 3 + 1 + 'px';
-            dustParticle.style.animationDuration = (8 + Math.random() * 4) + 's';
-            dustParticle.style.animationDelay = Math.random() * 2 + 's';
-            document.body.appendChild(dustParticle);
-            setTimeout(() => dustParticle.remove(), 12000);
-        }
-
-        // Event listeners
         document.getElementById('centerButton').addEventListener('click', togglePlayPause);
-        document.getElementById('nextBtn').addEventListener('click', () => {
-            console.log('🔴 Next button clicked!');
-            playNextRandomTrack();
-        });
-        document.getElementById('prevBtn').addEventListener('click', () => {
-            console.log('🔴 Prev button clicked!');
-            playPreviousRandomTrack();
-        });
+        document.getElementById('nextBtn').addEventListener('click', () => { console.log('🔴 Next button clicked!'); playNextRandomTrack(); });
+        document.getElementById('prevBtn').addEventListener('click', () => { console.log('🔴 Prev button clicked!'); playPreviousRandomTrack(); });
         document.getElementById('volumeUp').addEventListener('click', () => adjustVolume(0.1));
         document.getElementById('volumeDown').addEventListener('click', () => adjustVolume(-0.1));
 
-        // Drag functionality for iPod
-        let isDragging = false;
-        let dragOffset = { x: 0, y: 0 };
-        const ipodContainer = document.getElementById('ipodContainer');
-
+        // Drag
+        let isDragging = false, dragOffset = { x: 0, y: 0 }; const ipod = document.getElementById('ipodContainer');
         function startDrag(e) {
-            // Don't start drag if clicking on controls
-            if (e.target.classList.contains('control') || e.target.classList.contains('center-button') || e.target.classList.contains('play-pause')) {
-                return;
-            }
-
-            isDragging = true;
-            const rect = ipodContainer.getBoundingClientRect();
-            
-            dragOffset.x = e.clientX - rect.left;
-            dragOffset.y = e.clientY - rect.top;
-
-            // Change cursor and disable animations while dragging
-            ipodContainer.style.cursor = 'grabbing';
-            ipodContainer.style.animation = 'none';
-
-            // Prevent text selection while dragging
-            document.body.style.userSelect = 'none';
+            if (e.target.classList.contains('control') || e.target.classList.contains('center-button') || e.target.classList.contains('play-pause')) return;
+            isDragging = true; const r = ipod.getBoundingClientRect(); dragOffset.x = e.clientX - r.left; dragOffset.y = e.clientY - r.top; ipod.style.cursor = 'grabbing'; ipod.style.animation = 'none'; document.body.style.userSelect = 'none';
         }
-
         function moveDrag(e) {
             if (!isDragging) return;
-            
-            const x = e.clientX - dragOffset.x;
-            const y = e.clientY - dragOffset.y;
-
-            // Keep iPod within viewport bounds
-            const maxX = window.innerWidth - 120; // iPod width
-            const maxY = window.innerHeight - 120; // iPod height
-
-            const constrainedX = Math.max(0, Math.min(x, maxX));
-            const constrainedY = Math.max(0, Math.min(y, maxY));
-
-            ipodContainer.style.position = 'fixed';
-            ipodContainer.style.left = constrainedX + 'px';
-            ipodContainer.style.top = constrainedY + 'px';
-            ipodContainer.style.transform = 'none';
+            const x = e.clientX - dragOffset.x, y = e.clientY - dragOffset.y;
+            const maxX = window.innerWidth - 120, maxY = window.innerHeight - 120;
+            const cx = Math.max(0, Math.min(x, maxX)), cy = Math.max(0, Math.min(y, maxY));
+            ipod.style.position = 'fixed'; ipod.style.left = cx + 'px'; ipod.style.top = cy + 'px'; ipod.style.transform = 'none';
         }
-
         function endDrag() {
-            if (isDragging) {
-                isDragging = false;
-                ipodContainer.style.cursor = 'grab';
-
-                // Re-enable animations after a short delay
-                setTimeout(() => {
-                    if (!isDragging) {
-                        ipodContainer.style.animation = '';
-                    }
-                }, 100);
-
-                // Re-enable text selection
-                document.body.style.userSelect = '';
-            }
+            if (isDragging) { isDragging = false; ipod.style.cursor = 'grab'; setTimeout(() => { if (!isDragging) ipod.style.animation = ''; }, 100); document.body.style.userSelect = ''; }
         }
-
-        // Mouse events
-        ipodContainer.addEventListener('mousedown', startDrag);
+        ipod.addEventListener('mousedown', startDrag);
         document.addEventListener('mousemove', moveDrag);
         document.addEventListener('mouseup', endDrag);
 
-        // Keyboard support
-        document.addEventListener('DOMContentLoaded', function () {
-            document.getElementById('initialSongTitle').addEventListener('keypress', function (e) {
-                if (e.key === 'Enter') startRecommendationPlaylist();
-            });
-
-            document.getElementById('initialArtistName').addEventListener('keypress', function (e) {
-                if (e.key === 'Enter') startRecommendationPlaylist();
-            });
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('initialSongTitle').addEventListener('keypress', e => { if (e.key === 'Enter') startRecommendationPlaylist(); });
+            document.getElementById('initialArtistName').addEventListener('keypress', e => { if (e.key === 'Enter') startRecommendationPlaylist(); });
         });
 
-
-        // 🎵 DEBUG: Playlist status function
+        // Debug helpers
         function showPlaylistStatus() {
-            if (randomTracks.length === 0) {
-                console.log('🚫 No playlist loaded');
-                return;
-            }
-            
+            if (randomTracks.length === 0) { console.log('🚫 No playlist loaded'); return; }
             console.log(`\n📊 ===== PLAYLIST STATUS =====`);
             console.log(`📍 Position: ${currentTrackIndex + 1}/${randomTracks.length}`);
             console.log(`🎵 Current: ${current_track?.name || 'None'} - ${current_track?.artists?.map(a => a.name).join(', ') || 'Unknown'}`);
             console.log(`📋 Remaining tracks: ${randomTracks.length - currentTrackIndex - 1}`);
             console.log(`📊 Playback history: ${playbackHistory.length} entries`);
-            if (playbackHistory.length > 0) {
-                const avgCompletion = playbackHistory.reduce((a, b) => a + b, 0) / playbackHistory.length;
-                console.log(`📊 Average completion: ${avgCompletion.toFixed(1)}%`);
-            }
+            if (playbackHistory.length > 0) { const avg = playbackHistory.reduce((a, b) => a + b, 0) / playbackHistory.length; console.log(`📊 Average completion: ${avg.toFixed(1)}%`); }
             console.log(`🎯 Recommendation mode: ${isRecommendationMode ? 'ON' : 'OFF'}`);
             console.log(`============================\n`);
         }
-        
-        // Make it available in console
         window.showPlaylistStatus = showPlaylistStatus;
         window.showPlaylist = () => {
-            if (randomTracks.length === 0) {
-                console.log('🚫 No playlist loaded');
-                return;
-            }
+            if (randomTracks.length === 0) { console.log('🚫 No playlist loaded'); return; }
             console.log(`\n📋 ===== FULL PLAYLIST =====`);
-            randomTracks.forEach((track, index) => {
-                const trackInfo = track.spotify_track || track.track || track;
-                const name = trackInfo.name || track.track || 'Unknown Track';
-                const artists = trackInfo.artists ? 
-                    trackInfo.artists.map(a => a.name).join(', ') : 
-                    track.artist || 'Unknown Artist';
-                const current = index === currentTrackIndex ? ' ← CURRENT' : '';
-                const played = index < currentTrackIndex ? ' ✓' : '';
-                console.log(`  ${String(index + 1).padStart(2, '0')}. ${name} - ${artists}${current}${played}`);
+            randomTracks.forEach((t, i) => {
+                const x = t.spotify_track || t.track || t;
+                const name = x.name || t.track || 'Unknown Track';
+                const artists = x.artists ? x.artists.map(a => a.name).join(', ') : t.artist || 'Unknown Artist';
+                const current = i === currentTrackIndex ? ' ← CURRENT' : '';
+                const played = i < currentTrackIndex ? ' ✓' : '';
+                console.log(`  ${String(i + 1).padStart(2, '0')}. ${name} - ${artists}${current}${played}`);
             });
             console.log(`===========================\n`);
         };
-        
-        console.log('🎵 DEBUG: Playlist debugging enabled!');
-        console.log('📝 Use showPlaylistStatus() to see current status');
-        console.log('📝 Use showPlaylist() to see full playlist');
 
-        // Initialize
+        // Initialize visuals + auth
         createStars();
         setInterval(createDust, 2000);
         initializeAuth();
