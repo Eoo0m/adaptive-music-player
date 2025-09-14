@@ -378,15 +378,29 @@
 
         .search-input {
             width: 100%;
-            padding: 16px 24px;
-            margin: 12px 0;
+            padding: 10px 16px;
+            /* 기존 16px 24px → 줄임 */
+            margin: 8px 0;
+            /* 위아래 여백 줄임 */
             border: 2px solid rgba(255, 255, 255, .3);
-            border-radius: 30px;
+            border-radius: 20px;
+            /* 기존 30px → 줄여서 컴팩트하게 */
             background: rgba(255, 255, 255, .1);
             color: #fff;
-            font-size: 18px;
+            font-size: 14px;
+            /* 기존 18px → 줄임 */
             outline: none;
-            transition: .3s
+            transition: .3s;
+        }
+
+        .search-input:focus {
+            border-color: #1db954;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, .6);
+            font-size: 13px;
+            /* placeholder도 조금 줄임 */
         }
 
         .search-input:focus {
