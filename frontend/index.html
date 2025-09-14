@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>adaptive music player</title>
     <style>
-        /* --- 스타일 (기존과 동일) --- */
+        /* (스타일은 이전과 동일) */
         body {
             margin: 0;
             padding: 50px;
@@ -315,10 +315,6 @@
             font-family: Arial, sans-serif
         }
 
-        .control:active {
-            transform: scale(.95)
-        }
-
         .hidden {
             display: none !important
         }
@@ -463,7 +459,6 @@
         Eoo0m
     </a>
 
-    <!-- 로그인 -->
     <div class="login-screen" id="loginScreen">
         <h1>🎵 adaptive music player</h1>
         <p>동적인 음악 추천을 즐겨보세요</p>
@@ -471,7 +466,6 @@
         <div class="error-message" id="errorMessage"></div>
     </div>
 
-    <!-- 초기 검색 -->
     <div class="search-interface hidden" id="initialSongInput">
         <h2>🎵 어떤 음악을 좋아하시나요?</h2>
         <p>좋아하는 노래 하나를 입력하시면 음악을 추천해드려요.</p>
@@ -484,7 +478,6 @@
         <div id="initialSearchResults"></div>
     </div>
 
-    <!-- 현재 트랙 -->
     <div class="track-info hidden" id="trackInfo">
         <div class="track-name" id="trackName">노래 제목</div>
         <div class="artist-name" id="artistName">아티스트</div>
@@ -492,7 +485,6 @@
         </div>
     </div>
 
-    <!-- iPod 컨트롤 -->
     <div class="ipod-container" id="ipodContainer">
         <div class="clickwheel">
             <div class="control volume-up" id="volumeUp">+</div>
@@ -511,16 +503,13 @@
         let player, is_paused = true, current_track = null, device_id = null;
         let access_token = null, refresh_token = null;
 
-        let randomTracks = [];        // 현재 재생 목록(최대 10)
-        let currentTrackIndex = 0;    // 현재 인덱스
+        let randomTracks = [];
+        let currentTrackIndex = 0;
         let isRecommendationMode = false;
 
-        // 완료율 추적
         let trackStartTime = null, trackDuration = null;
         let playbackHistory = [];
         const maxHistoryLength = 3;
-
-        // 마지막으로 "완료율을 기록한" 트랙(시드 추출용 보조)
         let lastPlayedTrack = null;
 
         // ===== Auth =====
@@ -528,7 +517,6 @@
             const hashParams = new URLSearchParams(window.location.hash.substr(1));
             const storedToken = localStorage.getItem('spotify_access_token');
             const storedRefresh = localStorage.getItem('spotify_refresh_token');
-
             access_token = hashParams.get('access_token') || storedToken;
             refresh_token = hashParams.get('refresh_token') || storedRefresh;
 
@@ -570,21 +558,17 @@
                 current_track = state.track_window.current_track;
                 is_paused = state.paused;
 
-                // 새 곡 시작 감지: 이전 곡을 lastPlayedTrack으로 보존
                 if (previousTrack?.id && previousTrack?.id !== current_track?.id) {
                     lastPlayedTrack = previousTrack;
                 }
-
-                // 새 곡 타이밍 저장
                 if (previousTrack?.id !== current_track?.id && current_track) {
                     trackStartTime = Date.now();
                     trackDuration = current_track.duration_ms;
                 }
 
-                // 자연 종료되며 멈춘 순간: 완료율 기록 + 내부 판단으로 다음 곡
                 if (state.position === 0 && state.paused && current_track && trackStartTime) {
                     recordTrackCompletion('auto');
-                    setTimeout(() => playNextRandomTrack(), 600); // 인자 없이, 내부에서 diverse 여부 판단
+                    setTimeout(() => playNextRandomTrack(), 600);
                 } else {
                     updateTrackInfo(); updatePlayPauseIcon(); updateIPodState();
                 }
@@ -610,7 +594,7 @@
             } catch (e) { console.error('재생 장치 전환 오류:', e); }
         }
 
-        // ===== Debug logging helpers (★ 추가) =====
+        // ===== Debug helpers =====
         function fmtSeed(seed) {
             if (!seed) return 'Unknown seed';
             const title = seed.name || seed.track || 'Unknown';
@@ -636,11 +620,9 @@
             if (playbackHistory.length < 3) return false;
             const last3 = playbackHistory.slice(-3);
             const avg = last3.reduce((a, b) => a + b, 0) / 3;
-            return avg < 10; // 10% "미만"일 때 발동
+            return avg < 10; // 세 곡 평균 완료율 10% 미만
         }
-
         function getSeed() {
-            // 가장 신뢰도 높은 순서: 현재 재생중 > 방금 전 곡 > 플레이리스트 마지막 항목
             if (current_track?.id) return current_track;
             if (lastPlayedTrack?.id) return lastPlayedTrack;
             const last = randomTracks[randomTracks.length - 1];
@@ -658,7 +640,7 @@
             const t = track.spotify_track || track.track || track;
             const name = t.name || track.track || 'Unknown Track';
             const artists = t.artists ? t.artists.map(a => a.name).join(', ') : (track.artist || 'Unknown Artist');
-            const similarityText = track.similarity ? ` (${(track.similarity * 100).toFixed(1)}% similar)` : '';
+            const similarityText = (typeof track.similarity === 'number') ? ` (${(track.similarity * 100).toFixed(1)}% similar)` : '';
             console.log(`▶️ [${index + 1}/${randomTracks.length}] ${name} - ${artists}${similarityText}`);
 
             try {
@@ -669,7 +651,6 @@
                 });
             } catch (e) { console.error('트랙 재생 오류:', e); }
         }
-
         async function playSpotifyTrack(uri) {
             if (!device_id || !uri) return;
             try {
@@ -682,7 +663,6 @@
         }
 
         function recordTrackCompletion(reason = 'auto', currentPosition = 0) {
-            // 현재 재생중인 곡 기준으로 완료율 저장
             if (current_track && trackStartTime && trackDuration) {
                 let ratio;
                 if (reason === 'manual' && currentPosition > 0) {
@@ -701,22 +681,18 @@
             }
         }
 
+        // ===== NEXT logic (★ 다이버스 주입 우선) =====
         async function playNextRandomTrack() {
             const seed = getSeed();
             if (!seed) { console.warn('⚠️ 시드 트랙을 찾을 수 없습니다.'); return; }
 
             const wantDiverse = shouldUseDiverse();
 
-            // ✅ 조건 충족 시: 기존 플레이리스트 즉시 비우고 다이버스 추천
+            // 1) 다이버스 조건이면: 기존 리스트 유지 + 현재곡 다음 위치에 10곡 주입
             if (wantDiverse && seed.id) {
                 try {
-                    console.log('🔴 Low engagement detected (<10%). Clearing playlist & requesting DIVERSE…');
-                    // 현재 리스트 비우기
-                    randomTracks = [];
-                    currentTrackIndex = 0;
-                    isRecommendationMode = false;
+                    console.log('🔴 Low engagement (<10%). Injecting 10 DIVERSE tracks after current…');
 
-                    // 1) 먼 추천(트랙 ID 기반)
                     const r1 = await fetch(`${API_BASE_URL}/recommend-diverse`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -727,7 +703,6 @@
                     const recs = d1.recommendations || [];
                     if (recs.length === 0) throw new Error('diverse_empty');
 
-                    // 2) Spotify URI 매핑
                     const r2 = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -735,43 +710,46 @@
                     });
                     if (!r2.ok) { console.error('❌ find-spotify-tracks', r2.status, await r2.text()); throw new Error('find_spotify_failed'); }
                     const d2 = await r2.json();
-                    const spts = d2.spotify_tracks || [];
-                    if (spts.length === 0) throw new Error('find_spotify_empty');
+                    let newTracks = (d2.spotify_tracks || []).slice(0, 10);
+                    if (newTracks.length === 0) throw new Error('find_spotify_empty');
 
-                    randomTracks = spts.slice(0, 10);
-                    currentTrackIndex = 0;
-                    isRecommendationMode = true;
+                    // (선택) 중복 제거: uri 기준으로 현재 리스트와 겹치면 제외
+                    const existingUris = new Set(randomTracks.map(t => (t.uri || t.spotify_track?.uri || t.track?.uri)));
+                    newTracks = newTracks.filter(t => !existingUris.has(t.uri || t.spotify_track?.uri || t.track?.uri));
 
-                    // 루프 방지: 참여도 리셋
-                    playbackHistory = [];
+                    // ★ 현재곡 다음에 새 10곡 끼워넣기
+                    const head = randomTracks.slice(0, currentTrackIndex + 1);
+                    const tail = randomTracks.slice(currentTrackIndex + 1);
+                    randomTracks = [...head, ...newTracks, ...tail];
+
                     updateRecommendationMode('diverse');
+                    logRecommendationList('DIVERSE (injected)', seed, newTracks);
 
-                    // ★ 디버그: 시드 + 추천목록(유사도 포함)
-                    logRecommendationList('DIVERSE', seed, randomTracks);
-
-                    await playSpotifyTrack(randomTracks[0].uri || randomTracks[0].track?.uri);
-                    console.log(`🔴 DIVERSE playlist loaded: ${randomTracks.length} tracks`);
+                    // 주입 직후: 다음 트랙(방금 끼운 첫 곡)으로 진행
+                    currentTrackIndex++;
+                    await playTrackAtIndex(currentTrackIndex);
                     return;
                 } catch (e) {
-                    console.error('⚠️ Diverse fetch failed, no playlist present:', e?.message || e);
-                    return; // 비운 뒤 실패 시 억지 재생 안 함(원하면 여기서 유사 추천으로 폴백 가능)
+                    console.error('⚠️ Diverse injection failed:', e?.message || e);
+                    // 주입 실패 시 아래 일반 로직으로 폴백
                 }
             }
 
-            // ⬇️ 평상시 동작: 현재 리스트에 다음 곡이 있으면 그거 재생
+            // 2) 평상시: 현재 리스트에 다음 곡이 있으면 그걸 재생
             if (isRecommendationMode && randomTracks.length > 0 && currentTrackIndex < randomTracks.length - 1) {
                 currentTrackIndex++;
                 await playTrackAtIndex(currentTrackIndex);
                 return;
             }
 
-            // ⬇️ 리스트가 끝났거나 비어있을 때: 유사 추천으로 새 리스트 구성
+            // 3) 리스트가 끝났거나 비어있으면: 유사 추천으로 새 10곡 구성
             try {
                 console.log('🟢 Requesting SIMILAR…');
                 const title = seed?.name || '';
                 const artist = seed?.artists?.[0]?.name || '';
                 const r1 = await fetch(`${API_BASE_URL}/recommend`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ song_title: title, artist_name: artist || null, num_recommendations: 30 })
                 });
                 if (!r1.ok) { console.error('❌ recommend', r1.status, await r1.text()); throw new Error('similar_failed'); }
@@ -780,7 +758,8 @@
                 if (recs.length === 0) throw new Error('similar_empty');
 
                 const r2 = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ tracks: recs, access_token })
                 });
                 if (!r2.ok) { console.error('❌ find-spotify-tracks', r2.status, await r2.text()); throw new Error('find_spotify_failed'); }
@@ -793,7 +772,6 @@
                 isRecommendationMode = true;
                 updateRecommendationMode('similar');
 
-                // ★ 디버그: 시드 + 추천목록(유사도 포함)
                 logRecommendationList('SIMILAR', seed, randomTracks);
 
                 await playSpotifyTrack(randomTracks[0].uri || randomTracks[0].track?.uri);
@@ -804,11 +782,8 @@
         }
 
         async function playPreviousRandomTrack() {
-            // 수동 이전: 현재 위치를 완료율로 기록(낮음)
             let pos = 0;
-            if (player) {
-                try { const st = await player.getCurrentState(); pos = st ? st.position : 0; } catch { }
-            }
+            if (player) { try { const st = await player.getCurrentState(); pos = st ? st.position : 0; } catch { } }
             recordTrackCompletion('manual', pos);
 
             if (randomTracks.length === 0) return;
@@ -827,7 +802,6 @@
                 } else { logout(); }
             } catch (e) { console.error('토큰 새로고침 오류:', e); logout(); }
         }
-
         function logout() {
             localStorage.removeItem('spotify_access_token');
             localStorage.removeItem('spotify_refresh_token');
@@ -837,7 +811,7 @@
             document.getElementById('trackInfo').classList.add('hidden');
         }
 
-        // ===== UI 업데이트 =====
+        // ===== UI =====
         function updateTrackInfo() {
             if (!current_track) return;
             document.getElementById('trackName').textContent = current_track.name;
@@ -845,7 +819,6 @@
             document.getElementById('trackInfo').classList.remove('hidden');
             updateMediaSession();
         }
-
         function updateMediaSession() {
             if (!('mediaSession' in navigator) || !current_track) return;
             navigator.mediaSession.metadata = new MediaMetadata({
@@ -860,7 +833,6 @@
             navigator.mediaSession.setActionHandler('nexttrack', async () => { await onNextPressed(); });
             navigator.mediaSession.playbackState = is_paused ? 'paused' : 'playing';
         }
-
         function updatePlayPauseIcon() {
             document.getElementById('playPauseIcon').textContent = is_paused ? '▶' : '‖';
             if ('mediaSession' in navigator) navigator.mediaSession.playbackState = is_paused ? 'paused' : 'playing';
@@ -876,9 +848,7 @@
             if (mode === 'diverse') el.classList.add('diverse-mode');
             setTimeout(() => { el.classList.remove('similar-mode', 'diverse-mode'); }, 3000);
         }
-
         async function togglePlayPause() { if (player) await player.togglePlay(); }
-
         async function adjustVolume(delta) {
             if (!player) return;
             try {
@@ -892,7 +862,7 @@
             } catch (e) { console.error('볼륨 조절 오류:', e); }
         }
 
-        // ===== 초기 추천 흐름 =====
+        // ===== 초기 추천 =====
         async function startRecommendationPlaylist() {
             const songTitle = document.getElementById('initialSongTitle').value.trim();
             const artistName = document.getElementById('initialArtistName').value.trim();
@@ -912,7 +882,6 @@
             } catch (e) { console.error('Initial recommendation error:', e); alert('추천 시스템에 연결할 수 없습니다.'); }
             finally { btn.disabled = false; btn.textContent = '시작하기'; }
         }
-
         async function setupInitialPlaylist(recommendations, originalSong) {
             try {
                 const r = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
@@ -921,6 +890,7 @@
                 });
                 if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
                 const d = await r.json();
+
                 if (d.spotify_tracks?.length > 0) {
                     randomTracks = d.spotify_tracks.slice(0, 10);
                     currentTrackIndex = 0;
@@ -928,15 +898,13 @@
                     playbackHistory = [];
                     updateRecommendationMode('similar');
 
-                    // ★ 디버그: 시드(originalSong) + 추천목록(유사도 포함)
                     logRecommendationList('SIMILAR', originalSong?.spotify_track || originalSong, randomTracks);
 
                     console.log(`🎵 Initial playlist created: ${randomTracks.length} tracks`);
                     document.getElementById('initialSongInput').classList.add('hidden');
                     document.getElementById('trackInfo').classList.remove('hidden');
 
-                    if (!player) initializeSpotifyPlayer();
-                    else playTrackAtIndex(0);
+                    if (!player) initializeSpotifyPlayer(); else playTrackAtIndex(0);
                 } else {
                     alert('Spotify에서 추천곡들을 찾을 수 없습니다. 다른 노래를 시도해보세요.');
                 }
@@ -960,7 +928,6 @@
                 document.getElementById('initialSearchResults').innerHTML = '<div class="error-message">검색 서비스에 연결할 수 없습니다.</div>';
             } finally { btn.disabled = false; btn.textContent = '검색'; }
         }
-
         function displayInitialSearchResults(results) {
             const div = document.getElementById('initialSearchResults');
             if (results.length === 0) { div.innerHTML = '<div class="error-message">검색 결과가 없습니다.</div>'; return; }
@@ -1009,46 +976,19 @@
         // ===== Controls =====
         document.getElementById('centerButton').addEventListener('click', async () => { await togglePlayPause(); });
 
-        // 다음 버튼: 수동 스킵 완료율 기록 + 다음 로직
         async function onNextPressed() {
             console.log('🔴 Next button clicked!');
             let pos = 0;
             if (player) { try { const st = await player.getCurrentState(); pos = st ? st.position : 0; } catch { } }
             recordTrackCompletion('manual', pos);
-
-            // “10곡 다 들음 + 다음 버튼”일 경우: 현재는 인덱스가 마지막이라 새 추천을 받아오도록 아래 함수가 처리
             await playNextRandomTrack();
         }
         document.getElementById('nextBtn').addEventListener('click', onNextPressed);
-
         document.getElementById('prevBtn').addEventListener('click', async () => { await playPreviousRandomTrack(); });
         document.getElementById('volumeUp').addEventListener('click', () => adjustVolume(0.1));
         document.getElementById('volumeDown').addEventListener('click', () => adjustVolume(-0.1));
 
-        // 드래그 이동
-        let isDragging = false, dragOffset = { x: 0, y: 0 }; const ipod = document.getElementById('ipodContainer');
-        function startDrag(e) {
-            if (e.target.classList.contains('control') || e.target.classList.contains('center-button') || e.target.classList.contains('play-pause')) return;
-            isDragging = true;
-            const r = ipod.getBoundingClientRect();
-            dragOffset.x = e.clientX - r.left; dragOffset.y = e.clientY - r.top;
-            ipod.style.cursor = 'grabbing'; ipod.style.animation = 'none'; document.body.style.userSelect = 'none';
-        }
-        function moveDrag(e) {
-            if (!isDragging) return;
-            const x = e.clientX - dragOffset.x, y = e.clientY - dragOffset.y;
-            const maxX = window.innerWidth - 120, maxY = window.innerHeight - 120;
-            const cx = Math.max(0, Math.min(x, maxX)), cy = Math.max(0, Math.min(y, maxY));
-            ipod.style.position = 'fixed'; ipod.style.left = cx + 'px'; ipod.style.top = cy + 'px'; ipod.style.transform = 'none';
-        }
-        function endDrag() {
-            if (isDragging) { isDragging = false; ipod.style.cursor = 'grab'; setTimeout(() => { if (!isDragging) ipod.style.animation = ''; }, 100); document.body.style.userSelect = ''; }
-        }
-        ipod.addEventListener('mousedown', startDrag);
-        document.addEventListener('mousemove', moveDrag);
-        document.addEventListener('mouseup', endDrag);
-
-        // 엔터 키로 시작
+        // 엔터로 시작
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('initialSongTitle').addEventListener('keypress', e => { if (e.key === 'Enter') startRecommendationPlaylist(); });
             document.getElementById('initialArtistName').addEventListener('keypress', e => { if (e.key === 'Enter') startRecommendationPlaylist(); });
