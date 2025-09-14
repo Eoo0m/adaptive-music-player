@@ -170,18 +170,59 @@ app.post('/recommend', async (req, res) => {
 });
 
 // 다양한 추천(로컬 엔진) — 프론트가 current_track_id를 보내면 그대로 파이썬으로 프록시
-app.post('/recommend-diverse', async (req, res) => {
+// server.js 에 추가 (기존 라우트들 아래 아무 곳)
+app.post('/recommend-diverse-tracks', async (req, res) => {
+  const { spotify_track, access_token } = req.body;
+  if (!access_token || !spotify_track) {
+    return res.status(400).json({ error: 'Missing access token or track info' });
+  }
+
   try {
-    const r = await fetch('http://127.0.0.1:5001/recommend-diverse', {
+    // 토큰 검증
+    const me = await fetch('https://api.spotify.com/v1/me', {
+      headers: { 'Authorization': `Bearer ${access_token}` }
+    });
+    if (!me.ok) return res.status(401).json({ error: 'Invalid or expired access token' });
+
+    // 1) 로컬 검색으로 track_id 찾기
+    const query = `${spotify_track.name} ${spotify_track.artists?.[0]?.name || ''}`.trim();
+    const searchR = await fetch('http://127.0.0.1:5001/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req.body)
+      body: JSON.stringify({ query })
     });
-    const body = await r.text(); // 에러 메시지 보전 위해 text로 받고…
-    res.status(r.status).type('application/json').send(body);
+    if (!searchR.ok) return res.status(502).json({ error: 'search failed', status: searchR.status, text: await searchR.text() });
+    const searchData = await searchR.json();
+    const best = (searchData.results || [])[0];
+    if (!best?.track_id) return res.json({ spotify_tracks: [] });
+
+    // 2) diverse 추천 (track_id 기반)
+    const diverseR = await fetch('http://127.0.0.1:5001/recommend-diverse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ current_track_id: best.track_id, num_recommendations: 15 })
+    });
+    if (!diverseR.ok) return res.status(502).json({ error: 'diverse failed', status: diverseR.status, text: await diverseR.text() });
+    const diverseData = await diverseR.json();
+
+    // 3) Spotify 매칭 (최대 10개)
+    const out = [];
+    for (const rec of (diverseData.recommendations || []).slice(0, 10)) {
+      const q = `track:"${rec.track}" artist:"${rec.artist}"`;
+      const s = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=1`, {
+        headers: { 'Authorization': `Bearer ${access_token}` }
+      });
+      if (s.ok) {
+        const sj = await s.json();
+        const it = sj?.tracks?.items?.[0];
+        if (it) out.push({ ...rec, spotify_track: it, uri: it.uri, preview_url: it.preview_url, track: it });
+      }
+    }
+
+    res.json({ spotify_tracks: out });
   } catch (e) {
-    console.error('Diverse proxy error:', e);
-    res.status(500).json({ error: 'diverse service unavailable' });
+    console.error('recommend-diverse-tracks error:', e);
+    res.status(500).json({ error: 'Failed to get diverse recommendations' });
   }
 });
 

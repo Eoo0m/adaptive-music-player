@@ -773,13 +773,13 @@
                 try {
                     console.log('🔴 Low engagement (<10%). Injecting 10 DIVERSE tracks after current…');
 
-                    const diverseResp = await fetch(`${API_BASE_URL}/recommend-diverse`, {
+                    const diverseResp = await fetch(`${API_BASE_URL}/recommend-diverse-tracks`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ spotify_track: seed, access_token })
                     });
                     if (!diverseResp.ok) {
-                        console.error('❌ recommend-diverse', diverseResp.status, await diverseResp.text());
+                        console.error('❌ recommend-diverse-tracks', diverseResp.status, await diverseResp.text());
                         throw new Error('diverse_failed');
                     }
                     const diverseData = await diverseResp.json();
