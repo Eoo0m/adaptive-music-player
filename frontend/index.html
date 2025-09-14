@@ -768,7 +768,7 @@
 
             const wantDiverse = shouldUseDiverse();
 
-            // 1) 다이버스 조건 → 현재곡 다음에 10곡 주입 (락 걸기)
+            // ===== [교체] 다이버스 조건 → 현재곡 다음에 10곡 주입 (락 걸기) =====
             if (wantDiverse && seed.id) {
                 try {
                     console.log('🔴 Low engagement (<10%). Injecting 10 DIVERSE tracks after current…');
@@ -778,19 +778,40 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ spotify_track: seed, access_token })
                     });
+
                     if (!diverseResp.ok) {
                         console.error('❌ recommend-diverse-tracks', diverseResp.status, await diverseResp.text());
                         throw new Error('diverse_failed');
                     }
+
                     const diverseData = await diverseResp.json();
-                    let newTracks = (diverseData.spotify_tracks || []).slice(0, 10);
-                    if (newTracks.length === 0) throw new Error('diverse_empty');
+                    if (diverseData.debug) console.log('[DIVERSE debug]', diverseData.debug);
+
+                    const raw = diverseData.spotify_tracks || [];
+                    console.log('[DIVERSE] server returned:', raw.length);
+
+                    let newTracks = raw.slice(0, 12); // 넉넉히 받아서 중복 제거 후 10개로 수렴
+                    if (newTracks.length === 0) {
+                        console.warn('[DIVERSE] empty from server');
+                        throw new Error('diverse_empty_server');
+                    }
 
                     // 중복 제거
-                    const existingUris = new Set(randomTracks.map(t => (t.uri || t.spotify_track?.uri || t.track?.uri)));
+                    const existingUris = new Set(
+                        randomTracks.map(t => (t.uri || t.spotify_track?.uri || t.track?.uri))
+                    );
+                    const before = newTracks.length;
                     newTracks = newTracks.filter(t => !existingUris.has(t.uri || t.spotify_track?.uri || t.track?.uri));
+                    console.log('[DIVERSE] dedup:', before, '→', newTracks.length);
 
-                    // ✅ 다이버스 태그 달기 + 락
+                    if (newTracks.length === 0) {
+                        console.warn('[DIVERSE] all deduped; fallback to SIMILAR');
+                        await fetchAndInjectSimilarAfterCurrent(seed);
+                        return;
+                    }
+
+                    // ✅ 다이버스 태그 + 락
+                    newTracks = newTracks.slice(0, 10);
                     newTracks.forEach(t => t[DIVERSE_TAG] = true);
                     diverseLock = true;
 
@@ -802,10 +823,11 @@
                     updateRecommendationMode('diverse');
                     logRecommendationList('DIVERSE (injected)', seed, newTracks);
 
-                    // 바로 다음 트랙(방금 끼운 첫 곡) 재생
+                    // 방금 끼운 첫 곡 재생
                     currentTrackIndex++;
                     await playTrackAtIndex(currentTrackIndex);
                     return;
+
                 } catch (e) {
                     console.error('⚠️ Diverse injection failed:', e?.message || e);
                     // 실패 시 아래 일반 로직으로 폴백
