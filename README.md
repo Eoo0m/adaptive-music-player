@@ -21,12 +21,22 @@ task: spotify genre 400여개 기준 genre prediction
 
 **Top-1 Acc: 0.6207, Top-5 Acc: 0.8856을 달성.**
 
+---
+
 
 ## **Frontend (Cloudflare Pages)**
 
-github repo auto deploy
+- GitHub Repo → Cloudflare Pages 자동 배포
+- Pure HTML/CSS/JS 기반 iPod-style Player UI
+- OAuth Access Token → Web Playback SDK 연동
 
-## Backend (Node.js + PM2 + Nginx, Naver Cloud)
+---
+
+
+## Backend (Node.js api server)
+
+환경: PM2, Nginx Reverse Proxy, Ubuntu(Naver Cloud)
+
 
 ### **🎯GET /login**
 
@@ -49,6 +59,8 @@ github repo auto deploy
 **트랙  key→ Spotify 트랙 URI 매핑**
 
 ### **🎯GET /health**
+
+---
 
 ## Database (Supabase PostgreSQL + RPC 함수)
 
