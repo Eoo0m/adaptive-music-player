@@ -746,7 +746,10 @@
         }
 
         function recordTrackCompletion(reason = 'auto', currentPosition = 0) {
-            if (current_track && trackStartTime && trackDuration) {
+            // 🎵 이전 곡의 정보를 사용 (트랙 변경 시 lastPlayedTrack에 저장됨)
+            const trackToLog = lastPlayedTrack;
+
+            if (trackToLog && trackStartTime && trackDuration) {
                 let ratio;
                 let playedMs;
                 if (reason === 'manual' && currentPosition > 0) {
@@ -765,17 +768,19 @@
                 }
 
                 // ✅ Supabase에 듣는 기록 저장
-                const currentPlaylistTrack = playlist[currentTrackIndex];
+                const currentPlaylistTrack = playlist[currentTrackIndex - 1] || playlist[currentTrackIndex];
                 const similarityScore = currentPlaylistTrack?.similarity || null;
                 const isDiverse = currentPlaylistTrack?.[DIVERSE_TAG] || false;
                 const recommendationMode = isDiverse ? 'diverse' : 'similar';
 
+                console.log(`📝 Logging: ${trackToLog.name} - ${ratio.toFixed(1)}% completed`);
+
                 logListeningData({
-                    track_name: current_track.name,
-                    artist_name: current_track.artists?.map(a => a.name).join(', ') || 'Unknown',
-                    album_name: current_track.album?.name || null,
-                    spotify_uri: current_track.uri || null,
-                    spotify_track_id: current_track.id || null,
+                    track_name: trackToLog.name,
+                    artist_name: trackToLog.artists?.map(a => a.name).join(', ') || 'Unknown',
+                    album_name: trackToLog.album?.name || null,
+                    spotify_uri: trackToLog.uri || null,
+                    spotify_track_id: trackToLog.id || null,
                     duration_ms: trackDuration,
                     played_duration_ms: Math.min(playedMs, trackDuration),
                     completion_percentage: Math.min(ratio, 100).toFixed(2),
