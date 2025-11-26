@@ -1,6 +1,11 @@
 
 # 🎧 DynPlayer — Adaptive Music Recommendation Player
 
+>https://dynplayer.win
+
+<img width="588" height="510" alt="Screenshot 2025-11-26 at 3 11 39 PM" src="https://github.com/user-attachments/assets/4620573d-a787-4377-b68a-949ebb9bd2a8" />
+
+
 
 <img width="719" height="346" alt="Screenshot 2025-11-26 at 3 04 46 PM" src="https://github.com/user-attachments/assets/cd0ce653-f5c4-4781-8efb-a2aa25e28dd9" />
 
