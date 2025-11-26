@@ -1,211 +1,86 @@
-# 🎵 Dynamic Music Player
 
-Supabase 임베딩 기반 음악 추천 플레이어
+# 🎧 DynPlayer — Adaptive Music Recommendation Player
 
-## 기능
+>https://dynplayer.win
 
-- **검색 기반 추천**: 노래를 검색하고 선택하면 Supabase 벡터 임베딩을 활용해 유사한 음악을 추천
-- **적응형 재생**: 사용자의 청취 패턴에 따라 유사한(Similar) 또는 다양한(Diverse) 음악을 자동 추천
-- **Spotify 통합**: Spotify Web Playback SDK를 사용한 실시간 재생
+<img width="588" height="510" alt="Screenshot 2025-11-26 at 3 11 39 PM" src="https://github.com/user-attachments/assets/4620573d-a787-4377-b68a-949ebb9bd2a8" />
 
-## 설정 방법
 
-### 1. 환경 변수 설정
 
-`.env` 파일을 생성하고 다음 정보를 입력하세요:
+<img width="719" height="346" alt="Screenshot 2025-11-26 at 3 04 46 PM" src="https://github.com/user-attachments/assets/cd0ce653-f5c4-4781-8efb-a2aa25e28dd9" />
 
-```bash
-# Spotify OAuth
-SPOTIFY_CLIENT_ID=your_spotify_client_id
-SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
-REDIRECT_URI=https://api.dynplayer.win/callback
+## Embedding(Contrastive Learning)
 
-# Supabase
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_anon_key
+대조학습 기반 트랙 임베딩 학습
 
-# Server
-PORT=8889
-```
+<img width="499" height="342" alt="image" src="https://github.com/user-attachments/assets/bc434300-790c-4726-86e0-68ec2aabd536" />
 
-### 2. Supabase 데이터베이스 설정
 
-다음 함수들을 Supabase에서 생성해야 합니다:
+> $\ell_i = -\log\sum_{j\in P_i} p(j\mid i)
+= \log\sum_{k\neq i}e^{s_{ik}} - \log\sum_{j\in P_i}e^{s_{ij}}$
 
-#### `search_tracks_by_title` 함수
 
-```sql
-create or replace function search_tracks_by_title(
-  query_text text,
-  match_count int default 10
-)
-returns table (
-  id int8,
-  track_key text,
-  title text,
-  artist text,
-  album text,
-  pos_count int,
-  similarity float
-)
-language sql
-as $$
-  with candidates as (
-    select *
-    from track_embeddings
-    where title ilike '%' || query_text || '%'
-       or artist ilike '%' || query_text || '%'
-    limit 50
-  )
-  select
-    id,
-    track_key,
-    title,
-    artist,
-    album,
-    pos_count,
-    1 - (embedding <=> (
-        select embedding
-        from candidates
-        order by pos_count desc
-        limit 1
-    )) as similarity
-  from candidates
-  order by embedding <=> (
-      select embedding
-      from candidates
-      order by pos_count desc
-      limit 1
-  )
-  limit match_count;
-$$;
-```
+**linear evaluation:**
 
-#### `match_tracks_by_key` 함수
+task: spotify genre 400여개 기준 genre prediction
 
-```sql
-create or replace function match_tracks_by_key(
-  input_track_key text,
-  match_count int default 10
-)
-returns table (
-  id int8,
-  track_key text,
-  title text,
-  artist text,
-  album text,
-  pos_count int,
-  similarity float
-)
-language sql
-as $$
-  with base as (
-    select embedding
-    from track_embeddings
-    where track_key = input_track_key
-    limit 1
-  )
-  select
-    t.id,
-    t.track_key,
-    t.title,
-    t.artist,
-    t.album,
-    t.pos_count,
-    1 - (t.embedding <=> base.embedding) as similarity
-  from track_embeddings t, base
-  where t.track_key != input_track_key
-  order by t.embedding <=> base.embedding
-  limit match_count;
-$$;
-```
+**Top-1 Acc: 0.6207, Top-5 Acc: 0.8856을 달성.**
 
-### 3. 의존성 설치
+---
 
-```bash
-npm install
-```
 
-### 4. 서버 실행
+## **Frontend (Cloudflare Pages)**
 
-```bash
-npm start
-```
+- GitHub Repo → Cloudflare Pages 자동 배포
+- Pure HTML/CSS/JS 기반 iPod-style Player UI
+- OAuth Access Token → Web Playback SDK 연동
 
-서버는 `http://127.0.0.1:8889`에서 실행됩니다.
+---
 
-## API 엔드포인트
 
-### POST `/search-songs`
-노래 제목이나 아티스트로 검색합니다.
+## Backend (Node.js api server)
 
-**요청:**
-```json
-{
-  "query": "love"
-}
-```
+환경: PM2, Nginx Reverse Proxy, Ubuntu(Naver Cloud)
 
-**응답:**
-```json
-{
-  "results": [
-    {
-      "track_id": 5823,
-      "track_key": "7qEHsqek33rTcFNT9PFqLf",
-      "track": "Someone You Loved",
-      "artist": "Lewis Capaldi",
-      "album": "Divinely Uninspired To A Hellish Extent",
-      "pos_count": 1022,
-      "similarity": 1
-    }
-  ]
-}
-```
 
-### POST `/recommend`
-특정 트랙과 유사한 음악을 추천합니다.
+### **🎯GET /login**
 
-**요청:**
-```json
-{
-  "track_key": "7qEHsqek33rTcFNT9PFqLf",
-  "num_recommendations": 30
-}
-```
+**Spotify OAuth 로그인 시작**
 
-### POST `/recommend-diverse-tracks`
-다양한 음악을 추천합니다.
+### **🎯GET /callback?code=…**
 
-**요청:**
-```json
-{
-  "spotify_track": {
-    "name": "Someone You Loved",
-    "artists": [{"name": "Lewis Capaldi"}]
-  },
-  "access_token": "your_spotify_access_token"
-}
-```
+**Spotify authorization code → access_token 교환**
 
-### POST `/find-spotify-tracks`
-로컬 추천 결과를 Spotify 트랙으로 매칭합니다.
+### **🎯POST /search-songs**
 
-## 사용 방법
+**제목·아티스트 검색 → Supabase RPC(search_tracks_by_title)**
 
-1. Spotify 계정으로 로그인
-2. 검색창에 좋아하는 노래 제목이나 아티스트 입력
-3. 검색 결과에서 곡 선택
-4. 자동으로 유사한 음악 플레이리스트 생성 및 재생
+### **🎯POST /recommend**
 
-## 기술 스택
+**track_key 기반 유사 트랙 추천 → Supabase RPC(match_tracks_by_key)**
 
-- **Frontend**: Vanilla JavaScript, HTML5, CSS3
-- **Backend**: Node.js, Express
-- **Database**: Supabase (PostgreSQL + pgvector)
-- **Music**: Spotify Web API & Web Playback SDK
-- **Vector Search**: pgvector cosine similarity
+### **🎯POST /find-spotify-tracks**
 
-## 라이선스
+**트랙  key→ Spotify 트랙 URI 매핑**
 
-MIT
+### **🎯GET /health**
+
+---
+
+## Database (Supabase PostgreSQL + RPC 함수)
+
+| **track_key** | **embeddings** | **artist** | **song_title** | **pos_count** | **album** |
+| --- | --- | --- | --- | --- | --- |
+| **3QaPy1KgI7nu9FJEQUgn6h** | **[0.12,0.32…]** | **Billie Eilish** | **WILDFLOWER**| **668** | **HIT ME HARD AND SOFT** |
+
+### **🎯match_tracks_by_key**
+
+“임베딩 기반 유사도 계산” 수행
+
+- 입력: track_key
+- 출력: (추천 후보 30개)
+
+### **🎯search_songs**
+
+- 입력: 텍스트 쿼리
+- 출력: track_key 리스트
