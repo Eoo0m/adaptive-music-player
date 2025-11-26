@@ -337,6 +337,59 @@ app.get('/random-tracks', async (req, res) => {
     }
 });
 
+// ---------------- Listening Log ----------------
+// 듣는 기록 저장
+app.post('/log-listening', async (req, res) => {
+    const {
+        track_name,
+        artist_name,
+        album_name,
+        spotify_uri,
+        spotify_track_id,
+        duration_ms,
+        played_duration_ms,
+        completion_percentage,
+        recommendation_mode,
+        similarity_score,
+        session_id
+    } = req.body;
+
+    if (!track_name || !artist_name) {
+        return res.status(400).json({ error: 'Missing required fields: track_name, artist_name' });
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('listening_logs')
+            .insert([
+                {
+                    track_name,
+                    artist_name,
+                    album_name: album_name || null,
+                    spotify_uri: spotify_uri || null,
+                    spotify_track_id: spotify_track_id || null,
+                    duration_ms: duration_ms || null,
+                    played_duration_ms: played_duration_ms || null,
+                    completion_percentage: completion_percentage || null,
+                    recommendation_mode: recommendation_mode || null,
+                    similarity_score: similarity_score || null,
+                    session_id: session_id || null
+                }
+            ])
+            .select();
+
+        if (error) {
+            console.error('Supabase insert error:', error);
+            return res.status(500).json({ error: 'Failed to log listening data' });
+        }
+
+        res.json({ success: true, data });
+    } catch (e) {
+        console.error('log-listening error:', e);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // ---------------- Root / 404 ----------------
 app.get('/', (_req, res) => res.send('dynplayer API'));
 app.use((_req, res) => res.status(404).json({ error: 'not found' }));

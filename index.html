@@ -545,6 +545,48 @@
         let playlist = [];                // 현재 플레이리스트
         let currentTrackIndex = 0;        // 재생 인덱스
 
+        // ===== Playback Tracking =====
+        let trackStartTime = null;        // 현재 트랙 시작 시간
+        let trackDuration = null;         // 현재 트랙 총 길이(ms)
+        let lastPlayedTrack = null;       // 이전에 재생한 트랙
+        let playbackHistory = [];         // 재생 완료율 히스토리
+        const maxHistoryLength = 10;      // 히스토리 최대 길이
+        const DIVERSE_TAG = Symbol('diverse'); // 다이버스 모드 태그
+        let diverseLock = false;          // 다이버스 모드 락
+
+        // ===== Listening Log =====
+        let sessionId = null;             // 세션 ID (로그인 시 생성)
+
+        function generateSessionId() {
+            return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        }
+
+        async function logListeningData(trackData) {
+            if (!trackData || !trackData.track_name || !trackData.artist_name) {
+                console.warn('⚠️ Skipping log: missing track data');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/log-listening`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...trackData,
+                        session_id: sessionId
+                    })
+                });
+
+                if (!response.ok) {
+                    console.error('❌ Failed to log listening data:', response.status);
+                } else {
+                    console.log('✅ Listening data logged successfully');
+                }
+            } catch (e) {
+                console.error('❌ Error logging listening data:', e);
+            }
+        }
+
         // ===== Auth =====
         function initializeAuth() {
             const hashParams = new URLSearchParams(window.location.hash.substr(1));
@@ -560,6 +602,11 @@
             if (access_token) {
                 localStorage.setItem('spotify_access_token', access_token);
                 if (refresh_token) localStorage.setItem('spotify_refresh_token', refresh_token);
+
+                // 세션 ID 생성
+                sessionId = generateSessionId();
+                console.log('🎵 Session started:', sessionId);
+
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('initialSongInput').classList.remove('hidden');
                 window.location.hash = '';
@@ -699,11 +746,13 @@
         function recordTrackCompletion(reason = 'auto', currentPosition = 0) {
             if (current_track && trackStartTime && trackDuration) {
                 let ratio;
+                let playedMs;
                 if (reason === 'manual' && currentPosition > 0) {
                     ratio = (currentPosition / trackDuration) * 100;
+                    playedMs = currentPosition;
                 } else {
-                    const played = Date.now() - trackStartTime;
-                    ratio = Math.min((played / trackDuration) * 100, 100);
+                    playedMs = Date.now() - trackStartTime;
+                    ratio = Math.min((playedMs / trackDuration) * 100, 100);
                 }
                 playbackHistory.push(ratio);
                 if (playbackHistory.length > maxHistoryLength) playbackHistory.shift();
@@ -712,6 +761,25 @@
                     const avg = playbackHistory.reduce((a, b) => a + b, 0) / playbackHistory.length;
                     console.log(`📊 Engagement: ${avg.toFixed(1)}%`);
                 }
+
+                // ✅ Supabase에 듣는 기록 저장
+                const currentPlaylistTrack = playlist[currentTrackIndex];
+                const similarityScore = currentPlaylistTrack?.similarity || null;
+                const isDiverse = currentPlaylistTrack?.[DIVERSE_TAG] || false;
+                const recommendationMode = isDiverse ? 'diverse' : 'similar';
+
+                logListeningData({
+                    track_name: current_track.name,
+                    artist_name: current_track.artists?.map(a => a.name).join(', ') || 'Unknown',
+                    album_name: current_track.album?.name || null,
+                    spotify_uri: current_track.uri || null,
+                    spotify_track_id: current_track.id || null,
+                    duration_ms: trackDuration,
+                    played_duration_ms: Math.min(playedMs, trackDuration),
+                    completion_percentage: Math.min(ratio, 100).toFixed(2),
+                    recommendation_mode: recommendationMode,
+                    similarity_score: similarityScore
+                }).catch(err => console.error('Failed to log listening data:', err));
 
                 // ✅ 다이버스 트랙을 10% 이상 들었으면 → 해당 곡 기반 유사 10곡 주입 + 락 해제
                 maybeConvertDiverseToSimilar(ratio).catch(() => { });
