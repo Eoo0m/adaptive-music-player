@@ -51,8 +51,7 @@ github repo auto deploy
 
 | **track_key** | **embeddings** | **artist** | **song_title** | **pos_count** | **album** |
 | --- | --- | --- | --- | --- | --- |
-| **3QaPy1KgI7nu9FJEQUgn6h** | **[0.12,0.32…]** | **Billie Eilish** | **WILDFLOWER**
- | **668** | **HIT ME HARD AND SOFT** |
+| **3QaPy1KgI7nu9FJEQUgn6h** | **[0.12,0.32…]** | **Billie Eilish** | **WILDFLOWER**| **668** | **HIT ME HARD AND SOFT** |
 
 ### **🎯match_tracks_by_key**
 
