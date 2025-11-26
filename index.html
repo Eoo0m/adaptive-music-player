@@ -638,8 +638,10 @@
                 current_track = state.track_window.current_track;
                 is_paused = state.paused;
 
+                // 트랙이 변경될 때 이전 트랙의 듣기 기록 저장
                 if (previousTrack?.id && previousTrack?.id !== current_track?.id) {
                     lastPlayedTrack = previousTrack;
+                    recordTrackCompletion('auto', state.position);
                 }
                 if (previousTrack?.id !== current_track?.id && current_track) {
                     trackStartTime = Date.now();
