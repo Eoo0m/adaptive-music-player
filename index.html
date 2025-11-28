@@ -644,8 +644,8 @@
                     trackDuration = current_track.duration_ms;
                 }
 
-                // 자동 종료 감지 → 다음 곡 재생
-                if (state.position === 0 && state.paused && current_track) {
+                // 자동 종료 감지 → 다음 곡 재생 (이전 트랙이 있을 때만)
+                if (state.position === 0 && state.paused && current_track && previousTrack?.id) {
                     setTimeout(() => playNext(), 600);
                 } else {
                     updateTrackInfo(); updatePlayPauseIcon();
