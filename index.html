@@ -84,7 +84,8 @@
             opacity: 1
         }
 
-        .album-cover[src=""], .album-cover:not([src]) {
+        .album-cover[src=""],
+        .album-cover:not([src]) {
             display: none
         }
 
@@ -93,6 +94,7 @@
                 opacity: 0;
                 transform: scale(.95)
             }
+
             to {
                 opacity: 1;
                 transform: scale(1)
@@ -367,7 +369,7 @@
 
         .search-interface {
             position: absolute;
-            top: 50px;
+            top: 180px;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0, 0, 0, .9);
@@ -478,7 +480,8 @@
             display: block
         }
 
-        .rec-album-cover[src=""], .rec-album-cover:not([src]) {
+        .rec-album-cover[src=""],
+        .rec-album-cover:not([src]) {
             display: none
         }
 
@@ -539,7 +542,7 @@
     </div>
 
     <div class="search-interface hidden" id="initialSongInput">
-        <h2>🎵 노래를 검색하고 선택하세요</h2>
+        <h2>노래를 검색하세요</h2>
         <p>검색 결과에서 곡을 선택하면 유사한 음악을 추천해드립니다.</p>
         <input type="text" class="search-input" id="initialSongTitle" placeholder="노래 제목이나 아티스트를 입력하세요...">
         <div>
@@ -553,7 +556,8 @@
         <div>
             <div class="track-name" id="trackName">노래 제목</div>
             <div class="artist-name" id="artistName">아티스트</div>
-            <div class="recommendation-mode" id="recMode" style="font-size:12px;opacity:.7;margin-top:5px;">🎵 AI 추천 플레이리스트
+            <div class="recommendation-mode" id="recMode" style="font-size:12px;opacity:.7;margin-top:5px;">🎵 AI 추천
+                플레이리스트
             </div>
         </div>
     </div>
@@ -1030,7 +1034,6 @@
 
                     console.log(`✅ Playlist created: ${playlist.length} tracks`);
                     document.getElementById('initialSongInput').classList.add('hidden');
-                    document.getElementById('trackInfo').classList.remove('hidden');
 
                     if (!player) initializeSpotifyPlayer(); else playTrackAtIndex(0);
                 } else {
@@ -1125,18 +1128,22 @@
             // 바로 추천 플레이리스트 시작
             await startRecommendationPlaylist(trackData);
 
-            // 검색창 숨기고 트랙 정보 보이기
+            // 검색창 숨기기 (트랙 정보는 계속 표시)
             document.getElementById('initialSongInput').classList.add('hidden');
-            document.getElementById('trackInfo').classList.remove('hidden');
         }
 
-        // 검색창 다시 표시
+        // 검색창 토글
         function showSearchInterface() {
-            document.getElementById('initialSongInput').classList.remove('hidden');
-            document.getElementById('trackInfo').classList.add('hidden');
-            document.getElementById('initialSearchResults').innerHTML = '';
-            document.getElementById('initialSongTitle').value = '';
-            document.getElementById('initialSongTitle').focus();
+            const searchInterface = document.getElementById('initialSongInput');
+            // 토글 방식: 이미 보이면 숨기고, 숨겨져 있으면 보이기
+            if (searchInterface.classList.contains('hidden')) {
+                searchInterface.classList.remove('hidden');
+                document.getElementById('initialSongTitle').focus();
+            } else {
+                searchInterface.classList.add('hidden');
+                document.getElementById('initialSearchResults').innerHTML = '';
+                document.getElementById('initialSongTitle').value = '';
+            }
         }
 
         // ===== Controls =====
