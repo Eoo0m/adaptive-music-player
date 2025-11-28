@@ -57,7 +57,31 @@
             color: #fff;
             text-align: center;
             font-size: 14px;
-            max-width: 300px
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px
+        }
+
+        .album-cover {
+            width: 120px;
+            height: 120px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .5);
+            object-fit: cover;
+            animation: fadeIn .5s ease-in-out
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(.95)
+            }
+            to {
+                opacity: 1;
+                transform: scale(1)
+            }
         }
 
         .track-name {
@@ -169,39 +193,6 @@
             animation: playingPulse 2s ease-in-out infinite
         }
 
-        .ipod-container.similar-mode {
-            box-shadow: 0 5px 12px rgba(0, 0, 0, .3), 0 0 20px rgba(34, 197, 94, .6);
-            animation: similarGlow 2s ease-in-out infinite
-        }
-
-        .ipod-container.diverse-mode {
-            box-shadow: 0 5px 12px rgba(0, 0, 0, .3), 0 0 20px rgba(239, 68, 68, .6);
-            animation: diverseGlow 2s ease-in-out infinite
-        }
-
-        @keyframes similarGlow {
-
-            0%,
-            100% {
-                box-shadow: 0 5px 12px rgba(0, 0, 0, .3), 0 0 15px rgba(34, 197, 94, .4)
-            }
-
-            50% {
-                box-shadow: 0 8px 20px rgba(0, 0, 0, .4), 0 0 25px rgba(34, 197, 94, .8)
-            }
-        }
-
-        @keyframes diverseGlow {
-
-            0%,
-            100% {
-                box-shadow: 0 5px 12px rgba(0, 0, 0, .3), 0 0 15px rgba(239, 68, 68, .4)
-            }
-
-            50% {
-                box-shadow: 0 8px 20px rgba(0, 0, 0, .4), 0 0 25px rgba(239, 68, 68, .8)
-            }
-        }
 
         @keyframes playingPulse {
 
@@ -515,9 +506,12 @@
     </div>
 
     <div class="track-info hidden" id="trackInfo">
-        <div class="track-name" id="trackName">노래 제목</div>
-        <div class="artist-name" id="artistName">아티스트</div>
-        <div class="recommendation-mode" id="recMode" style="font-size:12px;opacity:.7;margin-top:5px;">🎵 AI 추천 플레이리스트
+        <img class="album-cover" id="albumCover" src="" alt="Album Cover">
+        <div>
+            <div class="track-name" id="trackName">노래 제목</div>
+            <div class="artist-name" id="artistName">아티스트</div>
+            <div class="recommendation-mode" id="recMode" style="font-size:12px;opacity:.7;margin-top:5px;">🎵 AI 추천 플레이리스트
+            </div>
         </div>
     </div>
 
@@ -549,10 +543,6 @@
         let trackStartTime = null;        // 현재 트랙 시작 시간
         let trackDuration = null;         // 현재 트랙 총 길이(ms)
         let lastPlayedTrack = null;       // 이전에 재생한 트랙
-        let playbackHistory = [];         // 재생 완료율 히스토리
-        const maxHistoryLength = 10;      // 히스토리 최대 길이
-        const DIVERSE_TAG = Symbol('diverse'); // 다이버스 모드 태그
-        let diverseLock = false;          // 다이버스 모드 락
 
         // ===== Listening Log =====
         let sessionId = null;             // 세션 ID (로그인 시 생성)
@@ -698,13 +688,6 @@
         }
 
         // ===== Helpers =====
-        function shouldUseDiverse() {
-            if (diverseLock) return false;               // 🔒 락 걸리면 금지
-            if (playbackHistory.length < 3) return false;
-            const last3 = playbackHistory.slice(-3);
-            const avg = last3.reduce((a, b) => a + b, 0) / 3;
-            return avg < 10; // 세 곡 평균 완료율 10% 미만
-        }
         function getSeed() {
             if (current_track?.id) return current_track;
             if (lastPlayedTrack?.id) return lastPlayedTrack;
@@ -756,19 +739,12 @@
                     playedMs = Date.now() - trackStartTime;
                     ratio = Math.min((playedMs / trackDuration) * 100, 100);
                 }
-                playbackHistory.push(ratio);
-                if (playbackHistory.length > maxHistoryLength) playbackHistory.shift();
-
-                if (playbackHistory.length >= 3) {
-                    const avg = playbackHistory.reduce((a, b) => a + b, 0) / playbackHistory.length;
-                    console.log(`📊 Engagement: ${avg.toFixed(1)}%`);
-                }
 
                 // ✅ Supabase에 듣는 기록 저장
                 const currentPlaylistTrack = playlist[currentTrackIndex];
                 const similarityScore = currentPlaylistTrack?.similarity || null;
-                const isDiverse = currentPlaylistTrack?.[DIVERSE_TAG] || false;
-                const recommendationMode = isDiverse ? 'diverse' : 'similar';
+
+                console.log(`📝 Logging: ${current_track.name} - ${ratio.toFixed(1)}% completed`);
 
                 logListeningData({
                     track_name: current_track.name,
@@ -779,96 +755,12 @@
                     duration_ms: trackDuration,
                     played_duration_ms: Math.min(playedMs, trackDuration),
                     completion_percentage: Math.min(ratio, 100).toFixed(2),
-                    recommendation_mode: recommendationMode,
+                    recommendation_mode: 'similar',
                     similarity_score: similarityScore
                 }).catch(err => console.error('Failed to log listening data:', err));
-
-                // ✅ 다이버스 트랙을 10% 이상 들었으면 → 해당 곡 기반 유사 10곡 주입 + 락 해제
-                maybeConvertDiverseToSimilar(ratio).catch(() => { });
             }
         }
 
-        // ✅ 다이버스 → 유사 전환 로직 (Supabase 기반)
-        async function maybeConvertDiverseToSimilar(ratio) {
-            // 현재 인덱스의 트랙이 다이버스 태그인지 확인
-            const cur = playlist[currentTrackIndex];
-            if (!cur || !cur[DIVERSE_TAG]) return;
-            if (ratio < 10) return; // 10% 미만이면 조건 불충족
-
-            const seed = current_track || null;
-            if (!seed) return;
-
-            console.log('🟢 Diverse track listened ≥10%. Converting to SIMILAR block…');
-
-            try {
-                const title = seed?.name || '';
-                const artist = seed?.artists?.[0]?.name || '';
-                const query = `${title} ${artist}`.trim();
-
-                console.log(`🔍 [Diverse→Similar] Searching for: "${query}"`);
-
-                // 1) Supabase에서 현재 트랙 검색
-                const r1 = await fetch(`${API_BASE_URL}/search-songs`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query })
-                });
-                if (!r1.ok) {
-                    const errorText = await r1.text();
-                    console.error('❌ search-songs', r1.status, errorText);
-                    throw new Error('search_failed');
-                }
-                const d1 = await r1.json();
-                const searchResults = d1.results || [];
-                if (searchResults.length === 0) {
-                    console.warn(`⚠️ No results found for: "${query}"`);
-                    throw new Error('search_empty');
-                }
-
-                const trackKey = searchResults[0].track_key;
-                console.log(`🔑 Found track_key: ${trackKey}`);
-
-                // 2) track_key로 유사 트랙 추천
-                const r2 = await fetch(`${API_BASE_URL}/recommend`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ track_key: trackKey, num_recommendations: 30 })
-                });
-                if (!r2.ok) throw new Error('recommend_failed');
-                const d2 = await r2.json();
-                const recs = d2.recommendations || [];
-                if (recs.length === 0) throw new Error('recommend_empty');
-
-                // 3) Spotify 매칭
-                const r3 = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tracks: recs, access_token })
-                });
-                if (!r3.ok) throw new Error('find_spotify_failed');
-                const d3 = await r3.json();
-                let newTracks = (d3.spotify_tracks || []).slice(0, 10);
-                if (newTracks.length === 0) throw new Error('find_spotify_empty');
-
-                // (중복 제거)
-                const existingUris = new Set(playlist.map(t => (t.uri || t.spotify_track?.uri || t.track?.uri)));
-                newTracks = newTracks.filter(t => !existingUris.has(t.uri || t.spotify_track?.uri || t.track?.uri));
-
-                // 4) 현재곡 다음에 유사 10곡 끼워넣기
-                const head = playlist.slice(0, currentTrackIndex + 1);
-                const tail = playlist.slice(currentTrackIndex + 1);
-                playlist = [...head, ...newTracks, ...tail];
-
-                // 5) 모든 다이버스 태그 제거 + 락 해제
-                playlist.forEach(t => delete t[DIVERSE_TAG]);
-                diverseLock = false;
-
-                updateRecommendationMode('similar');
-                logRecommendationList('SIMILAR (after diverse)', seed, newTracks);
-            } catch (e) {
-                console.error('⚠️ Convert diverse→similar failed:', e?.message || e);
-            }
-        }
 
         // ===== 다음 곡 재생 =====
         async function playNext() {
@@ -988,6 +880,16 @@
             if (!current_track) return;
             document.getElementById('trackName').textContent = current_track.name;
             document.getElementById('artistName').textContent = current_track.artists.map(a => a.name).join(', ');
+
+            // 앨범 커버 업데이트
+            const albumCover = document.getElementById('albumCover');
+            if (current_track.album?.images?.[0]?.url) {
+                albumCover.src = current_track.album.images[0].url;
+                albumCover.style.display = 'block';
+            } else {
+                albumCover.style.display = 'none';
+            }
+
             document.getElementById('trackInfo').classList.remove('hidden');
             updateMediaSession();
         }
@@ -1012,13 +914,6 @@
         function updateIPodState() {
             const el = document.getElementById('ipodContainer');
             if (!is_paused) el.classList.add('playing'); else el.classList.remove('playing');
-        }
-        function updateRecommendationMode(mode) {
-            const el = document.getElementById('ipodContainer');
-            el.classList.remove('similar-mode', 'diverse-mode');
-            if (mode === 'similar') el.classList.add('similar-mode');
-            if (mode === 'diverse') el.classList.add('diverse-mode');
-            setTimeout(() => { el.classList.remove('similar-mode', 'diverse-mode'); }, 3000);
         }
         async function togglePlayPause() { if (player) await player.togglePlay(); }
         async function adjustVolume(delta) {
@@ -1184,11 +1079,6 @@
             console.log(`📍 Position: ${currentTrackIndex + 1}/${playlist.length}`);
             console.log(`🎵 Current: ${current_track?.name || 'None'} - ${current_track?.artists?.map(a => a.name).join(', ') || 'Unknown'}`);
             console.log(`📋 Remaining: ${playlist.length - currentTrackIndex - 1}`);
-            console.log(`🔒 Diverse lock: ${diverseLock ? 'ON' : 'OFF'}`);
-            const leftTags = playlist.filter(t => t[DIVERSE_TAG]).length;
-            console.log(`🏷️ Diverse-tagged remaining: ${leftTags}`);
-            console.log(`📊 History: ${playbackHistory.length} entries`);
-            if (playbackHistory.length > 0) { const avg = playbackHistory.reduce((a, b) => a + b, 0) / playbackHistory.length; console.log(`📊 Avg completion: ${avg.toFixed(1)}%`); }
             console.log(`============================\n`);
         }
         window.showPlaylistStatus = showPlaylistStatus;
