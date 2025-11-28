@@ -74,7 +74,14 @@
             background: rgba(255, 255, 255, .05);
             border: 1px solid rgba(255, 255, 255, .1);
             filter: brightness(0.95) contrast(0.92) saturate(0.88);
-            opacity: 0.92
+            opacity: 0.92;
+            cursor: pointer;
+            transition: transform .2s ease, opacity .2s ease
+        }
+
+        .album-cover:hover {
+            transform: scale(1.05);
+            opacity: 1
         }
 
         .album-cover[src=""], .album-cover:not([src]) {
@@ -514,7 +521,7 @@
     </div>
 
     <div class="track-info hidden" id="trackInfo">
-        <img class="album-cover" id="albumCover" src="" alt="Album Cover">
+        <img class="album-cover" id="albumCover" src="" alt="Album Cover" onclick="showSearchInterface()">
         <div>
             <div class="track-name" id="trackName">노래 제목</div>
             <div class="artist-name" id="artistName">아티스트</div>
@@ -1064,6 +1071,19 @@
 
             // 바로 추천 플레이리스트 시작
             await startRecommendationPlaylist(trackData);
+
+            // 검색창 숨기고 트랙 정보 보이기
+            document.getElementById('initialSongInput').classList.add('hidden');
+            document.getElementById('trackInfo').classList.remove('hidden');
+        }
+
+        // 검색창 다시 표시
+        function showSearchInterface() {
+            document.getElementById('initialSongInput').classList.remove('hidden');
+            document.getElementById('trackInfo').classList.add('hidden');
+            document.getElementById('initialSearchResults').innerHTML = '';
+            document.getElementById('initialSongTitle').value = '';
+            document.getElementById('initialSongTitle').focus();
         }
 
         // ===== Controls =====
