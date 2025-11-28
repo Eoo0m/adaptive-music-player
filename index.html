@@ -70,7 +70,13 @@
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, .5);
             object-fit: cover;
-            animation: fadeIn .5s ease-in-out
+            animation: fadeIn .5s ease-in-out;
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid rgba(255, 255, 255, .1)
+        }
+
+        .album-cover[src=""], .album-cover:not([src]) {
+            display: none
         }
 
         @keyframes fadeIn {
