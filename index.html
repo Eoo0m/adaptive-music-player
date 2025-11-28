@@ -68,11 +68,13 @@
             width: 120px;
             height: 120px;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, .5);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .5), inset 0 0 15px rgba(0, 0, 0, .2);
             object-fit: cover;
             animation: fadeIn .5s ease-in-out;
             background: rgba(255, 255, 255, .05);
-            border: 1px solid rgba(255, 255, 255, .1)
+            border: 1px solid rgba(255, 255, 255, .1);
+            filter: brightness(0.95) contrast(0.92) saturate(0.88);
+            opacity: 0.92
         }
 
         .album-cover[src=""], .album-cover:not([src]) {
