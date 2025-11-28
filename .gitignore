@@ -1,0 +1,61 @@
+# ─────────────────────────────────────────
+# Node.js
+# ─────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+.cache/
+.temp/
+.env
+.env.*
+!.env.example
+
+# ─────────────────────────────────────────
+# Python (만약 FastAPI 등 일부 Python 사용 시)
+# ─────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.venv/
+
+# ─────────────────────────────────────────
+# macOS System Files
+# ─────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# ─────────────────────────────────────────
+# VSCode / Editors
+# ─────────────────────────────────────────
+.vscode/
+*.swp
+*.swo
+
+# ─────────────────────────────────────────
+# OS Logs / Temporary files
+# ─────────────────────────────────────────
+*.log
+logs/
+debug.log
+
+# ─────────────────────────────────────────
+# Project-specific
+# ─────────────────────────────────────────
+# 백업 html 혹은 로컬 시험파일
+index.html.backup
+
+# 만약 서브모듈 문제 있었던 폴더
+adaptive-music-player/
+
+# Supabase 로컬 설정
+supabase/.temp
+supabase/.branches
+supabase/.supabase
