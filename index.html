@@ -542,13 +542,30 @@
     </div>
 
     <div class="search-interface hidden" id="initialSongInput">
-        <h2>노래를 검색하세요</h2>
-        <p>검색 결과에서 곡을 선택하면 유사한 음악을 추천해드립니다.</p>
-        <input type="text" class="search-input" id="initialSongTitle" placeholder="노래 제목이나 아티스트를 입력하세요...">
-        <div>
-            <button class="search-button" onclick="searchInitialSongs()" id="initialSearchBtn">검색</button>
+        <h2>🎵 노래 검색</h2>
+
+        <!-- 제목 검색 -->
+        <div class="search-section">
+            <h3 style="font-size: 16px; margin: 15px 0 10px 0;">제목으로 검색</h3>
+            <input type="text" class="search-input" id="initialSongTitle" placeholder="노래 제목이나 아티스트를 입력하세요...">
+            <div>
+                <button class="search-button" onclick="searchInitialSongs()" id="initialSearchBtn">검색</button>
+            </div>
+            <div id="initialSearchResults"></div>
         </div>
-        <div id="initialSearchResults"></div>
+
+        <div style="margin: 20px 0; border-top: 1px solid rgba(255,255,255,0.1);"></div>
+
+        <!-- 키워드 검색 -->
+        <div class="search-section">
+            <h3 style="font-size: 16px; margin: 15px 0 10px 0;">키워드로 검색</h3>
+            <p style="font-size: 12px; opacity: 0.7; margin: 5px 0;">예: "공부할 때 듣는 재즈", "드라이브 팝송"</p>
+            <input type="text" class="search-input" id="keywordSearchInput" placeholder="키워드를 입력하세요...">
+            <div>
+                <button class="search-button" onclick="searchByKeyword()" id="keywordSearchBtn">검색</button>
+            </div>
+            <div id="keywordSearchResults"></div>
+        </div>
     </div>
 
     <div class="track-info hidden" id="trackInfo">
@@ -1143,6 +1160,105 @@
             }
         }
 
+        // 키워드 검색
+        async function searchByKeyword() {
+            const keyword = document.getElementById('keywordSearchInput').value.trim();
+            if (!keyword) { alert('키워드를 입력해주세요.'); return; }
+
+            const btn = document.getElementById('keywordSearchBtn');
+            btn.disabled = true;
+            btn.textContent = '검색 중...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/search-by-keyword`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keyword, top_k: 10 })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                // 결과를 songs 테이블에서 조회하여 메타데이터 가져오기
+                await displayKeywordSearchResults(data.results);
+
+            } catch (e) {
+                console.error('Keyword search error:', e);
+                alert('키워드 검색 중 오류가 발생했습니다.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '검색';
+            }
+        }
+
+        // 키워드 검색 결과 표시
+        async function displayKeywordSearchResults(results) {
+            const div = document.getElementById('keywordSearchResults');
+
+            if (results.length === 0) {
+                div.innerHTML = '<div class="error-message">검색 결과가 없습니다.</div>';
+                return;
+            }
+
+            // 먼저 결과 표시
+            let html = '<div class="recommendation-list" style="max-height:200px;">';
+            results.forEach((r, idx) => {
+                html += `
+          <div class="recommendation-item" data-track-idx="${idx}">
+            <img class="rec-album-cover" data-idx="${idx}" src="" alt="">
+            <div class="rec-info">
+              <div class="rec-title">로딩 중...</div>
+              <div class="rec-artist">...</div>
+            </div>
+          </div>`;
+            });
+            html += '</div>';
+            div.innerHTML = html;
+
+            // Spotify에서 트랙 정보 가져오기
+            for (let idx = 0; idx < results.length; idx++) {
+                const r = results[idx];
+                try {
+                    const response = await fetch(`https://api.spotify.com/v1/tracks/${r.track_key}`, {
+                        headers: { 'Authorization': `Bearer ${access_token}` }
+                    });
+
+                    if (response.ok) {
+                        const track = await response.json();
+
+                        // UI 업데이트
+                        const item = div.querySelector(`[data-track-idx="${idx}"]`);
+                        if (item) {
+                            const titleElem = item.querySelector('.rec-title');
+                            const artistElem = item.querySelector('.rec-artist');
+                            const imgElem = item.querySelector('.rec-album-cover');
+
+                            titleElem.textContent = track.name;
+                            artistElem.textContent = `${track.artists[0].name} - ${track.album.name}`;
+
+                            if (track.album?.images?.[2]) {
+                                imgElem.src = track.album.images[2].url;
+                            }
+
+                            // 클릭 이벤트
+                            item.onclick = () => selectAndStartPlaylist({
+                                track_key: r.track_key,
+                                track: track.name,
+                                artist: track.artists[0].name,
+                                album: track.album.name
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`Failed to fetch track ${r.track_key}:`, e);
+                }
+            }
+        }
+
         // ===== Controls =====
         document.getElementById('centerButton').addEventListener('click', async () => { await togglePlayPause(); });
         document.getElementById('nextBtn').addEventListener('click', async () => { await playNext(); });
@@ -1154,6 +1270,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('initialSongTitle').addEventListener('keypress', e => {
                 if (e.key === 'Enter') searchInitialSongs();
+            });
+            document.getElementById('keywordSearchInput').addEventListener('keypress', e => {
+                if (e.key === 'Enter') searchByKeyword();
             });
         });
 
