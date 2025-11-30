@@ -1028,6 +1028,21 @@
             try {
                 console.log(`🎵 Setting up initial playlist with ${recommendations.length} recommendations`);
 
+                // 먼저 선택한 원곡의 Spotify 정보 가져오기
+                let originalSpotifyTrack = null;
+                if (originalSong?.track_key) {
+                    try {
+                        const origResponse = await fetch(`https://api.spotify.com/v1/tracks/${originalSong.track_key}`, {
+                            headers: { 'Authorization': `Bearer ${access_token}` }
+                        });
+                        if (origResponse.ok) {
+                            originalSpotifyTrack = await origResponse.json();
+                        }
+                    } catch (e) {
+                        console.warn('Failed to fetch original track:', e);
+                    }
+                }
+
                 const r = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ tracks: recommendations, access_token })
@@ -1036,17 +1051,31 @@
                 const d = await r.json();
 
                 if (d.spotify_tracks?.length > 0) {
-                    playlist = d.spotify_tracks.slice(0, 10);
+                    // 원곡을 플레이리스트 맨 앞에 추가
+                    playlist = [];
+                    if (originalSpotifyTrack) {
+                        playlist.push({
+                            track_key: originalSong.track_key,
+                            track: originalSong.track,
+                            artist: originalSong.artist,
+                            spotify_track: originalSpotifyTrack,
+                            uri: originalSpotifyTrack.uri,
+                            preview_url: originalSpotifyTrack.preview_url
+                        });
+                    }
+
+                    // 추천곡들 추가 (원곡 제외하고 9개)
+                    playlist.push(...d.spotify_tracks.slice(0, 9));
                     currentTrackIndex = 0;
 
                     // ✅ track_key를 각 트랙에 저장
                     playlist.forEach((track, idx) => {
-                        if (!track.track_key && recommendations[idx]?.track_key) {
-                            track.track_key = recommendations[idx].track_key;
+                        if (!track.track_key && recommendations[idx - 1]?.track_key) {
+                            track.track_key = recommendations[idx - 1].track_key;
                         }
                     });
 
-                    console.log(`✅ Playlist created: ${playlist.length} tracks`);
+                    console.log(`✅ Playlist created: ${playlist.length} tracks (starting with selected track)`);
                     document.getElementById('initialSongInput').classList.add('hidden');
 
                     if (!player) initializeSpotifyPlayer(); else playTrackAtIndex(0);
