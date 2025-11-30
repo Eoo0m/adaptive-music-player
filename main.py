@@ -107,7 +107,7 @@ class SearchRequest(BaseModel):
 
 class KeywordSearchRequest(BaseModel):
     keyword: str
-    top_k: Optional[int] = 10
+    top_k: Optional[int] = 200
 
 
 class RecommendRequest(BaseModel):
@@ -420,7 +420,7 @@ async def search_by_keyword(request: KeywordSearchRequest):
             "match_keyword_embeddings",
             {
                 "query_embedding": projected_embedding.tolist(),
-                "match_count": 200,
+                "match_count": request.top_k,
             },
         ).execute()
 
