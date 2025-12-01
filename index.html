@@ -767,11 +767,22 @@
             console.log(`▶️ [${index + 1}/${playlist.length}] ${name} - ${artists}${similarityText}`);
 
             try {
-                await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
+                const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${access_token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ uris: [uri] })
                 });
+
+                // 403 에러 발생 시 1초 후 재시도
+                if (response.status === 403) {
+                    console.warn('플레이어 준비 중... 1초 후 재시도');
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `Bearer ${access_token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ uris: [uri] })
+                    });
+                }
             } catch (e) { console.error('트랙 재생 오류:', e); }
         }
         async function playSpotifyTrack(uri) {
@@ -1198,7 +1209,7 @@
                 const response = await fetch(`${API_BASE_URL}/search-by-keyword`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ keyword, top_k: 10 })
+                    body: JSON.stringify({ keyword, top_k: 200 })
                 });
 
                 const data = await response.json();
