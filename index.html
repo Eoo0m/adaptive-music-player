@@ -86,7 +86,8 @@
         }
 
         .album-cover.hidden {
-            display: none;
+            opacity: 0;
+            pointer-events: none;
         }
 
         .album-cover[src=""],
@@ -569,8 +570,8 @@
         </div>
     </div>
 
-    <div class="track-info hidden" id="trackInfo">
-        <img class="album-cover" id="albumCover" src="" alt="Album Cover" onclick="showSearchInterface()">
+    <div class="track-info hidden" id="trackInfo" onclick="showSearchInterface()" style="cursor: pointer;">
+        <img class="album-cover" id="albumCover" src="" alt="Album Cover">
         <div>
             <div class="track-name" id="trackName">노래 제목</div>
             <div class="artist-name" id="artistName">아티스트</div>
@@ -1048,6 +1049,20 @@
             try {
                 console.log(`🎵 Setting up initial playlist with ${recommendations.length} recommendations`);
 
+                // 기존 플레이리스트 완전히 초기화
+                playlist = [];
+                currentTrackIndex = 0;
+                current_track = null;
+
+                // 재생 중이면 중지
+                if (player) {
+                    try {
+                        await player.pause();
+                    } catch (e) {
+                        console.warn('Failed to pause player:', e);
+                    }
+                }
+
                 // 먼저 선택한 원곡의 Spotify 정보 가져오기
                 let originalSpotifyTrack = null;
                 if (originalSong?.track_key) {
@@ -1072,7 +1087,6 @@
 
                 if (d.spotify_tracks?.length > 0) {
                     // 원곡을 플레이리스트 맨 앞에 추가
-                    playlist = [];
                     if (originalSpotifyTrack) {
                         playlist.push({
                             track_key: originalSong.track_key,
@@ -1086,7 +1100,6 @@
 
                     // 추천곡들 추가 (원곡 제외하고 9개)
                     playlist.push(...d.spotify_tracks.slice(0, 9));
-                    currentTrackIndex = 0;
 
                     // ✅ track_key를 각 트랙에 저장
                     playlist.forEach((track, idx) => {
