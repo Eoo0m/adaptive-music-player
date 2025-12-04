@@ -660,7 +660,15 @@
                 console.log('🎵 Session started:', sessionId);
 
                 document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('trackInfo').classList.remove('hidden');
                 document.getElementById('initialSongInput').classList.remove('hidden');
+
+                // 처음 로그인 시 검색창만 보이고 앨범은 숨김
+                const albumCover = document.getElementById('albumCover');
+                if (albumCover && !albumCover.src) {
+                    albumCover.classList.add('hidden');
+                }
+
                 window.location.hash = '';
             }
         }
