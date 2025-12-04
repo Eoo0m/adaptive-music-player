@@ -797,11 +797,21 @@
             console.log(`   📦 Full track object:`, track);
 
             try {
+                // Spotify Player 상태를 완전히 리셋하고 새 트랙 재생
+                const playPayload = {
+                    uris: [uri],
+                    position_ms: 0
+                };
+
+                console.log(`   📤 Sending to Spotify API:`, playPayload);
+
                 const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${access_token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ uris: [uri] })
+                    body: JSON.stringify(playPayload)
                 });
+
+                console.log(`   📥 Spotify API Response: ${response.status} ${response.statusText}`);
 
                 // 403 에러 발생 시 1초 후 재시도
                 if (response.status === 403) {
