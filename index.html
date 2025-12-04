@@ -862,9 +862,12 @@
 
         // ===== 다음 곡 재생 =====
         async function playNext() {
+            console.log(`⏭️ playNext() called - currentTrackIndex: ${currentTrackIndex}, playlist.length: ${playlist.length}`);
+
             // 1) 플레이리스트에 다음 곡이 있으면 재생
             if (playlist.length > 0 && currentTrackIndex < playlist.length - 1) {
                 currentTrackIndex++;
+                console.log(`   ➡️ Moving to next track: index ${currentTrackIndex}`);
                 await playTrackAtIndex(currentTrackIndex);
                 return;
             }
