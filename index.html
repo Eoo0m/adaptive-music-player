@@ -65,23 +65,28 @@
         }
 
         .album-cover {
-            width: 120px;
-            height: 120px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, .5), inset 0 0 15px rgba(0, 0, 0, .2);
+            width: 300px;
+            height: 300px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .6), inset 0 0 20px rgba(0, 0, 0, .2);
             object-fit: cover;
             animation: fadeIn .5s ease-in-out;
             background: rgba(255, 255, 255, .05);
             border: 1px solid rgba(255, 255, 255, .1);
             filter: brightness(0.95) contrast(0.92) saturate(0.88);
             opacity: 0.92;
+            transition: all 0.3s ease;
             cursor: pointer;
             transition: transform .2s ease, opacity .2s ease
         }
 
         .album-cover:hover {
-            transform: scale(1.05);
+            transform: scale(1.02);
             opacity: 1
+        }
+
+        .album-cover.hidden {
+            display: none;
         }
 
         .album-cover[src=""],
@@ -1178,19 +1183,25 @@
             // 바로 추천 플레이리스트 시작
             await startRecommendationPlaylist(trackData);
 
-            // 검색창 숨기기 (트랙 정보는 계속 표시)
+            // 검색창 숨기고 앨범 커버 보이기
             document.getElementById('initialSongInput').classList.add('hidden');
+            const albumCover = document.querySelector('.album-cover');
+            if (albumCover) albumCover.classList.remove('hidden');
         }
 
         // 검색창 토글
         function showSearchInterface() {
             const searchInterface = document.getElementById('initialSongInput');
+            const albumCover = document.querySelector('.album-cover');
+
             // 토글 방식: 이미 보이면 숨기고, 숨겨져 있으면 보이기
             if (searchInterface.classList.contains('hidden')) {
                 searchInterface.classList.remove('hidden');
+                if (albumCover) albumCover.classList.add('hidden');
                 document.getElementById('initialSongTitle').focus();
             } else {
                 searchInterface.classList.add('hidden');
+                if (albumCover) albumCover.classList.remove('hidden');
                 document.getElementById('initialSearchResults').innerHTML = '';
                 document.getElementById('initialSongTitle').value = '';
             }
@@ -1309,6 +1320,21 @@
             });
             document.getElementById('keywordSearchInput').addEventListener('keypress', e => {
                 if (e.key === 'Enter') searchByKeyword();
+            });
+
+            // 검색창 바깥쪽 클릭 시 검색창 닫기
+            document.addEventListener('click', (e) => {
+                const searchInterface = document.getElementById('initialSongInput');
+                const searchButton = document.querySelector('button[onclick="showSearchInterface()"]');
+
+                // 검색창이 열려있고, 클릭한 곳이 검색창 내부가 아니고, 검색 버튼도 아니면
+                if (!searchInterface.classList.contains('hidden') &&
+                    !searchInterface.contains(e.target) &&
+                    e.target !== searchButton) {
+                    searchInterface.classList.add('hidden');
+                    const albumCover = document.querySelector('.album-cover');
+                    if (albumCover) albumCover.classList.remove('hidden');
+                }
             });
         });
 
