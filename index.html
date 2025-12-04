@@ -847,12 +847,12 @@
 
             try {
                 console.log('🎵 Playlist ended, fetching new recommendations...');
+                console.log(`🎵 Current playing track: ${current_track.name} by ${current_track.artists?.[0]?.name}`);
 
-                // 현재 트랙의 track_key 사용
-                const currentPlaylistTrack = playlist[currentTrackIndex];
-                let trackKey = currentPlaylistTrack?.track_key;
+                // 현재 재생 중인 Spotify 트랙 ID를 track_key로 사용
+                let trackKey = current_track.id;
 
-                // track_key가 없으면 검색으로 찾기
+                // track_key가 없으면 제목으로 검색
                 if (!trackKey) {
                     const query = `${current_track.name} ${current_track.artists?.[0]?.name || ''}`.trim();
                     console.log(`🔍 Searching for track_key: "${query}"`);
@@ -871,9 +871,9 @@
                     }
 
                     trackKey = searchData.results[0].track_key;
-                    console.log(`🔑 Found track_key: ${trackKey}`);
+                    console.log(`🔑 Found track_key from search: ${trackKey}`);
                 } else {
-                    console.log(`🔑 Using stored track_key: ${trackKey}`);
+                    console.log(`🔑 Using Spotify track ID as track_key: ${trackKey}`);
                 }
 
                 // track_key로 추천 받기
