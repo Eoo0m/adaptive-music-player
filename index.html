@@ -1347,10 +1347,12 @@
             document.addEventListener('click', (e) => {
                 const searchInterface = document.getElementById('initialSongInput');
                 const searchButton = document.querySelector('button[onclick="showSearchInterface()"]');
+                const trackInfo = document.getElementById('trackInfo');
 
-                // 검색창이 열려있고, 클릭한 곳이 검색창 내부가 아니고, 검색 버튼도 아니면
+                // 검색창이 열려있고, 클릭한 곳이 검색창 내부가 아니고, 검색 버튼도 아니고, track-info도 아니면
                 if (!searchInterface.classList.contains('hidden') &&
                     !searchInterface.contains(e.target) &&
+                    !trackInfo.contains(e.target) &&
                     e.target !== searchButton) {
                     searchInterface.classList.add('hidden');
                     const albumCover = document.querySelector('.album-cover');
