@@ -868,10 +868,15 @@
 
                 // 현재 플레이리스트에서 track_key 찾기
                 const currentPlaylistTrack = playlist[currentTrackIndex];
-                let trackKey = currentPlaylistTrack?.track_key || current_track.id;
+                console.log('🔍 Current playlist track:', currentPlaylistTrack);
+                console.log('🔍 Track has track_key?', currentPlaylistTrack?.track_key);
+
+                let trackKey = currentPlaylistTrack?.track_key;
 
                 if (!trackKey) {
-                    throw new Error('No track_key available for current track');
+                    console.warn('⚠️ No track_key in playlist, cannot fetch recommendations');
+                    alert('이 곡은 추천 데이터베이스에 없어서 다음 곡을 추천할 수 없습니다.');
+                    return;
                 }
 
                 console.log(`🔑 Using track_key: ${trackKey}`);
@@ -1094,14 +1099,13 @@
                         });
                     }
 
-                    // 추천곡들 추가 (원곡 제외하고 9개)
-                    playlist.push(...d.spotify_tracks.slice(0, 9));
-
-                    // ✅ track_key를 각 트랙에 저장
-                    playlist.forEach((track, idx) => {
-                        if (!track.track_key && recommendations[idx - 1]?.track_key) {
-                            track.track_key = recommendations[idx - 1].track_key;
-                        }
+                    // 추천곡들 추가 (원곡 제외하고 9개) + track_key 매핑
+                    d.spotify_tracks.slice(0, 9).forEach((spotifyTrack, idx) => {
+                        const recTrack = recommendations[idx];
+                        playlist.push({
+                            ...spotifyTrack,
+                            track_key: recTrack?.track_key || spotifyTrack.track_key
+                        });
                     });
 
                     console.log(`✅ Playlist created: ${playlist.length} tracks (starting with selected track)`);
