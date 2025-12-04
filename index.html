@@ -86,8 +86,7 @@
         }
 
         .album-cover.hidden {
-            opacity: 0;
-            pointer-events: none;
+            display: none !important;
         }
 
         .album-cover[src=""],
@@ -770,6 +769,10 @@
         // ===== Playback / UI =====
         async function playTrackAtIndex(index) {
             if (!playlist[index]) return;
+
+            // 명시적으로 인덱스 설정
+            currentTrackIndex = index;
+
             const track = playlist[index];
             const uri = track.uri || track.spotify_track?.uri || track.track?.uri;
             if (!uri || !device_id) return;
@@ -1050,18 +1053,28 @@
                 console.log(`🎵 Setting up initial playlist with ${recommendations.length} recommendations`);
 
                 // 기존 플레이리스트 완전히 초기화
+                console.log('🔄 Clearing existing playlist...');
                 playlist = [];
                 currentTrackIndex = 0;
                 current_track = null;
 
-                // 재생 중이면 중지
+                // UI 초기화
+                document.getElementById('playPauseIcon').textContent = '▶';
+
+                // 재생 중이면 완전히 중지
                 if (player) {
                     try {
-                        await player.pause();
+                        const state = await player.getCurrentState();
+                        if (state && !state.paused) {
+                            console.log('⏸️ Stopping current playback...');
+                            await player.pause();
+                        }
                     } catch (e) {
                         console.warn('Failed to pause player:', e);
                     }
                 }
+
+                console.log('✅ Playlist cleared');
 
                 // 먼저 선택한 원곡의 Spotify 정보 가져오기
                 let originalSpotifyTrack = null;
@@ -1204,25 +1217,25 @@
             // 바로 추천 플레이리스트 시작
             await startRecommendationPlaylist(trackData);
 
-            // 검색창 숨기고 앨범 커버 보이기
+            // 검색창 숨기고 트랙 정보 보이기
             document.getElementById('initialSongInput').classList.add('hidden');
-            const albumCover = document.querySelector('.album-cover');
-            if (albumCover) albumCover.classList.remove('hidden');
+            const trackInfo = document.getElementById('trackInfo');
+            if (trackInfo) trackInfo.classList.remove('hidden');
         }
 
         // 검색창 토글
         function showSearchInterface() {
             const searchInterface = document.getElementById('initialSongInput');
-            const albumCover = document.querySelector('.album-cover');
+            const trackInfo = document.getElementById('trackInfo');
 
             // 토글 방식: 이미 보이면 숨기고, 숨겨져 있으면 보이기
             if (searchInterface.classList.contains('hidden')) {
                 searchInterface.classList.remove('hidden');
-                if (albumCover) albumCover.classList.add('hidden');
+                if (trackInfo) trackInfo.classList.add('hidden');
                 document.getElementById('initialSongTitle').focus();
             } else {
                 searchInterface.classList.add('hidden');
-                if (albumCover) albumCover.classList.remove('hidden');
+                if (trackInfo) trackInfo.classList.remove('hidden');
                 document.getElementById('initialSearchResults').innerHTML = '';
                 document.getElementById('initialSongTitle').value = '';
             }
@@ -1355,8 +1368,7 @@
                     !trackInfo.contains(e.target) &&
                     e.target !== searchButton) {
                     searchInterface.classList.add('hidden');
-                    const albumCover = document.querySelector('.album-cover');
-                    if (albumCover) albumCover.classList.remove('hidden');
+                    if (trackInfo) trackInfo.classList.remove('hidden');
                 }
             });
         });
