@@ -698,6 +698,14 @@
                 current_track = state.track_window.current_track;
                 is_paused = state.paused;
 
+                // 트랙이 변경될 때 로그
+                if (previousTrack?.id !== current_track?.id && current_track) {
+                    console.log(`🎧 Spotify Player State Changed:`);
+                    console.log(`   Previous: ${previousTrack?.name || 'None'} (ID: ${previousTrack?.id || 'N/A'})`);
+                    console.log(`   Current: ${current_track.name} (ID: ${current_track.id})`);
+                    console.log(`   Expected playlist[${currentTrackIndex}]:`, playlist[currentTrackIndex]);
+                }
+
                 // 트랙이 변경될 때 이전 트랙의 듣기 기록 저장
                 if (previousTrack?.id && previousTrack?.id !== current_track?.id) {
                     lastPlayedTrack = previousTrack;
@@ -780,8 +788,13 @@
             const t = track.spotify_track || track.track || track;
             const name = t.name || track.track || 'Unknown Track';
             const artists = t.artists ? t.artists.map(a => a.name).join(', ') : (track.artist || 'Unknown Artist');
+            const trackId = t.id || uri?.split(':')[2];
             const similarityText = (typeof track.similarity === 'number') ? ` (${(track.similarity * 100).toFixed(1)}% similar)` : '';
+
             console.log(`▶️ [${index + 1}/${playlist.length}] ${name} - ${artists}${similarityText}`);
+            console.log(`   🔑 Track ID: ${trackId}`);
+            console.log(`   🎵 URI: ${uri}`);
+            console.log(`   📦 Full track object:`, track);
 
             try {
                 const response = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
@@ -1100,8 +1113,15 @@
                     }
 
                     // 추천곡들 추가 (원곡 제외하고 9개) + track_key 매핑
+                    console.log('📋 Adding recommended tracks to playlist:');
                     d.spotify_tracks.slice(0, 9).forEach((spotifyTrack, idx) => {
                         const recTrack = recommendations[idx];
+                        const trackName = spotifyTrack.spotify_track?.name || spotifyTrack.track;
+                        const artistName = spotifyTrack.spotify_track?.artists?.[0]?.name || spotifyTrack.artist;
+                        const similarity = recTrack?.similarity || spotifyTrack.similarity;
+
+                        console.log(`  ${idx+2}. ${trackName} - ${artistName} (${similarity ? (similarity*100).toFixed(1)+'% similar' : 'N/A'})`);
+
                         playlist.push({
                             ...spotifyTrack,
                             track_key: recTrack?.track_key || spotifyTrack.track_key
