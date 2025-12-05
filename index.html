@@ -198,6 +198,10 @@
             cursor: grabbing
         }
 
+        .ipod-wrapper.hidden {
+            display: none;
+        }
+
         .ipod-container {
             width: 120px;
             height: 120px;
@@ -663,12 +667,14 @@
 
                 document.getElementById('loginScreen').classList.add('hidden');
 
-                // 검색창 표시, track-info 숨김 (명확한 초기 상태 설정)
+                // 검색창 표시, track-info와 아이팟 숨김 (명확한 초기 상태 설정)
                 const searchInterface = document.getElementById('initialSongInput');
                 const trackInfo = document.getElementById('trackInfo');
+                const ipodWrapper = document.getElementById('ipodWrapper');
 
                 searchInterface.classList.remove('hidden');
                 trackInfo.classList.add('hidden');
+                if (ipodWrapper) ipodWrapper.classList.add('hidden');
 
                 window.location.hash = '';
             }
@@ -1266,25 +1272,30 @@
             // 바로 추천 플레이리스트 시작
             await startRecommendationPlaylist(trackData);
 
-            // 검색창 숨기고 트랙 정보 보이기
+            // 검색창 숨기고 트랙 정보와 아이팟 보이기
             document.getElementById('initialSongInput').classList.add('hidden');
             const trackInfo = document.getElementById('trackInfo');
+            const ipodWrapper = document.getElementById('ipodWrapper');
             if (trackInfo) trackInfo.classList.remove('hidden');
+            if (ipodWrapper) ipodWrapper.classList.remove('hidden');
         }
 
         // 검색창 토글
         function showSearchInterface() {
             const searchInterface = document.getElementById('initialSongInput');
             const trackInfo = document.getElementById('trackInfo');
+            const ipodWrapper = document.getElementById('ipodWrapper');
 
             // 토글 방식: 이미 보이면 숨기고, 숨겨져 있으면 보이기
             if (searchInterface.classList.contains('hidden')) {
                 searchInterface.classList.remove('hidden');
                 if (trackInfo) trackInfo.classList.add('hidden');
+                if (ipodWrapper) ipodWrapper.classList.add('hidden');
                 document.getElementById('initialSongTitle').focus();
             } else {
                 searchInterface.classList.add('hidden');
                 if (trackInfo) trackInfo.classList.remove('hidden');
+                if (ipodWrapper) ipodWrapper.classList.remove('hidden');
                 document.getElementById('initialSearchResults').innerHTML = '';
                 document.getElementById('initialSongTitle').value = '';
             }
@@ -1410,6 +1421,7 @@
                 const searchInterface = document.getElementById('initialSongInput');
                 const searchButton = document.querySelector('button[onclick="showSearchInterface()"]');
                 const trackInfo = document.getElementById('trackInfo');
+                const ipodWrapper = document.getElementById('ipodWrapper');
 
                 // 검색창이 열려있고, 클릭한 곳이 검색창 내부가 아니고, 검색 버튼도 아니고, track-info도 아니면
                 if (!searchInterface.classList.contains('hidden') &&
@@ -1418,6 +1430,7 @@
                     e.target !== searchButton) {
                     searchInterface.classList.add('hidden');
                     if (trackInfo) trackInfo.classList.remove('hidden');
+                    if (ipodWrapper) ipodWrapper.classList.remove('hidden');
                 }
             });
         });
