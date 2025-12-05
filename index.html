@@ -1162,12 +1162,7 @@
                 img.style.height = '100px';
                 img.alt = track.spotify_track?.name || track.track || track.track_name || '';
 
-                const infoDiv = document.createElement('div');
-                infoDiv.className = 'upcoming-track-info';
-                infoDiv.textContent = `${index + 1}`;
-
                 trackDiv.appendChild(img);
-                trackDiv.appendChild(infoDiv);
                 upcomingTracksContainer.appendChild(trackDiv);
             });
         }
