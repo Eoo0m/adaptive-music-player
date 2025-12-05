@@ -50,21 +50,26 @@
         }
 
         .track-info {
-            position: absolute;
-            top: 20px;
+            position: fixed;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -50%);
             color: #fff;
             text-align: center;
             font-size: 14px;
             width: 100%;
-            max-width: 1400px;
+            max-width: 1600px;
             display: flex;
             flex-direction: row;
             align-items: center;
             justify-content: center;
-            gap: 15px;
+            gap: 12px;
             perspective: 1200px;
+            pointer-events: none;
+        }
+
+        .track-info > * {
+            pointer-events: auto;
         }
 
         .previous-tracks {
