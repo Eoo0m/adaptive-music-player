@@ -7,13 +7,17 @@
 
 
 
-<img width="719" height="346" alt="Screenshot 2025-11-26 at 3 04 46 PM" src="https://github.com/user-attachments/assets/cd0ce653-f5c4-4781-8efb-a2aa25e28dd9" />
+<img width="378" height="238" alt="image" src="https://github.com/user-attachments/assets/cf21609d-728a-4a57-be32-16e3247cf84e" />
+
+
 
 ## Embedding(Contrastive Learning)
 
 대조학습 기반 트랙 임베딩 학습
 
 <img width="499" height="342" alt="image" src="https://github.com/user-attachments/assets/bc434300-790c-4726-86e0-68ec2aabd536" />
+
+
 
 
 > $\ell_i = -\log\sum_{j\in P_i} p(j\mid i)
