@@ -74,12 +74,12 @@
 
         .previous-tracks {
             display: flex;
-            flex-direction: row-reverse;
+            flex-direction: row;
             align-items: center;
             gap: 8px;
             overflow: visible;
             flex: 1;
-            justify-content: flex-start;
+            justify-content: flex-end;
             min-width: 0;
         }
 
@@ -99,7 +99,7 @@
             gap: 8px;
             overflow: visible;
             flex: 1;
-            justify-content: flex-end;
+            justify-content: flex-start;
             min-width: 0;
         }
 
@@ -1116,18 +1116,19 @@
             const previousTracksContainer = document.getElementById('previousTracks');
             previousTracksContainer.innerHTML = '';
 
-            // 이전 3개 트랙 표시
+            // 이전 3개 트랙 표시 (reverse 제거하여 정순으로)
             const prevStart = Math.max(0, currentTrackIndex - 3);
-            const prevTracks = playlist.slice(prevStart, currentTrackIndex).reverse();
+            const prevTracks = playlist.slice(prevStart, currentTrackIndex);
 
             prevTracks.forEach((track, index) => {
                 const trackDiv = document.createElement('div');
                 trackDiv.className = 'previous-track';
 
-                // 멀어질수록 작아짐 (80px, 70px, 60px)
-                const size = 80 - (index * 10);
-                trackDiv.style.transform = `scale(${size / 100}) translateX(${index * 5}px)`;
-                trackDiv.style.opacity = Math.max(0.3, 0.7 - (index * 0.15));
+                // 현재 곡에 가까울수록 크게 (첫 곡이 가장 작고, 마지막 곡이 가장 큼)
+                const reverseIndex = prevTracks.length - 1 - index;
+                const size = 80 - (reverseIndex * 10);
+                trackDiv.style.transform = `scale(${size / 100}) translateX(-${reverseIndex * 5}px)`;
+                trackDiv.style.opacity = Math.max(0.3, 0.7 - (reverseIndex * 0.15));
 
                 const img = document.createElement('img');
                 img.src = track.spotify_track?.album?.images?.[0]?.url || track.album?.images?.[0]?.url || '';
