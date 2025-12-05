@@ -68,7 +68,7 @@
             pointer-events: none;
         }
 
-        .track-info > * {
+        .track-info>* {
             pointer-events: auto;
         }
 
@@ -97,7 +97,8 @@
             overflow: visible;
         }
 
-        .upcoming-track, .previous-track {
+        .upcoming-track,
+        .previous-track {
             position: relative;
             display: flex;
             flex-direction: column;
@@ -105,7 +106,8 @@
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .upcoming-track img, .previous-track img {
+        .upcoming-track img,
+        .previous-track img {
             border-radius: 6px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, .5);
             object-fit: cover;
@@ -114,7 +116,8 @@
             filter: brightness(0.6) saturate(0.7);
         }
 
-        .upcoming-track-info, .previous-track-info {
+        .upcoming-track-info,
+        .previous-track-info {
             margin-top: 4px;
             text-align: center;
             font-size: 9px;
@@ -588,7 +591,7 @@
     <div class="space-background"></div>
     <div class="stars" id="stars"></div>
 
-    <a href="https://github.com/Eoo0m" target="_blank" class="github-link">
+    <a href="https://github.com/Eoo0m/adaptive-music-player-backend" target="_blank" class="github-link">
         <svg class="github-logo" viewBox="0 0 16 16" width="20" height="20" fill="currentColor">
             <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 
                2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 
@@ -617,18 +620,20 @@
     </div>
 
     <div class="search-interface hidden" id="initialSongInput">
-        <h2>🎵 노래 검색</h2>
+        <h2>노래 검색</h2>
 
         <!-- 제목 검색 -->
         <div class="search-section">
-            <input type="text" class="search-input" id="initialSongTitle" placeholder="노래 제목을 입력하세요 (예: Shape of You, Ed Sheeran)">
+            <input type="text" class="search-input" id="initialSongTitle"
+                placeholder="노래 제목을 입력하세요 (예: Shape of You, Ed Sheeran)">
             <button class="search-button" onclick="searchInitialSongs()" id="initialSearchBtn">검색</button>
             <div id="initialSearchResults"></div>
         </div>
 
         <!-- 키워드 검색 -->
         <div class="search-section" style="margin-top: 15px;">
-            <input type="text" class="search-input" id="keywordSearchInput" placeholder="키워드를 입력하세요 (예: 공부할 때 듣는 재즈, 드라이브 팝송)">
+            <input type="text" class="search-input" id="keywordSearchInput"
+                placeholder="키워드를 입력하세요 (예: 공부할 때 듣는 재즈, 드라이브 팝송)">
             <button class="search-button" onclick="searchByKeyword()" id="keywordSearchBtn">검색</button>
             <div id="keywordSearchResults"></div>
         </div>
@@ -1300,7 +1305,7 @@
                         const artistName = spotifyTrack.spotify_track?.artists?.[0]?.name || spotifyTrack.artist;
                         const similarity = recTrack?.similarity || spotifyTrack.similarity;
 
-                        console.log(`  ${idx+2}. ${trackName} - ${artistName} (${similarity ? (similarity*100).toFixed(1)+'% similar' : 'N/A'})`);
+                        console.log(`  ${idx + 2}. ${trackName} - ${artistName} (${similarity ? (similarity * 100).toFixed(1) + '% similar' : 'N/A'})`);
 
                         playlist.push({
                             ...spotifyTrack,
