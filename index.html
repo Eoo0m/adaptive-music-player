@@ -1012,6 +1012,12 @@
                 return;
             }
 
+            // 검색창이 열려있으면 track-info 업데이트하지 않음 (곡이 바뀌어도 커버 표시 안함)
+            const searchInterface = document.getElementById('initialSongInput');
+            if (!searchInterface.classList.contains('hidden')) {
+                return;
+            }
+
             document.getElementById('trackName').textContent = current_track.name;
             document.getElementById('artistName').textContent = current_track.artists.map(a => a.name).join(', ');
 
