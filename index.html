@@ -57,11 +57,59 @@
             color: #fff;
             text-align: center;
             font-size: 14px;
-            max-width: 400px;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 40px;
+            perspective: 1000px;
+        }
+
+        .current-track {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .upcoming-tracks {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 20px;
+            overflow: visible;
+            position: relative;
+            height: 300px;
+        }
+
+        .upcoming-track {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: left center;
+        }
+
+        .upcoming-track img {
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .4);
+            object-fit: cover;
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid rgba(255, 255, 255, .1);
+            filter: brightness(0.8);
+        }
+
+        .upcoming-track-info {
+            margin-top: 8px;
+            text-align: center;
+            font-size: 11px;
+            opacity: 0.7;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .album-cover {
@@ -573,12 +621,15 @@
         </div>
     </div>
 
-    <div class="track-info hidden" id="trackInfo" onclick="showSearchInterface()" style="cursor: pointer;">
-        <img class="album-cover" id="albumCover" src="" alt="Album Cover">
-        <div>
-            <div class="track-name" id="trackName">노래 제목</div>
-            <div class="artist-name" id="artistName">아티스트</div>
+    <div class="track-info hidden" id="trackInfo">
+        <div class="current-track" onclick="showSearchInterface()" style="cursor: pointer;">
+            <img class="album-cover" id="albumCover" src="" alt="Album Cover">
+            <div>
+                <div class="track-name" id="trackName">노래 제목</div>
+                <div class="artist-name" id="artistName">아티스트</div>
+            </div>
         </div>
+        <div class="upcoming-tracks" id="upcomingTracks"></div>
     </div>
 
     <!-- ✅ 드래그 가능한 래퍼 -->
@@ -1031,7 +1082,47 @@
             }
 
             document.getElementById('trackInfo').classList.remove('hidden');
+            updateUpcomingTracks();
             updateMediaSession();
+        }
+
+        function updateUpcomingTracks() {
+            const upcomingTracksContainer = document.getElementById('upcomingTracks');
+            upcomingTracksContainer.innerHTML = '';
+
+            // 다음 10개 트랙 표시
+            const nextTracks = playlist.slice(currentTrackIndex + 1, currentTrackIndex + 11);
+
+            nextTracks.forEach((track, index) => {
+                const trackDiv = document.createElement('div');
+                trackDiv.className = 'upcoming-track';
+
+                // 거리에 따라 크기 줄어들기 (300px → 80px)
+                const baseSize = 300;
+                const minSize = 80;
+                const scale = Math.max(minSize, baseSize - (index * 22));
+
+                // 3D 원근감 효과
+                const rotateY = Math.min(index * 3, 30); // 최대 30도
+                const translateZ = -index * 30; // 뒤로 이동
+
+                trackDiv.style.transform = `scale(${scale / baseSize}) rotateY(${rotateY}deg) translateZ(${translateZ}px)`;
+                trackDiv.style.opacity = Math.max(0.3, 1 - (index * 0.08));
+
+                const img = document.createElement('img');
+                img.src = track.spotify_track?.album?.images?.[0]?.url || track.album?.images?.[0]?.url || '';
+                img.style.width = `${baseSize}px`;
+                img.style.height = `${baseSize}px`;
+                img.alt = track.spotify_track?.name || track.track || track.track_name || '';
+
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'upcoming-track-info';
+                infoDiv.textContent = `${index + 1}. ${track.spotify_track?.name || track.track || track.track_name || 'Unknown'}`;
+
+                trackDiv.appendChild(img);
+                trackDiv.appendChild(infoDiv);
+                upcomingTracksContainer.appendChild(trackDiv);
+            });
         }
         function updateMediaSession() {
             if (!('mediaSession' in navigator) || !current_track) return;
