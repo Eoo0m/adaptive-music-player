@@ -596,6 +596,8 @@
     <script>
         // ===== Global =====
         let player, is_paused = true, current_track = null, device_id = null;
+        let expectedTrackId = null;  // 재생 요청한 트랙 ID
+        let retryAttempted = false;  // 재시도 여부
         let access_token = null, refresh_token = null;
 
         let playlist = [];                // 현재 플레이리스트
@@ -698,12 +700,25 @@
                 current_track = state.track_window.current_track;
                 is_paused = state.paused;
 
-                // 트랙이 변경될 때 로그
+                // 트랙이 변경될 때 로그 및 검증
                 if (previousTrack?.id !== current_track?.id && current_track) {
                     console.log(`🎧 Spotify Player State Changed:`);
                     console.log(`   Previous: ${previousTrack?.name || 'None'} (ID: ${previousTrack?.id || 'N/A'})`);
                     console.log(`   Current: ${current_track.name} (ID: ${current_track.id})`);
+                    console.log(`   Expected Track ID: ${expectedTrackId}`);
                     console.log(`   Expected playlist[${currentTrackIndex}]:`, playlist[currentTrackIndex]);
+
+                    // ⚠️ 잘못된 트랙이 재생되면 재시도
+                    if (expectedTrackId && current_track.id !== expectedTrackId && !retryAttempted) {
+                        console.error(`❌ WRONG TRACK PLAYING! Expected: ${expectedTrackId}, Got: ${current_track.id}`);
+                        console.warn(`🔄 Retrying correct track...`);
+                        retryAttempted = true;
+                        setTimeout(() => playTrackAtIndex(currentTrackIndex), 500);
+                        return;
+                    } else if (expectedTrackId && current_track.id === expectedTrackId) {
+                        console.log(`✅ Correct track is playing`);
+                        expectedTrackId = null;  // 리셋
+                    }
                 }
 
                 // 트랙이 변경될 때 이전 트랙의 듣기 기록 저장
@@ -791,8 +806,12 @@
             const trackId = t.id || uri?.split(':')[2];
             const similarityText = (typeof track.similarity === 'number') ? ` (${(track.similarity * 100).toFixed(1)}% similar)` : '';
 
+            // 예상 트랙 ID 저장
+            expectedTrackId = trackId;
+            retryAttempted = false;
+
             console.log(`▶️ [${index + 1}/${playlist.length}] ${name} - ${artists}${similarityText}`);
-            console.log(`   🔑 Track ID: ${trackId}`);
+            console.log(`   🔑 Expected Track ID: ${trackId}`);
             console.log(`   🎵 URI: ${uri}`);
             console.log(`   📦 Full track object:`, track);
 
