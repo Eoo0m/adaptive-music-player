@@ -662,14 +662,11 @@
                 console.log('🎵 Session started:', sessionId);
 
                 document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('trackInfo').classList.remove('hidden');
                 document.getElementById('initialSongInput').classList.remove('hidden');
 
-                // 처음 로그인 시 검색창만 보이고 앨범은 숨김
-                const albumCover = document.getElementById('albumCover');
-                if (albumCover && !albumCover.src) {
-                    albumCover.classList.add('hidden');
-                }
+                // 처음 로그인 시에는 track-info 숨김 (검색 전)
+                // 재생 시작하면 track-info가 보이도록 함
+                document.getElementById('trackInfo').classList.add('hidden');
 
                 window.location.hash = '';
             }
@@ -735,7 +732,11 @@
                 if (state.position === 0 && state.paused && current_track && previousTrack?.id) {
                     setTimeout(() => playNext(), 600);
                 } else {
-                    updateTrackInfo(); updatePlayPauseIcon();
+                    // 플레이리스트가 있을 때만 UI 업데이트
+                    if (playlist.length > 0) {
+                        updateTrackInfo();
+                        updatePlayPauseIcon();
+                    }
                 }
             });
 
@@ -996,6 +997,13 @@
         // ===== UI =====
         function updateTrackInfo() {
             if (!current_track) return;
+
+            // 플레이리스트가 없으면 track-info 숨김 (새로고침 후 이전 곡이 남아있는 경우)
+            if (playlist.length === 0) {
+                document.getElementById('trackInfo').classList.add('hidden');
+                return;
+            }
+
             document.getElementById('trackName').textContent = current_track.name;
             document.getElementById('artistName').textContent = current_track.artists.map(a => a.name).join(', ');
 
