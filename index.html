@@ -662,11 +662,13 @@
                 console.log('🎵 Session started:', sessionId);
 
                 document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('initialSongInput').classList.remove('hidden');
 
-                // 처음 로그인 시에는 track-info 숨김 (검색 전)
-                // 재생 시작하면 track-info가 보이도록 함
-                document.getElementById('trackInfo').classList.add('hidden');
+                // 검색창 표시, track-info 숨김 (명확한 초기 상태 설정)
+                const searchInterface = document.getElementById('initialSongInput');
+                const trackInfo = document.getElementById('trackInfo');
+
+                searchInterface.classList.remove('hidden');
+                trackInfo.classList.add('hidden');
 
                 window.location.hash = '';
             }
