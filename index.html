@@ -1369,53 +1369,29 @@
                 return;
             }
 
-            // 먼저 결과 표시
+            // Supabase 데이터로 바로 표시 (Spotify API 호출 없음)
             let html = '<div class="recommendation-list" style="max-height:200px;">';
             results.slice(0, 10).forEach((r, idx) => {
+                // cover_image가 있으면 base64 디코딩, 없으면 빈 문자열
+                const coverImageSrc = r.cover_image ? `data:image/jpeg;base64,${r.cover_image}` : '';
+
                 html += `
-          <div class="recommendation-item" data-track-idx="${idx}">
-            <img class="rec-album-cover" data-idx="${idx}" src="" alt="">
+          <div class="recommendation-item" onclick="selectAndStartPlaylist({
+              track_key: '${r.track_key}',
+              track: '${(r.track || '').replace(/'/g, "\\'")}',
+              artist: '${(r.artist || '').replace(/'/g, "\\'")}',
+              album: '${(r.album || '').replace(/'/g, "\\'")}',
+              cover_image: '${r.cover_image || ''}'
+          })">
+            <img class="rec-album-cover" src="${coverImageSrc}" alt="" style="${!coverImageSrc ? 'display:none;' : ''}">
             <div class="rec-info">
-              <div class="rec-title">${r.track}</div>
-              <div class="rec-artist">${r.artist} - ${r.album}</div>
+              <div class="rec-title">${r.track || 'Unknown'}</div>
+              <div class="rec-artist">${r.artist || 'Unknown'} - ${r.album || 'Unknown'}</div>
             </div>
           </div>`;
             });
             html += '</div>';
             div.innerHTML = html;
-
-            // Spotify에서 앨범 커버 가져오기 (백그라운드)
-            results.slice(0, 10).forEach(async (r, idx) => {
-                try {
-                    const query = `track:"${r.track}" artist:"${r.artist}"`;
-                    const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`, {
-                        headers: { 'Authorization': `Bearer ${access_token}` }
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        const track = data?.tracks?.items?.[0];
-                        if (track?.album?.images?.[2]) {
-                            const img = div.querySelector(`img[data-idx="${idx}"]`);
-                            if (img) img.src = track.album.images[2].url;
-                        }
-                    }
-                } catch (e) {
-                    console.warn('Failed to fetch album cover:', e);
-                }
-            });
-
-            // Attach click listeners with proper data
-            results.slice(0, 10).forEach((r, idx) => {
-                const elem = div.querySelector(`[data-track-idx="${idx}"]`);
-                if (elem) {
-                    elem.onclick = () => selectAndStartPlaylist({
-                        track_key: r.track_key,
-                        track: r.track,
-                        artist: r.artist,
-                        album: r.album
-                    });
-                }
-            });
         }
 
         // ✅ 검색 결과에서 곡 선택 시 바로 재생 시작
