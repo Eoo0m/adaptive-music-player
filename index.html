@@ -622,6 +622,7 @@
         <h1>🎵 adaptive music player</h1>
         <p>동적인 음악 추천을 즐겨보세요</p>
         <button class="login-button" onclick="login()">Spotify로 로그인</button>
+        <button class="login-button" onclick="directAccess()" style="background: #535353; margin-top: 10px;">바로 접속 (재생 없이 추천만)</button>
         <div class="error-message" id="errorMessage"></div>
     </div>
 
@@ -756,6 +757,12 @@
         }
         const API_BASE_URL = 'https://api.dynplayer.win';
         function login() { window.location.href = `${API_BASE_URL}/login`; }
+
+        // 바로 접속 (재생 없이 추천만)
+        function directAccess() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('initialSongInput').classList.remove('hidden');
+        }
 
         // ===== Spotify SDK =====
         window.onSpotifyWebPlaybackSDKReady = () => { if (access_token) initializeSpotifyPlayer(); };
@@ -1403,8 +1410,14 @@
             document.getElementById('initialSearchResults').innerHTML = '';
             document.getElementById('initialSongTitle').value = `${trackData.track} - ${trackData.artist}`;
 
-            // 바로 추천 플레이리스트 시작
-            await startRecommendationPlaylist(trackData);
+            // Spotify 로그인 여부 확인
+            if (access_token) {
+                // 로그인 되어있으면 재생
+                await startRecommendationPlaylist(trackData);
+            } else {
+                // 로그인 안되어있으면 재생 없이 추천만
+                await showRecommendationsOnly(trackData);
+            }
 
             // 검색창 숨기고 트랙 정보와 아이팟 보이기
             document.getElementById('initialSongInput').classList.add('hidden');
@@ -1412,6 +1425,88 @@
             const ipodWrapper = document.getElementById('ipodWrapper');
             if (trackInfo) trackInfo.classList.remove('hidden');
             if (ipodWrapper) ipodWrapper.classList.remove('hidden');
+        }
+
+        // 재생 없이 추천만 보여주기
+        async function showRecommendationsOnly(selectedTrack) {
+            if (!selectedTrack || !selectedTrack.track_key) {
+                alert('먼저 노래를 검색하고 선택해주세요.');
+                return;
+            }
+
+            console.log('🎵 Showing recommendations without playback for track_key:', selectedTrack.track_key);
+
+            try {
+                const r = await fetch(`${API_BASE_URL}/recommend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        track_key: selectedTrack.track_key,
+                        num_recommendations: 30
+                    })
+                });
+                const d = await r.json();
+                if (d.error) {
+                    alert(d.error);
+                }
+                else if (d.recommendations?.length > 0) {
+                    // 선택한 곡 + 추천 9곡
+                    const displayTracks = [selectedTrack, ...d.recommendations.slice(0, 9)];
+
+                    // 커버 이미지만 업데이트 (재생 없음)
+                    updateTrackDisplayOnly(displayTracks, 0);
+                }
+                else {
+                    alert('추천곡을 찾을 수 없습니다. 다른 노래를 시도해보세요.');
+                }
+            } catch (e) {
+                console.error('Recommendation error:', e);
+                alert('추천 시스템에 연결할 수 없습니다.');
+            }
+        }
+
+        // 재생 없이 트랙 정보만 표시
+        function updateTrackDisplayOnly(tracks, currentIndex) {
+            // 이전 곡들
+            const prevContainer = document.querySelector('.previous-tracks');
+            prevContainer.innerHTML = '';
+            for (let i = Math.max(0, currentIndex - 3); i < currentIndex; i++) {
+                const track = tracks[i];
+                const coverSrc = track.cover_image ? `data:image/jpeg;base64,${track.cover_image}` : '';
+                const distance = currentIndex - i;
+                prevContainer.innerHTML += `
+                    <img src="${coverSrc}"
+                         class="album-cover previous"
+                         style="transform: rotateY(${45 * distance}deg) translateZ(-${80 * distance}px);"
+                         alt="${track.track || 'Unknown'}">
+                `;
+            }
+
+            // 현재 곡
+            const currentTrack = tracks[currentIndex];
+            const currentCover = document.getElementById('albumCover');
+            const currentCoverSrc = currentTrack.cover_image ? `data:image/jpeg;base64,${currentTrack.cover_image}` : '';
+            if (currentCover) currentCover.src = currentCoverSrc;
+
+            const trackTitle = document.getElementById('trackTitle');
+            const trackArtist = document.getElementById('trackArtist');
+            if (trackTitle) trackTitle.textContent = currentTrack.track || 'Unknown';
+            if (trackArtist) trackArtist.textContent = currentTrack.artist || 'Unknown Artist';
+
+            // 다음 곡들
+            const upcomingContainer = document.querySelector('.upcoming-tracks');
+            upcomingContainer.innerHTML = '';
+            for (let i = currentIndex + 1; i < Math.min(tracks.length, currentIndex + 4); i++) {
+                const track = tracks[i];
+                const coverSrc = track.cover_image ? `data:image/jpeg;base64,${track.cover_image}` : '';
+                const distance = i - currentIndex;
+                upcomingContainer.innerHTML += `
+                    <img src="${coverSrc}"
+                         class="album-cover upcoming"
+                         style="transform: rotateY(-${45 * distance}deg) translateZ(-${80 * distance}px);"
+                         alt="${track.track || 'Unknown'}">
+                `;
+            }
         }
 
         // 검색창 토글
