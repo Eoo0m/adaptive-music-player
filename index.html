@@ -1095,9 +1095,16 @@
             document.getElementById('trackName').textContent = current_track.name;
             document.getElementById('artistName').textContent = current_track.artists.map(a => a.name).join(', ');
 
-            // 앨범 커버 업데이트
+            // 앨범 커버 업데이트 - Supabase cover_image 우선 사용
             const albumCover = document.getElementById('albumCover');
-            if (current_track.album?.images?.[0]?.url) {
+            const currentPlaylistTrack = playlist[currentTrackIndex];
+
+            if (currentPlaylistTrack?.cover_image) {
+                // Supabase에 저장된 cover_image 사용
+                albumCover.src = `data:image/jpeg;base64,${currentPlaylistTrack.cover_image}`;
+                albumCover.style.display = 'block';
+            } else if (current_track.album?.images?.[0]?.url) {
+                // Supabase에 없으면 Spotify 이미지 사용
                 albumCover.src = current_track.album.images[0].url;
                 albumCover.style.display = 'block';
             } else {
@@ -1129,7 +1136,12 @@
                 trackDiv.style.opacity = Math.max(0.3, 0.7 - (reverseIndex * 0.15));
 
                 const img = document.createElement('img');
-                img.src = track.spotify_track?.album?.images?.[0]?.url || track.album?.images?.[0]?.url || '';
+                // Supabase cover_image 우선 사용, 없으면 Spotify 이미지
+                if (track.cover_image) {
+                    img.src = `data:image/jpeg;base64,${track.cover_image}`;
+                } else {
+                    img.src = track.spotify_track?.album?.images?.[0]?.url || track.album?.images?.[0]?.url || '';
+                }
                 img.style.width = '100px';
                 img.style.height = '100px';
                 img.alt = track.spotify_track?.name || track.track || track.track_name || '';
@@ -1155,7 +1167,12 @@
                 trackDiv.style.opacity = Math.max(0.25, 0.8 - (index * 0.06));
 
                 const img = document.createElement('img');
-                img.src = track.spotify_track?.album?.images?.[0]?.url || track.album?.images?.[0]?.url || '';
+                // Supabase cover_image 우선 사용, 없으면 Spotify 이미지
+                if (track.cover_image) {
+                    img.src = `data:image/jpeg;base64,${track.cover_image}`;
+                } else {
+                    img.src = track.spotify_track?.album?.images?.[0]?.url || track.album?.images?.[0]?.url || '';
+                }
                 img.style.width = '100px';
                 img.style.height = '100px';
                 img.alt = track.spotify_track?.name || track.track || track.track_name || '';
@@ -1264,13 +1281,15 @@
 
                 // 먼저 선택한 원곡의 Spotify 정보 가져오기
                 let originalSpotifyTrack = null;
-                if (originalSong?.track_key) {
+                if (originalSong?.track && originalSong?.artist) {
                     try {
-                        const origResponse = await fetch(`https://api.spotify.com/v1/tracks/${originalSong.track_key}`, {
+                        const query = `track:"${originalSong.track}" artist:"${originalSong.artist}"`;
+                        const origResponse = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`, {
                             headers: { 'Authorization': `Bearer ${access_token}` }
                         });
                         if (origResponse.ok) {
-                            originalSpotifyTrack = await origResponse.json();
+                            const data = await origResponse.json();
+                            originalSpotifyTrack = data?.tracks?.items?.[0];
                         }
                     } catch (e) {
                         console.warn('Failed to fetch original track:', e);
@@ -1482,12 +1501,15 @@
                 return;
             }
 
-            // 먼저 결과 표시
+            // Supabase의 cover_image를 사용하여 결과 표시
             let html = '<div class="recommendation-list" style="max-height:200px;">';
             results.forEach((r, idx) => {
+                // cover_image가 있으면 base64 디코딩, 없으면 빈 문자열
+                const coverImageSrc = r.cover_image ? `data:image/jpeg;base64,${r.cover_image}` : '';
+
                 html += `
           <div class="recommendation-item" data-track-idx="${idx}">
-            <img class="rec-album-cover" data-idx="${idx}" src="" alt="">
+            <img class="rec-album-cover" data-idx="${idx}" src="${coverImageSrc}" alt="" style="${!coverImageSrc ? 'display:none;' : ''}">
             <div class="rec-info">
               <div class="rec-title">로딩 중...</div>
               <div class="rec-artist">...</div>
@@ -1497,7 +1519,7 @@
             html += '</div>';
             div.innerHTML = html;
 
-            // Spotify에서 트랙 정보 가져오기
+            // Spotify에서 트랙 정보 가져오기 (메타데이터만)
             for (let idx = 0; idx < results.length; idx++) {
                 const r = results[idx];
                 try {
@@ -1508,26 +1530,22 @@
                     if (response.ok) {
                         const track = await response.json();
 
-                        // UI 업데이트
+                        // UI 업데이트 (이미지는 Supabase 것 사용, 메타데이터만 Spotify에서)
                         const item = div.querySelector(`[data-track-idx="${idx}"]`);
                         if (item) {
                             const titleElem = item.querySelector('.rec-title');
                             const artistElem = item.querySelector('.rec-artist');
-                            const imgElem = item.querySelector('.rec-album-cover');
 
                             titleElem.textContent = track.name;
                             artistElem.textContent = `${track.artists[0].name} - ${track.album.name}`;
-
-                            if (track.album?.images?.[2]) {
-                                imgElem.src = track.album.images[2].url;
-                            }
 
                             // 클릭 이벤트
                             item.onclick = () => selectAndStartPlaylist({
                                 track_key: r.track_key,
                                 track: track.name,
                                 artist: track.artists[0].name,
-                                album: track.album.name
+                                album: track.album.name,
+                                cover_image: r.cover_image  // cover_image 전달
                             });
                         }
                     }
