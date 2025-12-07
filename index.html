@@ -1467,20 +1467,7 @@
 
         // 재생 없이 트랙 정보만 표시
         function updateTrackDisplayOnly(tracks, currentIndex) {
-            // 이전 곡들
-            const prevContainer = document.querySelector('.previous-tracks');
-            prevContainer.innerHTML = '';
-            for (let i = Math.max(0, currentIndex - 3); i < currentIndex; i++) {
-                const track = tracks[i];
-                const coverSrc = track.cover_image ? `data:image/jpeg;base64,${track.cover_image}` : '';
-                const distance = currentIndex - i;
-                prevContainer.innerHTML += `
-                    <img src="${coverSrc}"
-                         class="album-cover previous"
-                         style="transform: rotateY(${45 * distance}deg) translateZ(-${80 * distance}px);"
-                         alt="${track.track || 'Unknown'}">
-                `;
-            }
+            console.log('🎨 Updating track display, total tracks:', tracks.length, 'current index:', currentIndex);
 
             // 현재 곡
             const currentTrack = tracks[currentIndex];
@@ -1488,25 +1475,59 @@
             const currentCoverSrc = currentTrack.cover_image ? `data:image/jpeg;base64,${currentTrack.cover_image}` : '';
             if (currentCover) currentCover.src = currentCoverSrc;
 
-            const trackTitle = document.getElementById('trackTitle');
-            const trackArtist = document.getElementById('trackArtist');
-            if (trackTitle) trackTitle.textContent = currentTrack.track || 'Unknown';
-            if (trackArtist) trackArtist.textContent = currentTrack.artist || 'Unknown Artist';
+            const trackName = document.getElementById('trackName');
+            const artistName = document.getElementById('artistName');
+            if (trackName) trackName.textContent = currentTrack.track || 'Unknown';
+            if (artistName) artistName.textContent = currentTrack.artist || 'Unknown Artist';
 
-            // 다음 곡들
-            const upcomingContainer = document.querySelector('.upcoming-tracks');
-            upcomingContainer.innerHTML = '';
-            for (let i = currentIndex + 1; i < Math.min(tracks.length, currentIndex + 4); i++) {
-                const track = tracks[i];
-                const coverSrc = track.cover_image ? `data:image/jpeg;base64,${track.cover_image}` : '';
-                const distance = i - currentIndex;
-                upcomingContainer.innerHTML += `
-                    <img src="${coverSrc}"
-                         class="album-cover upcoming"
-                         style="transform: rotateY(-${45 * distance}deg) translateZ(-${80 * distance}px);"
-                         alt="${track.track || 'Unknown'}">
-                `;
-            }
+            // 이전 곡들 (왼쪽)
+            const previousTracksContainer = document.getElementById('previousTracks');
+            previousTracksContainer.innerHTML = '';
+
+            const prevTracks = tracks.slice(Math.max(0, currentIndex - 10), currentIndex);
+            prevTracks.forEach((track, index) => {
+                const trackDiv = document.createElement('div');
+                trackDiv.className = 'previous-track';
+
+                const reverseIndex = prevTracks.length - 1 - index;
+                const size = 80 - (reverseIndex * 10);
+                trackDiv.style.transform = `scale(${size / 100}) translateX(-${reverseIndex * 5}px)`;
+                trackDiv.style.opacity = Math.max(0.3, 0.7 - (reverseIndex * 0.15));
+
+                const img = document.createElement('img');
+                img.src = track.cover_image ? `data:image/jpeg;base64,${track.cover_image}` : '';
+                img.style.width = '100px';
+                img.style.height = '100px';
+                img.alt = track.track || 'Unknown';
+
+                trackDiv.appendChild(img);
+                previousTracksContainer.appendChild(trackDiv);
+            });
+
+            // 다음 곡들 (오른쪽)
+            const upcomingTracksContainer = document.getElementById('upcomingTracks');
+            upcomingTracksContainer.innerHTML = '';
+
+            const nextTracks = tracks.slice(currentIndex + 1, currentIndex + 11);
+            nextTracks.forEach((track, index) => {
+                const trackDiv = document.createElement('div');
+                trackDiv.className = 'upcoming-track';
+
+                const size = Math.max(50, 100 - (index * 5));
+                trackDiv.style.transform = `scale(${size / 100}) translateX(-${index * 3}px)`;
+                trackDiv.style.opacity = Math.max(0.25, 0.8 - (index * 0.06));
+
+                const img = document.createElement('img');
+                img.src = track.cover_image ? `data:image/jpeg;base64,${track.cover_image}` : '';
+                img.style.width = '100px';
+                img.style.height = '100px';
+                img.alt = track.track || 'Unknown';
+
+                trackDiv.appendChild(img);
+                upcomingTracksContainer.appendChild(trackDiv);
+            });
+
+            console.log('✅ Track display updated');
         }
 
         // 검색창 토글
