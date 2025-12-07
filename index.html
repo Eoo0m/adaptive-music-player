@@ -1355,6 +1355,8 @@
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query })
                 });
                 const d = await r.json();
+                console.log('🔍 Search response:', d);
+                console.log('🔍 First result cover_image length:', d.results?.[0]?.cover_image?.length);
                 if (d.error) { document.getElementById('initialSearchResults').innerHTML = `<div class="error-message">${d.error}</div>`; }
                 else { displayInitialSearchResults(d.results); }
             } catch (e) {
