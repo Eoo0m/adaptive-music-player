@@ -1500,7 +1500,30 @@
                 img.style.height = '100px';
                 img.alt = track.track || 'Unknown';
 
+                const titleDiv = document.createElement('div');
+                titleDiv.textContent = track.track || 'Unknown';
+                titleDiv.style.fontSize = '10px';
+                titleDiv.style.color = '#fff';
+                titleDiv.style.marginTop = '4px';
+                titleDiv.style.textAlign = 'center';
+                titleDiv.style.overflow = 'hidden';
+                titleDiv.style.textOverflow = 'ellipsis';
+                titleDiv.style.whiteSpace = 'nowrap';
+                titleDiv.style.maxWidth = '100px';
+
+                const artistDiv = document.createElement('div');
+                artistDiv.textContent = track.artist || 'Unknown Artist';
+                artistDiv.style.fontSize = '8px';
+                artistDiv.style.color = '#aaa';
+                artistDiv.style.textAlign = 'center';
+                artistDiv.style.overflow = 'hidden';
+                artistDiv.style.textOverflow = 'ellipsis';
+                artistDiv.style.whiteSpace = 'nowrap';
+                artistDiv.style.maxWidth = '100px';
+
                 trackDiv.appendChild(img);
+                trackDiv.appendChild(titleDiv);
+                trackDiv.appendChild(artistDiv);
                 previousTracksContainer.appendChild(trackDiv);
             });
 
@@ -1523,7 +1546,30 @@
                 img.style.height = '100px';
                 img.alt = track.track || 'Unknown';
 
+                const titleDiv = document.createElement('div');
+                titleDiv.textContent = track.track || 'Unknown';
+                titleDiv.style.fontSize = '10px';
+                titleDiv.style.color = '#fff';
+                titleDiv.style.marginTop = '4px';
+                titleDiv.style.textAlign = 'center';
+                titleDiv.style.overflow = 'hidden';
+                titleDiv.style.textOverflow = 'ellipsis';
+                titleDiv.style.whiteSpace = 'nowrap';
+                titleDiv.style.maxWidth = '100px';
+
+                const artistDiv = document.createElement('div');
+                artistDiv.textContent = track.artist || 'Unknown Artist';
+                artistDiv.style.fontSize = '8px';
+                artistDiv.style.color = '#aaa';
+                artistDiv.style.textAlign = 'center';
+                artistDiv.style.overflow = 'hidden';
+                artistDiv.style.textOverflow = 'ellipsis';
+                artistDiv.style.whiteSpace = 'nowrap';
+                artistDiv.style.maxWidth = '100px';
+
                 trackDiv.appendChild(img);
+                trackDiv.appendChild(titleDiv);
+                trackDiv.appendChild(artistDiv);
                 upcomingTracksContainer.appendChild(trackDiv);
             });
 
