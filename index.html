@@ -619,10 +619,11 @@
     </a>
 
     <div class="login-screen" id="loginScreen">
-        <h1>🎵 adaptive music player</h1>
-        <p>동적인 음악 추천을 즐겨보세요</p>
+        <h1>dynplayer</h1>
+        <p>음악 추천을 즐겨보세요</p>
         <button class="login-button" onclick="login()">Spotify로 로그인</button>
-        <button class="login-button" onclick="directAccess()" style="background: #535353; margin-top: 10px;">바로 접속 (재생 없이 추천만)</button>
+        <button class="login-button" onclick="directAccess()" style="background: #535353; margin-top: 10px;">바로 접속 (재생
+            없이 추천만)</button>
         <div class="error-message" id="errorMessage"></div>
     </div>
 
@@ -762,6 +763,10 @@
         function directAccess() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('initialSongInput').classList.remove('hidden');
+            // 검색창에 포커스
+            setTimeout(() => {
+                document.getElementById('initialSongTitle').focus();
+            }, 100);
         }
 
         // ===== Spotify SDK =====
