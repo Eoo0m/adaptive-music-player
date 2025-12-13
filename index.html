@@ -769,6 +769,12 @@
             loginScreen.remove();
             searchInput.classList.remove('hidden');
 
+            // 검색창이 확실히 보이도록 스타일 강제 적용
+            searchInput.style.display = 'block';
+            searchInput.style.visibility = 'visible';
+            searchInput.style.opacity = '1';
+            searchInput.style.zIndex = '1000';
+
             // 검색창에 포커스
             setTimeout(() => {
                 document.getElementById('initialSongTitle').focus();
