@@ -762,18 +762,12 @@
 
         // 바로 접속 (재생 없이 추천만)
         function directAccess() {
-            console.log('🚀 Direct access clicked');
             const loginScreen = document.getElementById('loginScreen');
             const searchInput = document.getElementById('initialSongInput');
 
-            console.log('Login screen:', loginScreen);
-            console.log('Search input:', searchInput);
-            console.log('Search input hidden?', searchInput.classList.contains('hidden'));
-
-            loginScreen.style.display = 'none';
+            // 로그인 화면 완전히 제거
+            loginScreen.remove();
             searchInput.classList.remove('hidden');
-
-            console.log('After removal - Search input hidden?', searchInput.classList.contains('hidden'));
 
             // 검색창에 포커스
             setTimeout(() => {
