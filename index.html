@@ -1119,13 +1119,13 @@
             document.getElementById('trackName').textContent = current_track.name;
             document.getElementById('artistName').textContent = current_track.artists.map(a => a.name).join(', ');
 
-            // 앨범 커버 업데이트 - Supabase cover_image 우선 사용
+            // 앨범 커버 업데이트 - Supabase cover_image_url 우선 사용
             const albumCover = document.getElementById('albumCover');
             const currentPlaylistTrack = playlist[currentTrackIndex];
 
-            if (currentPlaylistTrack?.cover_image) {
-                // Supabase에 저장된 cover_image 사용
-                albumCover.src = `data:image/jpeg;base64,${currentPlaylistTrack.cover_image}`;
+            if (currentPlaylistTrack?.cover_image_url) {
+                // Supabase에 저장된 cover_image_url 사용
+                albumCover.src = currentPlaylistTrack.cover_image_url;
                 albumCover.style.display = 'block';
             } else if (current_track.album?.images?.[0]?.url) {
                 // Supabase에 없으면 Spotify 이미지 사용
@@ -1160,9 +1160,9 @@
                 trackDiv.style.opacity = Math.max(0.3, 0.7 - (reverseIndex * 0.15));
 
                 const img = document.createElement('img');
-                // Supabase cover_image 우선 사용, 없으면 Spotify 이미지
-                if (track.cover_image) {
-                    img.src = `data:image/jpeg;base64,${track.cover_image}`;
+                // Supabase cover_image_url 우선 사용, 없으면 Spotify 이미지
+                if (track.cover_image_url) {
+                    img.src = track.cover_image_url;
                 } else {
                     img.src = track.spotify_track?.album?.images?.[0]?.url || track.album?.images?.[0]?.url || '';
                 }
@@ -1191,9 +1191,9 @@
                 trackDiv.style.opacity = Math.max(0.25, 0.8 - (index * 0.06));
 
                 const img = document.createElement('img');
-                // Supabase cover_image 우선 사용, 없으면 Spotify 이미지
-                if (track.cover_image) {
-                    img.src = `data:image/jpeg;base64,${track.cover_image}`;
+                // Supabase cover_image_url 우선 사용, 없으면 Spotify 이미지
+                if (track.cover_image_url) {
+                    img.src = track.cover_image_url;
                 } else {
                     img.src = track.spotify_track?.album?.images?.[0]?.url || track.album?.images?.[0]?.url || '';
                 }
@@ -1380,7 +1380,7 @@
                 });
                 const d = await r.json();
                 console.log('🔍 Search response:', d);
-                console.log('🔍 First result cover_image length:', d.results?.[0]?.cover_image?.length);
+                console.log('🔍 First result cover_image_url:', d.results?.[0]?.cover_image_url);
                 if (d.error) { document.getElementById('initialSearchResults').innerHTML = `<div class="error-message">${d.error}</div>`; }
                 else { displayInitialSearchResults(d.results); }
             } catch (e) {
@@ -1398,8 +1398,8 @@
             // Supabase 데이터로 바로 표시 (Spotify API 호출 없음)
             let html = '<div class="recommendation-list" style="max-height:200px;">';
             results.slice(0, 10).forEach((r, idx) => {
-                // cover_image가 있으면 base64 디코딩, 없으면 빈 문자열
-                const coverImageSrc = r.cover_image ? `data:image/jpeg;base64,${r.cover_image}` : '';
+                // cover_image_url이 있으면 사용, 없으면 빈 문자열
+                const coverImageSrc = r.cover_image_url || '';
 
                 html += `
           <div class="recommendation-item" onclick="selectAndStartPlaylist({
@@ -1407,7 +1407,7 @@
               track: '${(r.track || '').replace(/'/g, "\\'")}',
               artist: '${(r.artist || '').replace(/'/g, "\\'")}',
               album: '${(r.album || '').replace(/'/g, "\\'")}',
-              cover_image: '${r.cover_image || ''}'
+              cover_image_url: '${r.cover_image_url || ''}'
           })">
             <img class="rec-album-cover" src="${coverImageSrc}" alt="" style="${!coverImageSrc ? 'display:none;' : ''}">
             <div class="rec-info">
@@ -1489,7 +1489,7 @@
             // 현재 곡
             const currentTrack = tracks[currentIndex];
             const currentCover = document.getElementById('albumCover');
-            const currentCoverSrc = currentTrack.cover_image ? `data:image/jpeg;base64,${currentTrack.cover_image}` : '';
+            const currentCoverSrc = currentTrack.cover_image_url || '';
             if (currentCover) currentCover.src = currentCoverSrc;
 
             const trackName = document.getElementById('trackName');
@@ -1512,7 +1512,7 @@
                 trackDiv.style.opacity = Math.max(0.3, 0.7 - (reverseIndex * 0.15));
 
                 const img = document.createElement('img');
-                img.src = track.cover_image ? `data:image/jpeg;base64,${track.cover_image}` : '';
+                img.src = track.cover_image_url || '';
                 img.style.width = '100px';
                 img.style.height = '100px';
                 img.alt = track.track || 'Unknown';
@@ -1558,7 +1558,7 @@
                 trackDiv.style.opacity = Math.max(0.25, 0.8 - (index * 0.06));
 
                 const img = document.createElement('img');
-                img.src = track.cover_image ? `data:image/jpeg;base64,${track.cover_image}` : '';
+                img.src = track.cover_image_url || '';
                 img.style.width = '100px';
                 img.style.height = '100px';
                 img.alt = track.track || 'Unknown';
@@ -1661,8 +1661,8 @@
             // Supabase 데이터로 바로 표시 (Spotify API 호출 없음)
             let html = '<div class="recommendation-list" style="max-height:200px;">';
             results.forEach((r, idx) => {
-                // cover_image가 있으면 base64 디코딩, 없으면 빈 문자열
-                const coverImageSrc = r.cover_image ? `data:image/jpeg;base64,${r.cover_image}` : '';
+                // cover_image_url이 있으면 사용, 없으면 빈 문자열
+                const coverImageSrc = r.cover_image_url || '';
 
                 html += `
           <div class="recommendation-item" onclick="selectAndStartPlaylist({
@@ -1670,7 +1670,7 @@
               track: '${(r.track_name || '').replace(/'/g, "\\'")}',
               artist: '${(r.artist || '').replace(/'/g, "\\'")}',
               album: '${(r.album || '').replace(/'/g, "\\'")}',
-              cover_image: '${r.cover_image || ''}'
+              cover_image_url: '${r.cover_image_url || ''}'
           })">
             <img class="rec-album-cover" src="${coverImageSrc}" alt="" style="${!coverImageSrc ? 'display:none;' : ''}">
             <div class="rec-info">
