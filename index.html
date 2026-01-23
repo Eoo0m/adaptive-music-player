@@ -1637,6 +1637,16 @@
                     return;
                 }
 
+                // 디버그 정보 콘솔 출력
+                if (data.debug) {
+                    console.log('🔍 키워드 검색 결과:', keyword);
+                    console.log('📊 찾은 플레이리스트 수:', data.debug.playlists_found);
+                    console.log('📋 상위 플레이리스트:');
+                    console.table(data.debug.top_playlists);
+                    console.log('🎵 추천된 트랙 수:', data.debug.tracks_recommended);
+                    console.log('✅ 반환된 트랙 수:', data.debug.tracks_returned);
+                }
+
                 // 결과를 songs 테이블에서 조회하여 메타데이터 가져오기
                 await displayKeywordSearchResults(data.results);
 
