@@ -1615,20 +1615,32 @@
         }
 
         // 키워드 검색
-        async function searchByKeyword() {
+        async function searchByKeyword(retryCount = 0) {
             const keyword = document.getElementById('keywordSearchInput').value.trim();
             if (!keyword) { alert('키워드를 입력해주세요.'); return; }
 
             const btn = document.getElementById('keywordSearchBtn');
             btn.disabled = true;
-            btn.textContent = '검색 중...';
+
+            // 재시도 중인 경우 버튼 텍스트 변경
+            if (retryCount > 0) {
+                btn.textContent = `재시도 중... (${retryCount}/3)`;
+            } else {
+                btn.textContent = '검색 중...';
+            }
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30초 타임아웃
 
             try {
                 const response = await fetch(`${API_BASE_URL}/search-by-keyword`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ keyword, top_k: 200 })
+                    body: JSON.stringify({ keyword, top_k: 200 }),
+                    signal: controller.signal
                 });
+
+                clearTimeout(timeoutId);
 
                 const data = await response.json();
 
@@ -1651,8 +1663,20 @@
                 await displayKeywordSearchResults(data.results);
 
             } catch (e) {
+                clearTimeout(timeoutId);
                 console.error('Keyword search error:', e);
-                alert('키워드 검색 중 오류가 발생했습니다.');
+
+                // 재시도 로직 (최대 3번)
+                if (retryCount < 3) {
+                    console.log(`⚠️ 검색 실패, ${retryCount + 1}번째 재시도 중...`);
+                    // 지수 백오프: 2초, 4초, 8초 대기
+                    const delayMs = Math.pow(2, retryCount) * 2000;
+                    await new Promise(resolve => setTimeout(resolve, delayMs));
+                    return searchByKeyword(retryCount + 1);
+                } else {
+                    // 3번 재시도 후에도 실패하면 에러 메시지 표시
+                    alert('키워드 검색 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                }
             } finally {
                 btn.disabled = false;
                 btn.textContent = '검색';
