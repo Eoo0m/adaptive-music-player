@@ -547,11 +547,12 @@
         let lastPlayedTrack = null;       // 이전에 재생한 트랙
 
         // ===== Listening Log =====
-        let sessionId = null;             // 세션 ID (로그인 시 생성)
-
         function generateSessionId() {
             return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         }
+
+        let sessionId = generateSessionId(); // 페이지 로드 시 세션 ID 생성
+        console.log('🎵 Session initialized:', sessionId);
 
         async function logListeningData(trackData) {
             if (!trackData || !trackData.track_name || !trackData.artist_name) {
@@ -600,10 +601,6 @@
             if (access_token) {
                 localStorage.setItem('spotify_access_token', access_token);
                 if (refresh_token) localStorage.setItem('spotify_refresh_token', refresh_token);
-
-                // 세션 ID 생성
-                sessionId = generateSessionId();
-                console.log('🎵 Session started:', sessionId);
 
                 document.getElementById('loginScreen').classList.add('hidden');
 
