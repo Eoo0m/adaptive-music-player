@@ -220,166 +220,6 @@
         }
 
         /* ✅ 드래그용 래퍼: transform 대신 left/top으로 이동 */
-        .ipod-wrapper {
-            position: fixed;
-            /* 화면 위 자유롭게 이동 */
-            left: calc(50% - 60px);
-            top: calc(50% + 100px);
-            /* 중앙보다 아래로 */
-            width: 120px;
-            height: 120px;
-            z-index: 1;
-            cursor: grab;
-            /* 드래그 중 포인터 시각 */
-        }
-
-        .ipod-wrapper.dragging {
-            cursor: grabbing
-        }
-
-        .ipod-wrapper.hidden {
-            display: none;
-        }
-
-        .ipod-container {
-            width: 120px;
-            height: 120px;
-            background: linear-gradient(135deg, #d5d5d5 0%, #b8b8b8 50%, #a8a8a8 100%);
-            border-radius: 6px;
-            box-shadow: 0 5px 12px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .6), inset 0 -1px 0 rgba(0, 0, 0, .3);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            animation: floatTilt 4s ease-in-out infinite;
-            user-select: none
-        }
-
-        .ipod-container.playing {
-            animation: playingPulse 2s ease-in-out infinite
-        }
-
-
-        @keyframes playingPulse {
-
-            0%,
-            100% {
-                transform: scale(1) rotate(0);
-                box-shadow: 0 5px 12px rgba(0, 0, 0, .3), 0 0 0 rgba(29, 185, 84, 0)
-            }
-
-            50% {
-                transform: scale(1.05) rotate(1deg);
-                box-shadow: 0 8px 20px rgba(0, 0, 0, .4), 0 0 20px rgba(29, 185, 84, .3)
-            }
-        }
-
-        @keyframes floatTilt {
-            0% {
-                transform: rotate(0) translateY(0)
-            }
-
-            25% {
-                transform: rotate(2deg) translateY(-3px)
-            }
-
-            50% {
-                transform: rotate(-1deg) translateY(-6px)
-            }
-
-            75% {
-                transform: rotate(1.5deg) translateY(-3px)
-            }
-
-            100% {
-                transform: rotate(0) translateY(0)
-            }
-        }
-
-        .clickwheel {
-            width: 90px;
-            height: 90px;
-            background: radial-gradient(circle, #1a1a1a 0%, #0a0a0a 70%, #000 100%);
-            border-radius: 50%;
-            position: relative;
-            box-shadow: inset 0 2px 6px rgba(0, 0, 0, .8), 0 2px 3px rgba(0, 0, 0, .4)
-        }
-
-        .center-button {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #e5e5e5 0%, #c8c8c8 50%, #b8b8b8 100%);
-            border: 1px solid #999;
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .8), inset 0 -1px 0 rgba(0, 0, 0, .1);
-            cursor: pointer;
-            transition: transform .1s ease
-        }
-
-        .control {
-            position: absolute;
-            color: #ccc;
-            font-size: 12px;
-            font-weight: 400;
-            user-select: none;
-            cursor: pointer;
-            transition: .2s;
-            font-family: Arial, sans-serif
-        }
-
-        .control:hover {
-            color: #fff
-        }
-
-        .control.active {
-            color: #1db954 !important
-        }
-
-        .volume-up {
-            top: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 14px
-        }
-
-        .volume-down {
-            bottom: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 14px
-        }
-
-        .prev {
-            left: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 14px;
-            font-weight: bold
-        }
-
-        .next {
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 14px;
-            font-weight: bold
-        }
-
-        .play-pause {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #2d2d2d;
-            font-size: 18px;
-            pointer-events: none;
-            font-weight: bold;
-            text-shadow: 0 1px 1px rgba(0, 0, 0, .3);
-            font-family: Arial, sans-serif
-        }
 
         .hidden {
             display: none !important
@@ -618,21 +458,6 @@
     </div>
 
     <div class="track-info hidden" id="trackInfo"></div>
-
-    <!-- ✅ 드래그 가능한 래퍼 -->
-    <div id="ipodWrapper" class="ipod-wrapper hidden">
-        <div class="ipod-container" id="ipodContainer">
-            <div class="clickwheel">
-                <div class="control volume-up" id="volumeUp">+</div>
-                <div class="control volume-down" id="volumeDown">−</div>
-                <div class="control prev" id="prevBtn">‹‹</div>
-                <div class="control next" id="nextBtn">››</div>
-                <div class="center-button" id="centerButton">
-                    <div class="play-pause" id="playPauseIcon">▶</div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <script>
@@ -1095,6 +920,7 @@
 
                 const trackDiv = document.createElement('div');
                 trackDiv.className = 'track-item' + (isCurrent ? ' current' : '');
+                trackDiv.style.cursor = 'pointer';
 
                 const img = document.createElement('img');
                 // Supabase cover_image_url 우선 사용, 없으면 Spotify 이미지
@@ -1127,13 +953,82 @@
                 trackDiv.appendChild(img);
                 trackDiv.appendChild(infoDiv);
 
-                // 검색창 열기 기능 (현재 트랙만)
+                // 클릭 이벤트 - 현재 트랙(초록색)은 검색창, 다른 트랙은 추천
                 if (isCurrent) {
-                    trackDiv.style.cursor = 'pointer';
                     trackDiv.onclick = showSearchInterface;
+                } else {
+                    trackDiv.onclick = () => loadRecommendationsFromTrack(track, i);
                 }
 
                 trackInfoContainer.appendChild(trackDiv);
+            }
+        }
+
+        // 특정 트랙을 클릭하면 해당 트랙 기반으로 새로운 추천 로드
+        async function loadRecommendationsFromTrack(track, trackIndex) {
+            // track_key가 있는지 확인
+            if (!track.track_key) {
+                console.warn('⚠️ No track_key available for this track');
+                alert('이 트랙은 추천 데이터베이스에 없습니다.');
+                return;
+            }
+
+            console.log('🎵 Loading recommendations from track:', track.track_key);
+
+            try {
+                // 추천 받기
+                const recResp = await fetch(`${API_BASE_URL}/recommend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        track_key: track.track_key,
+                        num_recommendations: 30
+                    })
+                });
+
+                if (!recResp.ok) throw new Error('Recommendation failed');
+
+                const recData = await recResp.json();
+                if (!recData.recommendations || recData.recommendations.length === 0) {
+                    throw new Error('No recommendations found');
+                }
+
+                // Spotify 매칭 (access_token이 있는 경우만)
+                if (access_token) {
+                    const spotifyResp = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tracks: recData.recommendations,
+                            access_token
+                        })
+                    });
+
+                    if (!spotifyResp.ok) throw new Error('Spotify matching failed');
+
+                    const spotifyData = await spotifyResp.json();
+                    if (!spotifyData.spotify_tracks || spotifyData.spotify_tracks.length === 0) {
+                        throw new Error('No Spotify tracks found');
+                    }
+
+                    // 클릭한 트랙을 첫 번째로, 추천곡들을 그 다음에
+                    playlist = [track, ...spotifyData.spotify_tracks.slice(0, 9)];
+                    currentTrackIndex = 0;
+
+                    console.log(`✅ New playlist loaded from track: ${playlist.length} tracks`);
+
+                    // UI 업데이트
+                    updateAllTracks();
+
+                } else {
+                    // 로그인 안되어 있는 경우 - 추천만 표시
+                    const displayTracks = [track, ...recData.recommendations.slice(0, 9)];
+                    updateTrackDisplayOnly(displayTracks, 0);
+                }
+
+            } catch (e) {
+                console.error('⚠️ Failed to fetch recommendations:', e);
+                alert('추천곡을 가져올 수 없습니다.');
             }
         }
         function updateMediaSession() {
@@ -1367,12 +1262,10 @@
                 await showRecommendationsOnly(trackData);
             }
 
-            // 검색창 숨기고 트랙 정보와 아이팟 보이기
+            // 검색창 숨기고 트랙 정보 보이기
             document.getElementById('initialSongInput').classList.add('hidden');
             const trackInfo = document.getElementById('trackInfo');
-            const ipodWrapper = document.getElementById('ipodWrapper');
             if (trackInfo) trackInfo.classList.remove('hidden');
-            if (ipodWrapper) ipodWrapper.classList.remove('hidden');
         }
 
         // 재생 없이 추천만 보여주기
@@ -1430,6 +1323,7 @@
 
                 const trackDiv = document.createElement('div');
                 trackDiv.className = 'track-item' + (isCurrent ? ' current' : '');
+                trackDiv.style.cursor = 'pointer';
 
                 const img = document.createElement('img');
                 img.src = track.cover_image_url || '';
@@ -1452,10 +1346,11 @@
                 trackDiv.appendChild(img);
                 trackDiv.appendChild(infoDiv);
 
-                // 검색창 열기 기능 (현재 트랙만)
+                // 클릭 이벤트 - 현재 트랙(초록색)은 검색창, 다른 트랙은 추천
                 if (isCurrent) {
-                    trackDiv.style.cursor = 'pointer';
                     trackDiv.onclick = showSearchInterface;
+                } else {
+                    trackDiv.onclick = () => loadRecommendationsFromTrack(track, i);
                 }
 
                 trackInfoContainer.appendChild(trackDiv);
@@ -1468,18 +1363,15 @@
         function showSearchInterface() {
             const searchInterface = document.getElementById('initialSongInput');
             const trackInfo = document.getElementById('trackInfo');
-            const ipodWrapper = document.getElementById('ipodWrapper');
 
             // 토글 방식: 이미 보이면 숨기고, 숨겨져 있으면 보이기
             if (searchInterface.classList.contains('hidden')) {
                 searchInterface.classList.remove('hidden');
                 if (trackInfo) trackInfo.classList.add('hidden');
-                if (ipodWrapper) ipodWrapper.classList.add('hidden');
                 document.getElementById('initialSongTitle').focus();
             } else {
                 searchInterface.classList.add('hidden');
                 if (trackInfo) trackInfo.classList.remove('hidden');
-                if (ipodWrapper) ipodWrapper.classList.remove('hidden');
                 document.getElementById('initialSearchResults').innerHTML = '';
                 document.getElementById('initialSongTitle').value = '';
             }
@@ -1588,12 +1480,6 @@
             div.innerHTML = html;
         }
 
-        // ===== Controls =====
-        document.getElementById('centerButton').addEventListener('click', async () => { await togglePlayPause(); });
-        document.getElementById('nextBtn').addEventListener('click', async () => { await playNext(); });
-        document.getElementById('prevBtn').addEventListener('click', async () => { await playPrevious(); });
-        document.getElementById('volumeUp').addEventListener('click', () => adjustVolume(0.1));
-        document.getElementById('volumeDown').addEventListener('click', () => adjustVolume(-0.1));
 
         // 엔터로 검색
         document.addEventListener('DOMContentLoaded', () => {
@@ -1609,7 +1495,6 @@
                 const searchInterface = document.getElementById('initialSongInput');
                 const searchButton = document.querySelector('button[onclick="showSearchInterface()"]');
                 const trackInfo = document.getElementById('trackInfo');
-                const ipodWrapper = document.getElementById('ipodWrapper');
 
                 // 검색창이 열려있고, 클릭한 곳이 검색창 내부가 아니고, 검색 버튼도 아니고, track-info도 아니면
                 if (!searchInterface.classList.contains('hidden') &&
@@ -1618,7 +1503,6 @@
                     e.target !== searchButton) {
                     searchInterface.classList.add('hidden');
                     if (trackInfo) trackInfo.classList.remove('hidden');
-                    if (ipodWrapper) ipodWrapper.classList.remove('hidden');
                 }
             });
         });
@@ -1652,46 +1536,6 @@
             document.body.appendChild(d); setTimeout(() => d.remove(), 12000);
         }
 
-        // ===== ✅ 아이팟 드래그 =====
-        (function enableIPodDrag() {
-            const wrap = document.getElementById('ipodWrapper');
-            let dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
-
-            function onDown(e) {
-                dragging = true; wrap.classList.add('dragging');
-                const rect = wrap.getBoundingClientRect();
-                startLeft = rect.left; startTop = rect.top;
-                if (e.touches && e.touches[0]) { startX = e.touches[0].clientX; startY = e.touches[0].clientY; }
-                else { startX = e.clientX; startY = e.clientY; }
-                e.preventDefault();
-            }
-            function onMove(e) {
-                if (!dragging) return;
-                const x = e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX;
-                const y = e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY;
-                const dx = x - startX; const dy = y - startY;
-                let left = startLeft + dx; let top = startTop + dy;
-
-                // 화면 밖으로 못나가게 클램프
-                const W = window.innerWidth, H = window.innerHeight;
-                const w = wrap.offsetWidth, h = wrap.offsetHeight;
-                left = Math.max(0, Math.min(W - w, left));
-                top = Math.max(0, Math.min(H - h, top));
-
-                wrap.style.left = left + 'px';
-                wrap.style.top = top + 'px';
-            }
-            function onUp() {
-                dragging = false; wrap.classList.remove('dragging');
-            }
-
-            wrap.addEventListener('mousedown', onDown);
-            wrap.addEventListener('touchstart', onDown, { passive: false });
-            window.addEventListener('mousemove', onMove, { passive: false });
-            window.addEventListener('touchmove', onMove, { passive: false });
-            window.addEventListener('mouseup', onUp);
-            window.addEventListener('touchend', onUp);
-        })();
 
         // ===== 초기화 =====
         createStars(); setInterval(createDust, 2000); initializeAuth();
