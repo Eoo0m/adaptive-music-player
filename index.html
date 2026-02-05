@@ -526,24 +526,30 @@
 
         async function logListeningData(trackData) {
             if (!trackData || !trackData.track_name || !trackData.artist_name) {
-                console.warn('⚠️ Skipping log: missing track data');
+                console.warn('⚠️ Skipping log: missing track data', trackData);
                 return;
             }
+
+            const payload = {
+                ...trackData,
+                session_id: sessionId
+            };
+
+            console.log('📤 Sending listening log:', payload);
 
             try {
                 const response = await fetch(`${API_BASE_URL}/log-listening`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        ...trackData,
-                        session_id: sessionId
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 if (!response.ok) {
-                    console.error('❌ Failed to log listening data:', response.status);
+                    const errorText = await response.text();
+                    console.error('❌ Failed to log listening data:', response.status, errorText);
                 } else {
-                    console.log('✅ Listening data logged successfully');
+                    const result = await response.json();
+                    console.log('✅ Listening data logged successfully:', result);
                 }
             } catch (e) {
                 console.error('❌ Error logging listening data:', e);
