@@ -738,6 +738,7 @@
             const t = track.spotify_track || track.track || track;
             const name = t.name || track.track || 'Unknown Track';
             const artists = t.artists ? t.artists.map(a => a.name).join(', ') : (track.artist || 'Unknown Artist');
+            const album = t.album?.name || track.album || null;
             const trackId = t.id || uri?.split(':')[2];
             const similarityText = (typeof track.similarity === 'number') ? ` (${(track.similarity * 100).toFixed(1)}% similar)` : '';
 
@@ -748,6 +749,15 @@
             console.log(`   🔑 Expected Track ID: ${trackId}`);
             console.log(`   🎵 URI: ${uri}`);
             console.log(`   📦 Full track object:`, track);
+
+            // 클릭 시 즉시 로그 전송
+            logListeningData({
+                track_name: name,
+                artist_name: artists,
+                album_name: album,
+                spotify_uri: uri,
+                spotify_track_id: trackId
+            }).catch(err => console.error('Failed to log track click:', err));
 
             try {
                 // Spotify Player 상태를 완전히 리셋하고 새 트랙 재생
