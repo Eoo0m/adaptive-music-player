@@ -51,83 +51,63 @@
 
         .track-info {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             color: #fff;
-            display: flex;
-            flex-direction: row;
-            align-items: flex-start;
-            gap: 12px;
-            overflow-x: auto;
-            overflow-y: hidden;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 30px;
             pointer-events: none;
-            padding-bottom: 10px;
+            max-width: 90vw;
+            max-height: 80vh;
         }
 
         .track-info>* {
             pointer-events: auto;
         }
 
-        .track-info::-webkit-scrollbar {
-            height: 8px;
-        }
-
-        .track-info::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-        }
-
-        .track-info::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 4px;
-        }
-
-        .track-info::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.5);
-        }
-
         .track-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            flex-shrink: 0;
-            width: 150px;
             transition: all 0.3s ease;
         }
 
         .track-item.current {
-            border: 2px solid #1db954;
-            border-radius: 8px;
-            padding: 4px;
-            background: rgba(29, 185, 84, 0.1);
+            border: 3px solid #1db954;
+            border-radius: 12px;
+            padding: 8px;
+            background: rgba(29, 185, 84, 0.15);
+            box-shadow: 0 0 20px rgba(29, 185, 84, 0.4);
         }
 
         .track-item img {
-            width: 150px;
-            height: 150px;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, .5);
+            width: 180px;
+            height: 180px;
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, .6);
             object-fit: cover;
             background: rgba(255, 255, 255, .05);
-            border: 1px solid rgba(255, 255, 255, .08);
+            border: 1px solid rgba(255, 255, 255, .1);
             cursor: pointer;
-            transition: transform .2s ease, opacity .2s ease;
+            transition: transform .2s ease, box-shadow .2s ease;
         }
 
         .track-item img:hover {
-            transform: scale(1.05);
-            opacity: 1;
+            transform: scale(1.08);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, .8);
         }
 
         .track-item-info {
-            margin-top: 8px;
+            margin-top: 10px;
             text-align: center;
-            width: 100%;
+            width: 180px;
         }
 
         .track-item-title {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -136,12 +116,12 @@
         }
 
         .track-item-artist {
-            font-size: 10px;
+            font-size: 11px;
             opacity: 0.7;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            margin-top: 2px;
+            margin-top: 4px;
         }
 
         .album-cover.hidden {
@@ -1105,12 +1085,9 @@
             trackInfoContainer.innerHTML = '';
             trackInfoContainer.style.pointerEvents = 'auto';
 
-            // 현재 트랙을 포함하여 앞뒤로 표시할 트랙들
-            const visibleTracks = [];
-
-            // 최대 30개 트랙 표시 (현재 트랙 + 앞뒤 트랙들)
-            const startIdx = Math.max(0, currentTrackIndex);
-            const endIdx = Math.min(playlist.length, currentTrackIndex + 30);
+            // 5개씩 2줄 = 총 10개 트랙 표시
+            const startIdx = currentTrackIndex;
+            const endIdx = Math.min(playlist.length, currentTrackIndex + 10);
 
             for (let i = startIdx; i < endIdx; i++) {
                 const track = playlist[i];
@@ -1158,14 +1135,6 @@
 
                 trackInfoContainer.appendChild(trackDiv);
             }
-
-            // 현재 트랙으로 스크롤
-            setTimeout(() => {
-                const currentTrackEl = trackInfoContainer.querySelector('.track-item.current');
-                if (currentTrackEl) {
-                    currentTrackEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-                }
-            }, 100);
         }
         function updateMediaSession() {
             if (!('mediaSession' in navigator) || !current_track) return;
@@ -1452,8 +1421,8 @@
             trackInfoContainer.innerHTML = '';
             trackInfoContainer.style.pointerEvents = 'auto';
 
-            // 최대 30개 트랙 표시
-            const endIdx = Math.min(tracks.length, currentIndex + 30);
+            // 5개씩 2줄 = 총 10개 트랙 표시
+            const endIdx = Math.min(tracks.length, currentIndex + 10);
 
             for (let i = currentIndex; i < endIdx; i++) {
                 const track = tracks[i];
@@ -1491,14 +1460,6 @@
 
                 trackInfoContainer.appendChild(trackDiv);
             }
-
-            // 현재 트랙으로 스크롤
-            setTimeout(() => {
-                const currentTrackEl = trackInfoContainer.querySelector('.track-item.current');
-                if (currentTrackEl) {
-                    currentTrackEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-                }
-            }, 100);
 
             console.log('✅ Track display updated');
         }
