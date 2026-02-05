@@ -1264,24 +1264,50 @@
             }
         }
 
-        async function searchInitialSongs() {
+        async function searchInitialSongs(retryCount = 0) {
             const query = document.getElementById('initialSongTitle').value.trim();
             if (!query) { alert('검색어를 입력해주세요.'); return; }
             const btn = document.getElementById('initialSearchBtn');
-            btn.disabled = true; btn.textContent = '검색 중...';
+            btn.disabled = true;
+            btn.textContent = retryCount > 0 ? `재시도 중... (${retryCount}/2)` : '검색 중...';
+
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15초 타임아웃
+
                 const r = await fetch(`${API_BASE_URL}/search-songs`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query })
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query }),
+                    signal: controller.signal
                 });
+
+                clearTimeout(timeoutId);
                 const d = await r.json();
+
                 console.log('🔍 Search response:', d);
                 console.log('🔍 First result cover_image_url:', d.results?.[0]?.cover_image_url);
-                if (d.error) { document.getElementById('initialSearchResults').innerHTML = `<div class="error-message">${d.error}</div>`; }
-                else { displayInitialSearchResults(d.results); }
+
+                if (d.error) {
+                    document.getElementById('initialSearchResults').innerHTML = `<div class="error-message">${d.error}</div>`;
+                } else {
+                    displayInitialSearchResults(d.results);
+                }
             } catch (e) {
                 console.error('Initial search error:', e);
-                document.getElementById('initialSearchResults').innerHTML = '<div class="error-message">검색 서비스에 연결할 수 없습니다.</div>';
-            } finally { btn.disabled = false; btn.textContent = '검색'; }
+
+                // 타임아웃이나 네트워크 에러 시 재시도 (최대 2회)
+                if (retryCount < 2) {
+                    console.log(`⚠️ 검색 실패, ${retryCount + 1}번째 재시도 중...`);
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 대기
+                    return searchInitialSongs(retryCount + 1);
+                } else {
+                    document.getElementById('initialSearchResults').innerHTML = '<div class="error-message">검색 서비스에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.</div>';
+                }
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '검색';
+            }
         }
         async function displayInitialSearchResults(results) {
             const div = document.getElementById('initialSearchResults');
