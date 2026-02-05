@@ -136,11 +136,40 @@
             border: 1px solid rgba(255, 255, 255, .1);
             cursor: pointer;
             transition: transform .2s ease, box-shadow .2s ease;
+            animation: subtleFloat 3s ease-in-out infinite;
+        }
+
+        /* 각 트랙마다 다른 타이밍으로 흔들림 */
+        .track-item:nth-child(1) img { animation-delay: 0s; }
+        .track-item:nth-child(2) img { animation-delay: 0.3s; }
+        .track-item:nth-child(3) img { animation-delay: 0.6s; }
+        .track-item:nth-child(4) img { animation-delay: 0.9s; }
+        .track-item:nth-child(5) img { animation-delay: 1.2s; }
+        .track-item:nth-child(6) img { animation-delay: 1.5s; }
+        .track-item:nth-child(7) img { animation-delay: 1.8s; }
+        .track-item:nth-child(8) img { animation-delay: 2.1s; }
+        .track-item:nth-child(9) img { animation-delay: 2.4s; }
+        .track-item:nth-child(10) img { animation-delay: 2.7s; }
+
+        @keyframes subtleFloat {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-3px) rotate(0.5deg);
+            }
+            50% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            75% {
+                transform: translateY(-2px) rotate(-0.5deg);
+            }
         }
 
         .track-item img:hover {
-            transform: scale(1.08);
+            transform: scale(1.08) !important;
             box-shadow: 0 12px 30px rgba(0, 0, 0, .8);
+            animation: none;
         }
 
         .track-item-info {
