@@ -57,11 +57,11 @@
             color: #fff;
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            grid-template-rows: repeat(2, 1fr);
-            gap: 30px;
+            grid-template-rows: repeat(3, 1fr);
+            gap: 25px;
             pointer-events: none;
             max-width: 90vw;
-            max-height: 80vh;
+            max-height: 85vh;
         }
 
         .track-info>* {
@@ -79,17 +79,24 @@
 
         /* 첫 번째 줄 - 왼쪽에서 오른쪽으로 */
         .track-item:nth-child(1) { animation-delay: 0s; }
-        .track-item:nth-child(2) { animation-delay: 0.1s; }
-        .track-item:nth-child(3) { animation-delay: 0.2s; }
-        .track-item:nth-child(4) { animation-delay: 0.3s; }
-        .track-item:nth-child(5) { animation-delay: 0.4s; }
+        .track-item:nth-child(2) { animation-delay: 0.08s; }
+        .track-item:nth-child(3) { animation-delay: 0.16s; }
+        .track-item:nth-child(4) { animation-delay: 0.24s; }
+        .track-item:nth-child(5) { animation-delay: 0.32s; }
 
         /* 두 번째 줄 - 오른쪽에서 왼쪽으로 (역순) */
-        .track-item:nth-child(6) { animation-delay: 0.4s; }
-        .track-item:nth-child(7) { animation-delay: 0.3s; }
-        .track-item:nth-child(8) { animation-delay: 0.2s; }
-        .track-item:nth-child(9) { animation-delay: 0.1s; }
+        .track-item:nth-child(6) { animation-delay: 0.32s; }
+        .track-item:nth-child(7) { animation-delay: 0.24s; }
+        .track-item:nth-child(8) { animation-delay: 0.16s; }
+        .track-item:nth-child(9) { animation-delay: 0.08s; }
         .track-item:nth-child(10) { animation-delay: 0s; }
+
+        /* 세 번째 줄 - 왼쪽에서 오른쪽으로 */
+        .track-item:nth-child(11) { animation-delay: 0s; }
+        .track-item:nth-child(12) { animation-delay: 0.08s; }
+        .track-item:nth-child(13) { animation-delay: 0.16s; }
+        .track-item:nth-child(14) { animation-delay: 0.24s; }
+        .track-item:nth-child(15) { animation-delay: 0.32s; }
 
         @keyframes slideIn {
             from {
@@ -103,8 +110,17 @@
         }
 
         /* 두 번째 줄은 오른쪽에서 들어옴 */
-        .track-item:nth-child(n+6) {
+        .track-item:nth-child(6),
+        .track-item:nth-child(7),
+        .track-item:nth-child(8),
+        .track-item:nth-child(9),
+        .track-item:nth-child(10) {
             animation-name: slideInFromRight;
+        }
+
+        /* 세 번째 줄은 왼쪽에서 들어옴 */
+        .track-item:nth-child(n+11) {
+            animation-name: slideIn;
         }
 
         @keyframes slideInFromRight {
@@ -127,8 +143,8 @@
         }
 
         .track-item img {
-            width: 180px;
-            height: 180px;
+            width: 140px;
+            height: 140px;
             border-radius: 8px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, .6);
             object-fit: cover;
@@ -141,15 +157,20 @@
 
         /* 각 트랙마다 다른 타이밍으로 흔들림 */
         .track-item:nth-child(1) img { animation-delay: 0s; }
-        .track-item:nth-child(2) img { animation-delay: 0.3s; }
-        .track-item:nth-child(3) img { animation-delay: 0.6s; }
-        .track-item:nth-child(4) img { animation-delay: 0.9s; }
-        .track-item:nth-child(5) img { animation-delay: 1.2s; }
-        .track-item:nth-child(6) img { animation-delay: 1.5s; }
-        .track-item:nth-child(7) img { animation-delay: 1.8s; }
-        .track-item:nth-child(8) img { animation-delay: 2.1s; }
-        .track-item:nth-child(9) img { animation-delay: 2.4s; }
-        .track-item:nth-child(10) img { animation-delay: 2.7s; }
+        .track-item:nth-child(2) img { animation-delay: 0.2s; }
+        .track-item:nth-child(3) img { animation-delay: 0.4s; }
+        .track-item:nth-child(4) img { animation-delay: 0.6s; }
+        .track-item:nth-child(5) img { animation-delay: 0.8s; }
+        .track-item:nth-child(6) img { animation-delay: 1.0s; }
+        .track-item:nth-child(7) img { animation-delay: 1.2s; }
+        .track-item:nth-child(8) img { animation-delay: 1.4s; }
+        .track-item:nth-child(9) img { animation-delay: 1.6s; }
+        .track-item:nth-child(10) img { animation-delay: 1.8s; }
+        .track-item:nth-child(11) img { animation-delay: 2.0s; }
+        .track-item:nth-child(12) img { animation-delay: 2.2s; }
+        .track-item:nth-child(13) img { animation-delay: 2.4s; }
+        .track-item:nth-child(14) img { animation-delay: 2.6s; }
+        .track-item:nth-child(15) img { animation-delay: 2.8s; }
 
         @keyframes subtleFloat {
             0%, 100% {
@@ -173,9 +194,9 @@
         }
 
         .track-item-info {
-            margin-top: 10px;
+            margin-top: 8px;
             text-align: center;
-            width: 180px;
+            width: 140px;
         }
 
         .track-item-title {
@@ -976,13 +997,32 @@
             trackInfoContainer.innerHTML = '';
             trackInfoContainer.style.pointerEvents = 'auto';
 
-            // 5개씩 2줄 = 총 10개 트랙 표시
+            // 5개씩 3줄 = 총 15개 트랙 표시
             const startIdx = currentTrackIndex;
-            const endIdx = Math.min(playlist.length, currentTrackIndex + 10);
+            const endIdx = Math.min(playlist.length, currentTrackIndex + 15);
 
+            // 첫 번째 트랙(원곡)은 그대로, 나머지는 랜덤 섞기
+            const tracksToDisplay = [];
             for (let i = startIdx; i < endIdx; i++) {
-                const track = playlist[i];
-                const isCurrent = i === currentTrackIndex;
+                tracksToDisplay.push({ track: playlist[i], originalIndex: i });
+            }
+
+            // 첫 번째 트랙 제외하고 나머지 섞기
+            if (tracksToDisplay.length > 1) {
+                const firstTrack = tracksToDisplay[0];
+                const remainingTracks = tracksToDisplay.slice(1);
+
+                // Fisher-Yates 셔플
+                for (let i = remainingTracks.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [remainingTracks[i], remainingTracks[j]] = [remainingTracks[j], remainingTracks[i]];
+                }
+
+                tracksToDisplay.splice(0, tracksToDisplay.length, firstTrack, ...remainingTracks);
+            }
+
+            tracksToDisplay.forEach(({ track, originalIndex }) => {
+                const isCurrent = originalIndex === currentTrackIndex;
 
                 const trackDiv = document.createElement('div');
                 trackDiv.className = 'track-item' + (isCurrent ? ' current' : '');
@@ -1023,11 +1063,11 @@
                 if (isCurrent) {
                     trackDiv.onclick = showSearchInterface;
                 } else {
-                    trackDiv.onclick = () => loadRecommendationsFromTrack(track, i);
+                    trackDiv.onclick = () => loadRecommendationsFromTrack(track, originalIndex);
                 }
 
                 trackInfoContainer.appendChild(trackDiv);
-            }
+            });
         }
 
         // 특정 트랙을 클릭하면 해당 트랙 기반으로 새로운 추천 로드
@@ -1092,8 +1132,8 @@
                         throw new Error('No Spotify tracks found');
                     }
 
-                    // 클릭한 트랙을 첫 번째로, 추천곡들을 그 다음에
-                    playlist = [track, ...spotifyData.spotify_tracks.slice(0, 9)];
+                    // 클릭한 트랙을 첫 번째로, 추천곡들을 그 다음에 (14개로 증가)
+                    playlist = [track, ...spotifyData.spotify_tracks.slice(0, 14)];
                     currentTrackIndex = 0;
 
                     console.log(`✅ New playlist loaded from track: ${playlist.length} tracks`);
@@ -1102,8 +1142,8 @@
                     updateAllTracks();
 
                 } else {
-                    // 로그인 안되어 있는 경우 - 추천만 표시
-                    const displayTracks = [track, ...recData.recommendations.slice(0, 9)];
+                    // 로그인 안되어 있는 경우 - 추천만 표시 (14개로 증가)
+                    const displayTracks = [track, ...recData.recommendations.slice(0, 14)];
                     updateTrackDisplayOnly(displayTracks, 0);
                 }
 
@@ -1247,9 +1287,9 @@
                         });
                     }
 
-                    // 추천곡들 추가 (원곡 제외하고 9개) + track_key 매핑
+                    // 추천곡들 추가 (원곡 제외하고 14개) + track_key 매핑
                     console.log('📋 Adding recommended tracks to playlist:');
-                    d.spotify_tracks.slice(0, 9).forEach((spotifyTrack, idx) => {
+                    d.spotify_tracks.slice(0, 14).forEach((spotifyTrack, idx) => {
                         const recTrack = recommendations[idx];
                         const trackName = spotifyTrack.spotify_track?.name || spotifyTrack.track;
                         const artistName = spotifyTrack.spotify_track?.artists?.[0]?.name || spotifyTrack.artist;
@@ -1398,8 +1438,8 @@
                     alert(d.error);
                 }
                 else if (d.recommendations?.length > 0) {
-                    // 선택한 곡 + 추천 9곡
-                    const displayTracks = [selectedTrack, ...d.recommendations.slice(0, 9)];
+                    // 선택한 곡 + 추천 14곡
+                    const displayTracks = [selectedTrack, ...d.recommendations.slice(0, 14)];
 
                     // 커버 이미지만 업데이트 (재생 없음)
                     updateTrackDisplayOnly(displayTracks, 0);
@@ -1421,12 +1461,31 @@
             trackInfoContainer.innerHTML = '';
             trackInfoContainer.style.pointerEvents = 'auto';
 
-            // 5개씩 2줄 = 총 10개 트랙 표시
-            const endIdx = Math.min(tracks.length, currentIndex + 10);
+            // 5개씩 3줄 = 총 15개 트랙 표시
+            const endIdx = Math.min(tracks.length, currentIndex + 15);
 
+            // 첫 번째 트랙(원곡)은 그대로, 나머지는 랜덤 섞기
+            const tracksToDisplay = [];
             for (let i = currentIndex; i < endIdx; i++) {
-                const track = tracks[i];
-                const isCurrent = i === currentIndex;
+                tracksToDisplay.push({ track: tracks[i], originalIndex: i });
+            }
+
+            // 첫 번째 트랙 제외하고 나머지 섞기
+            if (tracksToDisplay.length > 1) {
+                const firstTrack = tracksToDisplay[0];
+                const remainingTracks = tracksToDisplay.slice(1);
+
+                // Fisher-Yates 셔플
+                for (let i = remainingTracks.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [remainingTracks[i], remainingTracks[j]] = [remainingTracks[j], remainingTracks[i]];
+                }
+
+                tracksToDisplay.splice(0, tracksToDisplay.length, firstTrack, ...remainingTracks);
+            }
+
+            tracksToDisplay.forEach(({ track, originalIndex }) => {
+                const isCurrent = originalIndex === currentIndex;
 
                 const trackDiv = document.createElement('div');
                 trackDiv.className = 'track-item' + (isCurrent ? ' current' : '');
@@ -1457,11 +1516,11 @@
                 if (isCurrent) {
                     trackDiv.onclick = showSearchInterface;
                 } else {
-                    trackDiv.onclick = () => loadRecommendationsFromTrack(track, i);
+                    trackDiv.onclick = () => loadRecommendationsFromTrack(track, originalIndex);
                 }
 
                 trackInfoContainer.appendChild(trackDiv);
-            }
+            });
 
             console.log('✅ Track display updated');
         }
