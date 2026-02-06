@@ -567,6 +567,10 @@
         let trackDuration = null;         // 현재 트랙 총 길이(ms)
         let lastPlayedTrack = null;       // 이전에 재생한 트랙
 
+        // ===== Click History Tracking =====
+        let clickedTracks = [];           // 클릭한 트랙들의 track_key 저장
+        let averageBasedTracks = [];      // 평균 기반 추천 트랙들
+
         // ===== Listening Log =====
         function generateSessionId() {
             return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -1081,6 +1085,9 @@
 
             console.log('🎵 Loading recommendations from track:', track.track_key);
 
+            // 클릭한 트랙을 히스토리에 추가 (최대 5개 유지)
+            addClickedTrack(track.track_key);
+
             // 앨범 커버 클릭 로그 전송 (트랙기반 유사 음악 로드시)
             const trackName = track.track || track.name || 'Unknown Track';
             const artistName = track.artist || (track.artists ? track.artists.map(a => a.name).join(', ') : 'Unknown Artist');
@@ -1114,6 +1121,11 @@
                     throw new Error('No recommendations found');
                 }
 
+                // 클릭 히스토리가 5개 이상이면 평균 기반 추천 가져오기
+                if (clickedTracks.length >= 5) {
+                    await fetchAverageBasedRecommendations();
+                }
+
                 // Spotify 매칭 (access_token이 있는 경우만)
                 if (access_token) {
                     const spotifyResp = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
@@ -1132,24 +1144,111 @@
                         throw new Error('No Spotify tracks found');
                     }
 
-                    // 클릭한 트랙을 첫 번째로, 추천곡들을 그 다음에 (14개로 증가)
-                    playlist = [track, ...spotifyData.spotify_tracks.slice(0, 14)];
+                    // 클릭한 트랙을 첫 번째로, 추천곡들을 그 다음에
+                    // 평균 기반 추천이 있으면 하단 5개로 배치
+                    let mainRecommendations = spotifyData.spotify_tracks.slice(0, 9);
+
+                    if (averageBasedTracks.length > 0) {
+                        // 평균 기반 추천 5개 추가
+                        playlist = [track, ...mainRecommendations, ...averageBasedTracks];
+                    } else {
+                        // 평균 기반 추천이 없으면 기존처럼 14개
+                        playlist = [track, ...spotifyData.spotify_tracks.slice(0, 14)];
+                    }
+
                     currentTrackIndex = 0;
 
                     console.log(`✅ New playlist loaded from track: ${playlist.length} tracks`);
+                    console.log(`📊 Clicked tracks history: ${clickedTracks.length}/5`);
+                    if (averageBasedTracks.length > 0) {
+                        console.log(`🎯 Average-based recommendations added: ${averageBasedTracks.length}`);
+                    }
 
                     // UI 업데이트
                     updateAllTracks();
 
                 } else {
-                    // 로그인 안되어 있는 경우 - 추천만 표시 (14개로 증가)
-                    const displayTracks = [track, ...recData.recommendations.slice(0, 14)];
+                    // 로그인 안되어 있는 경우 - 추천만 표시
+                    let mainRecommendations = recData.recommendations.slice(0, 9);
+                    let displayTracks;
+
+                    if (averageBasedTracks.length > 0) {
+                        displayTracks = [track, ...mainRecommendations, ...averageBasedTracks];
+                    } else {
+                        displayTracks = [track, ...recData.recommendations.slice(0, 14)];
+                    }
+
                     updateTrackDisplayOnly(displayTracks, 0);
                 }
 
             } catch (e) {
                 console.error('⚠️ Failed to fetch recommendations:', e);
                 alert('추천곡을 가져올 수 없습니다.');
+            }
+        }
+
+        // 클릭한 트랙을 히스토리에 추가 (최대 5개 유지)
+        function addClickedTrack(trackKey) {
+            // 중복 제거
+            if (!clickedTracks.includes(trackKey)) {
+                clickedTracks.push(trackKey);
+
+                // 최대 5개 유지 (FIFO)
+                if (clickedTracks.length > 5) {
+                    clickedTracks.shift();
+                }
+
+                console.log(`📝 Added to click history: ${trackKey}`);
+                console.log(`📊 Click history (${clickedTracks.length}/5):`, clickedTracks);
+            }
+        }
+
+        // 평균 기반 추천 가져오기
+        async function fetchAverageBasedRecommendations() {
+            try {
+                console.log('🎯 Fetching average-based recommendations from:', clickedTracks);
+
+                const response = await fetch(`${API_BASE_URL}/recommend-average`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        track_keys: clickedTracks,
+                        num_recommendations: 5
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Average-based recommendation failed');
+                }
+
+                const data = await response.json();
+
+                if (data.recommendations && data.recommendations.length > 0) {
+                    // Spotify 매칭 (access_token이 있는 경우만)
+                    if (access_token) {
+                        const spotifyResp = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                tracks: data.recommendations,
+                                access_token
+                            })
+                        });
+
+                        if (spotifyResp.ok) {
+                            const spotifyData = await spotifyResp.json();
+                            averageBasedTracks = spotifyData.spotify_tracks.slice(0, 5);
+                            console.log('✅ Average-based tracks loaded:', averageBasedTracks.length);
+                        }
+                    } else {
+                        // 로그인 안되어 있으면 그냥 추천 데이터 사용
+                        averageBasedTracks = data.recommendations.slice(0, 5);
+                        console.log('✅ Average-based tracks loaded (no Spotify):', averageBasedTracks.length);
+                    }
+                }
+            } catch (e) {
+                console.error('⚠️ Failed to fetch average-based recommendations:', e);
+                averageBasedTracks = [];
             }
         }
         function updateMediaSession() {
