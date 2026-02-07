@@ -1104,13 +1104,13 @@
             }).catch(err => console.error('Failed to log album cover click:', err));
 
             try {
-                // 추천 받기
+                // 추천 받기 (중복 제거를 고려해 더 많이 요청)
                 const recResp = await fetch(`${API_BASE_URL}/recommend`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         track_key: track.track_key,
-                        num_recommendations: 30
+                        num_recommendations: 50  // 중복 제거 후에도 충분하도록 50개 요청
                     })
                 });
 
@@ -1158,29 +1158,33 @@
                         addedTracks.push(track);
                     }
 
-                    // 2. 메인 추천 추가 (중복 제거하며 최대 9개)
+                    // 2. 메인 추천 추가 (중복 제거하며 가능한 많이)
                     for (const t of spotifyData.spotify_tracks) {
                         const trackId = t.track_key || t.uri;
                         if (trackId && !seenIds.has(trackId)) {
                             seenIds.add(trackId);
                             addedTracks.push(t);
-                            if (addedTracks.length >= 10) break; // 클릭 트랙 1 + 추천 9 = 10
                         }
                     }
 
-                    // 3. 평균 기반 추천 추가 (중복 제거하며 최대 5개)
+                    // 3. 평균 기반 추천 추가 (중복 제거)
                     if (averageBasedTracks.length > 0) {
                         for (const t of averageBasedTracks) {
                             const trackId = t.track_key || t.uri;
                             if (trackId && !seenIds.has(trackId)) {
                                 seenIds.add(trackId);
                                 addedTracks.push(t);
-                                if (addedTracks.length >= 15) break; // 총 15개
                             }
                         }
                     }
 
+                    // 최종 플레이리스트: 모든 추천곡 사용 (최소 15개 목표)
                     playlist = addedTracks;
+
+                    console.log(`📝 Playlist created: ${playlist.length} unique tracks (requested 50 main + 15 average)`);
+                    if (playlist.length < 15) {
+                        console.warn(`⚠️ Only ${playlist.length} unique tracks available (target: 15)`)
+                    }
 
                     currentTrackIndex = 0;
 
@@ -1239,7 +1243,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         track_keys: clickedTracks,
-                        num_recommendations: 5
+                        num_recommendations: 15  // 중복 제거 후에도 5개 확보하도록 15개 요청
                     })
                 });
 
