@@ -1121,6 +1121,9 @@
                     throw new Error('No recommendations found');
                 }
 
+                console.log(`🎯 Main recommendations received: ${recData.recommendations.length} tracks`);
+                console.log('📋 Main recommendations (first 10):', recData.recommendations.slice(0, 10).map(t => `${t.track} - ${t.artist}`));
+
                 // 클릭 히스토리가 5개 이상이면 매번 평균 기반 추천 새로 가져오기
                 if (clickedTracks.length >= 5) {
                     await fetchAverageBasedRecommendations();
@@ -1148,40 +1151,91 @@
                     }
 
                     // 중복 제거: track_key 또는 Spotify URI 기준
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('🔍 DEDUPLICATION DEBUG');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
                     const seenIds = new Set();
                     const addedTracks = [];
+                    let mainAdded = 0;
+                    let mainDuplicates = 0;
+                    let avgAdded = 0;
+                    let avgDuplicates = 0;
 
                     // 1. 클릭한 트랙 추가
                     const clickedId = track.track_key || track.uri;
                     if (clickedId) {
                         seenIds.add(clickedId);
                         addedTracks.push(track);
+                        console.log(`✅ [CLICKED] ${track.track || track.name} - ${track.artist || 'Unknown'}`);
                     }
 
+                    console.log('\n📊 MAIN RECOMMENDATIONS (from single track similarity):');
+                    console.log(`   Total received: ${spotifyData.spotify_tracks.length} tracks`);
+
                     // 2. 메인 추천 추가 (중복 제거하며 가능한 많이)
-                    for (const t of spotifyData.spotify_tracks) {
+                    for (let i = 0; i < spotifyData.spotify_tracks.length; i++) {
+                        const t = spotifyData.spotify_tracks[i];
                         const trackId = t.track_key || t.uri;
+                        const trackName = t.name || t.track || 'Unknown';
+                        const artistName = t.artists ? t.artists.map(a => a.name).join(', ') : (t.artist || 'Unknown');
+
                         if (trackId && !seenIds.has(trackId)) {
                             seenIds.add(trackId);
                             addedTracks.push(t);
+                            mainAdded++;
+                            if (i < 15) {  // 처음 15개만 상세 로그
+                                console.log(`   ✅ [${mainAdded}] ${trackName} - ${artistName}`);
+                            }
+                        } else {
+                            mainDuplicates++;
+                            if (i < 15) {  // 처음 15개만 상세 로그
+                                console.log(`   ❌ [DUP] ${trackName} - ${artistName}`);
+                            }
                         }
                     }
 
+                    console.log(`   ✅ Added: ${mainAdded} tracks`);
+                    console.log(`   ❌ Duplicates: ${mainDuplicates} tracks`);
+
                     // 3. 평균 기반 추천 추가 (중복 제거)
                     if (averageBasedTracks.length > 0) {
-                        for (const t of averageBasedTracks) {
+                        console.log('\n🎯 AVERAGE-BASED RECOMMENDATIONS (from 5-track history):');
+                        console.log(`   Total received: ${averageBasedTracks.length} tracks`);
+
+                        for (let i = 0; i < averageBasedTracks.length; i++) {
+                            const t = averageBasedTracks[i];
                             const trackId = t.track_key || t.uri;
+                            const trackName = t.name || t.track || 'Unknown';
+                            const artistName = t.artists ? t.artists.map(a => a.name).join(', ') : (t.artist || 'Unknown');
+
                             if (trackId && !seenIds.has(trackId)) {
                                 seenIds.add(trackId);
                                 addedTracks.push(t);
+                                avgAdded++;
+                                console.log(`   ✅ [${avgAdded}] ${trackName} - ${artistName}`);
+                            } else {
+                                avgDuplicates++;
+                                console.log(`   ❌ [DUP] ${trackName} - ${artistName} (already in main)`);
                             }
                         }
+
+                        console.log(`   ✅ Added: ${avgAdded} tracks`);
+                        console.log(`   ❌ Duplicates: ${avgDuplicates} tracks (overlap with main recommendations)`);
                     }
 
                     // 최종 플레이리스트: 모든 추천곡 사용 (최소 15개 목표)
                     playlist = addedTracks;
 
-                    console.log(`📝 Playlist created: ${playlist.length} unique tracks (requested 50 main + 15 average)`);
+                    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('📝 FINAL PLAYLIST SUMMARY');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log(`   Clicked track: 1`);
+                    console.log(`   Main recommendations: ${mainAdded} (${mainDuplicates} duplicates filtered)`);
+                    console.log(`   Average-based: ${avgAdded} (${avgDuplicates} duplicates filtered)`);
+                    console.log(`   Total unique tracks: ${playlist.length}`);
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
                     if (playlist.length < 15) {
                         console.warn(`⚠️ Only ${playlist.length} unique tracks available (target: 15)`)
                     }
@@ -1236,7 +1290,10 @@
         // 평균 기반 추천 가져오기
         async function fetchAverageBasedRecommendations() {
             try {
-                console.log('🎯 Fetching average-based recommendations from:', clickedTracks);
+                console.log('\n🎯 ═══════════════════════════════════════════');
+                console.log('🎯 FETCHING AVERAGE-BASED RECOMMENDATIONS');
+                console.log('🎯 ═══════════════════════════════════════════');
+                console.log('   Click history (5 tracks):', clickedTracks);
 
                 const response = await fetch(`${API_BASE_URL}/recommend-average`, {
                     method: 'POST',
@@ -1252,8 +1309,14 @@
                 }
 
                 const data = await response.json();
+                console.log(`   Received ${data.recommendations ? data.recommendations.length : 0} recommendations from backend`);
 
                 if (data.recommendations && data.recommendations.length > 0) {
+                    console.log('   Raw recommendations (first 10):');
+                    data.recommendations.slice(0, 10).forEach((t, i) => {
+                        console.log(`      ${i+1}. ${t.track} - ${t.artist}`);
+                    });
+
                     // Spotify 매칭 (access_token이 있는 경우만)
                     if (access_token) {
                         const spotifyResp = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
@@ -1267,15 +1330,17 @@
 
                         if (spotifyResp.ok) {
                             const spotifyData = await spotifyResp.json();
-                            averageBasedTracks = spotifyData.spotify_tracks.slice(0, 5);
-                            console.log('✅ Average-based tracks loaded:', averageBasedTracks.length);
+                            averageBasedTracks = spotifyData.spotify_tracks;
+                            console.log(`   ✅ Spotify matched: ${averageBasedTracks.length} tracks`);
+                            console.log('   Average-based tracks ready for deduplication');
                         }
                     } else {
                         // 로그인 안되어 있으면 그냥 추천 데이터 사용
-                        averageBasedTracks = data.recommendations.slice(0, 5);
-                        console.log('✅ Average-based tracks loaded (no Spotify):', averageBasedTracks.length);
+                        averageBasedTracks = data.recommendations;
+                        console.log(`   ✅ Using DB tracks (no Spotify): ${averageBasedTracks.length} tracks`);
                     }
                 }
+                console.log('🎯 ═══════════════════════════════════════════\n');
             } catch (e) {
                 console.error('⚠️ Failed to fetch average-based recommendations:', e);
                 averageBasedTracks = [];
