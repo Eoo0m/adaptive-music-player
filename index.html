@@ -1252,17 +1252,90 @@
                     updateAllTracks();
 
                 } else {
-                    // 로그인 안되어 있는 경우 - 추천만 표시
-                    let mainRecommendations = recData.recommendations.slice(0, 9);
-                    let displayTracks;
+                    // 로그인 안되어 있는 경우 - DB 트랙 사용 (중복 제거 적용)
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('🔍 DEDUPLICATION DEBUG (No Spotify Login)');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-                    if (averageBasedTracks.length > 0) {
-                        displayTracks = [track, ...mainRecommendations, ...averageBasedTracks];
-                    } else {
-                        displayTracks = [track, ...recData.recommendations.slice(0, 14)];
+                    const seenIds = new Set();
+                    const addedTracks = [];
+                    let mainAdded = 0;
+                    let mainDuplicates = 0;
+                    let avgAdded = 0;
+                    let avgDuplicates = 0;
+
+                    // 1. 클릭한 트랙 추가
+                    const clickedId = track.track_key;
+                    if (clickedId) {
+                        seenIds.add(clickedId);
+                        addedTracks.push(track);
+                        console.log(`✅ [CLICKED] ${track.track} - ${track.artist}`);
                     }
 
-                    updateTrackDisplayOnly(displayTracks, 0);
+                    console.log('\n📊 MAIN RECOMMENDATIONS (from single track similarity):');
+                    console.log(`   Total received: ${recData.recommendations.length} tracks`);
+
+                    // 2. 메인 추천 추가 (중복 제거)
+                    for (let i = 0; i < recData.recommendations.length; i++) {
+                        const t = recData.recommendations[i];
+                        const trackId = t.track_key;
+                        const trackName = t.track || 'Unknown';
+                        const artistName = t.artist || 'Unknown';
+
+                        if (trackId && !seenIds.has(trackId)) {
+                            seenIds.add(trackId);
+                            addedTracks.push(t);
+                            mainAdded++;
+                            if (i < 15) {
+                                console.log(`   ✅ [${mainAdded}] ${trackName} - ${artistName}`);
+                            }
+                        } else {
+                            mainDuplicates++;
+                            if (i < 15) {
+                                console.log(`   ❌ [DUP] ${trackName} - ${artistName}`);
+                            }
+                        }
+                    }
+
+                    console.log(`   ✅ Added: ${mainAdded} tracks`);
+                    console.log(`   ❌ Duplicates: ${mainDuplicates} tracks`);
+
+                    // 3. 평균 기반 추천 추가 (중복 제거)
+                    if (averageBasedTracks.length > 0) {
+                        console.log('\n🎯 AVERAGE-BASED RECOMMENDATIONS (from 5-track history):');
+                        console.log(`   Total received: ${averageBasedTracks.length} tracks`);
+
+                        for (let i = 0; i < averageBasedTracks.length; i++) {
+                            const t = averageBasedTracks[i];
+                            const trackId = t.track_key;
+                            const trackName = t.track || 'Unknown';
+                            const artistName = t.artist || 'Unknown';
+
+                            if (trackId && !seenIds.has(trackId)) {
+                                seenIds.add(trackId);
+                                addedTracks.push(t);
+                                avgAdded++;
+                                console.log(`   ✅ [${avgAdded}] ${trackName} - ${artistName}`);
+                            } else {
+                                avgDuplicates++;
+                                console.log(`   ❌ [DUP] ${trackName} - ${artistName} (already in main)`);
+                            }
+                        }
+
+                        console.log(`   ✅ Added: ${avgAdded} tracks`);
+                        console.log(`   ❌ Duplicates: ${avgDuplicates} tracks (overlap with main recommendations)`);
+                    }
+
+                    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('📝 FINAL PLAYLIST SUMMARY (No Spotify)');
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log(`   Clicked track: 1`);
+                    console.log(`   Main recommendations: ${mainAdded} (${mainDuplicates} duplicates filtered)`);
+                    console.log(`   Average-based: ${avgAdded} (${avgDuplicates} duplicates filtered)`);
+                    console.log(`   Total unique tracks: ${addedTracks.length}`);
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+                    updateTrackDisplayOnly(addedTracks, 0);
                 }
 
             } catch (e) {
