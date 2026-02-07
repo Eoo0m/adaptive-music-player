@@ -1536,8 +1536,11 @@
 
                 if (d.error) {
                     document.getElementById('initialSearchResults').innerHTML = `<div class="error-message">${d.error}</div>`;
-                } else {
+                } else if (d.results && Array.isArray(d.results)) {
                     displayInitialSearchResults(d.results);
+                } else {
+                    console.error('Invalid response format:', d);
+                    document.getElementById('initialSearchResults').innerHTML = '<div class="error-message">검색 결과 형식이 올바르지 않습니다.</div>';
                 }
             } catch (e) {
                 console.error('Initial search error:', e);
@@ -1557,7 +1560,7 @@
         }
         async function displayInitialSearchResults(results) {
             const div = document.getElementById('initialSearchResults');
-            if (results.length === 0) {
+            if (!results || !Array.isArray(results) || results.length === 0) {
                 div.innerHTML = '<div class="error-message">검색 결과가 없습니다.</div>';
                 return;
             }
