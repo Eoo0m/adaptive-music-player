@@ -568,7 +568,7 @@
         let lastPlayedTrack = null;       // 이전에 재생한 트랙
 
         // ===== Click History Tracking =====
-        let clickedTracks = [];           // 클릭한 트랙들의 track_key 저장
+        let clickedTracks = [];           // 클릭한 트랙들의 track_key 저장 (최대 10개)
         let averageBasedTracks = [];      // 평균 기반 추천 트랙들
 
         // ===== Listening Log =====
@@ -1124,11 +1124,11 @@
                 console.log(`🎯 Main recommendations received: ${recData.recommendations.length} tracks`);
                 console.log('📋 Main recommendations (first 10):', recData.recommendations.slice(0, 10).map(t => `${t.track} - ${t.artist}`));
 
-                // 클릭 히스토리가 5개 이상이면 매번 평균 기반 추천 새로 가져오기
-                if (clickedTracks.length >= 5) {
+                // 클릭 히스토리가 10개 이상이면 매번 평균 기반 추천 새로 가져오기
+                if (clickedTracks.length >= 10) {
                     await fetchAverageBasedRecommendations();
                 } else {
-                    // 5개 미만이면 평균 기반 추천 초기화
+                    // 10개 미만이면 평균 기반 추천 초기화
                     averageBasedTracks = [];
                 }
 
@@ -1212,19 +1212,19 @@
             }
         }
 
-        // 클릭한 트랙을 히스토리에 추가 (최대 5개 유지)
+        // 클릭한 트랙을 히스토리에 추가 (최대 10개 유지)
         function addClickedTrack(trackKey) {
             // 중복 제거
             if (!clickedTracks.includes(trackKey)) {
                 clickedTracks.push(trackKey);
 
-                // 최대 5개 유지 (FIFO)
-                if (clickedTracks.length > 5) {
+                // 최대 10개 유지 (FIFO)
+                if (clickedTracks.length > 10) {
                     clickedTracks.shift();
                 }
 
                 console.log(`📝 Added to click history: ${trackKey}`);
-                console.log(`📊 Click history (${clickedTracks.length}/5):`, clickedTracks);
+                console.log(`📊 Click history (${clickedTracks.length}/10):`, clickedTracks);
             }
         }
 
@@ -1234,7 +1234,7 @@
                 console.log('\n🎯 ═══════════════════════════════════════════');
                 console.log('🎯 FETCHING AVERAGE-BASED RECOMMENDATIONS');
                 console.log('🎯 ═══════════════════════════════════════════');
-                console.log('   Click history (5 tracks):', clickedTracks);
+                console.log(`   Click history (${clickedTracks.length} tracks):`, clickedTracks);
 
                 const response = await fetch(`${API_BASE_URL}/recommend-average`, {
                     method: 'POST',
