@@ -1132,152 +1132,61 @@
                     averageBasedTracks = [];
                 }
 
-                // Spotify 매칭 (access_token이 있는 경우만)
-                if (access_token) {
-                    const spotifyResp = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            tracks: recData.recommendations,
-                            access_token
-                        })
-                    });
+                // 중복 제거 및 플레이리스트 구성
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('🔍 DEDUPLICATION DEBUG');
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-                    if (!spotifyResp.ok) throw new Error('Spotify matching failed');
+                const seenIds = new Set();
+                const addedTracks = [];
+                let mainAdded = 0;
+                let mainDuplicates = 0;
+                let avgAdded = 0;
+                let avgDuplicates = 0;
 
-                    const spotifyData = await spotifyResp.json();
-                    if (!spotifyData.spotify_tracks || spotifyData.spotify_tracks.length === 0) {
-                        throw new Error('No Spotify tracks found');
-                    }
+                // 1. 클릭한 트랙 추가
+                const clickedId = track.track_key;
+                if (clickedId) {
+                    seenIds.add(clickedId);
+                    addedTracks.push(track);
+                    console.log(`✅ [CLICKED] ${track.track} - ${track.artist}`);
+                }
 
-                    // 중복 제거: track_key 또는 Spotify URI 기준
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('🔍 DEDUPLICATION DEBUG');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('\n📊 MAIN RECOMMENDATIONS (from single track similarity):');
+                console.log(`   Total received: ${recData.recommendations.length} tracks`);
 
-                    const seenIds = new Set();
-                    const addedTracks = [];
-                    let mainAdded = 0;
-                    let mainDuplicates = 0;
-                    let avgAdded = 0;
-                    let avgDuplicates = 0;
+                // 2. 메인 추천 추가 (중복 제거)
+                for (let i = 0; i < recData.recommendations.length; i++) {
+                    const t = recData.recommendations[i];
+                    const trackId = t.track_key;
+                    const trackName = t.track || 'Unknown';
+                    const artistName = t.artist || 'Unknown';
 
-                    // 1. 클릭한 트랙 추가
-                    const clickedId = track.track_key || track.uri;
-                    if (clickedId) {
-                        seenIds.add(clickedId);
-                        addedTracks.push(track);
-                        console.log(`✅ [CLICKED] ${track.track || track.name} - ${track.artist || 'Unknown'}`);
-                    }
-
-                    console.log('\n📊 MAIN RECOMMENDATIONS (from single track similarity):');
-                    console.log(`   Total received: ${spotifyData.spotify_tracks.length} tracks`);
-
-                    // 2. 메인 추천 추가 (중복 제거하며 가능한 많이)
-                    for (let i = 0; i < spotifyData.spotify_tracks.length; i++) {
-                        const t = spotifyData.spotify_tracks[i];
-                        const trackId = t.track_key || t.uri;
-                        const trackName = t.name || t.track || 'Unknown';
-                        const artistName = t.artists ? t.artists.map(a => a.name).join(', ') : (t.artist || 'Unknown');
-
-                        if (trackId && !seenIds.has(trackId)) {
-                            seenIds.add(trackId);
-                            addedTracks.push(t);
-                            mainAdded++;
-                            if (i < 15) {  // 처음 15개만 상세 로그
-                                console.log(`   ✅ [${mainAdded}] ${trackName} - ${artistName}`);
-                            }
-                        } else {
-                            mainDuplicates++;
-                            if (i < 15) {  // 처음 15개만 상세 로그
-                                console.log(`   ❌ [DUP] ${trackName} - ${artistName}`);
-                            }
+                    if (trackId && !seenIds.has(trackId)) {
+                        seenIds.add(trackId);
+                        addedTracks.push(t);
+                        mainAdded++;
+                        if (i < 15) {
+                            console.log(`   ✅ [${mainAdded}] ${trackName} - ${artistName}`);
+                        }
+                    } else {
+                        mainDuplicates++;
+                        if (i < 15) {
+                            console.log(`   ❌ [DUP] ${trackName} - ${artistName}`);
                         }
                     }
+                }
 
-                    console.log(`   ✅ Added: ${mainAdded} tracks`);
-                    console.log(`   ❌ Duplicates: ${mainDuplicates} tracks`);
+                console.log(`   ✅ Added: ${mainAdded} tracks`);
+                console.log(`   ❌ Duplicates: ${mainDuplicates} tracks`);
 
-                    // 3. 평균 기반 추천 추가 (중복 제거)
-                    if (averageBasedTracks.length > 0) {
-                        console.log('\n🎯 AVERAGE-BASED RECOMMENDATIONS (from 5-track history):');
-                        console.log(`   Total received: ${averageBasedTracks.length} tracks`);
+                // 3. 평균 기반 추천 추가 (중복 제거)
+                if (averageBasedTracks.length > 0) {
+                    console.log('\n🎯 AVERAGE-BASED RECOMMENDATIONS (from 5-track history):');
+                    console.log(`   Total received: ${averageBasedTracks.length} tracks`);
 
-                        for (let i = 0; i < averageBasedTracks.length; i++) {
-                            const t = averageBasedTracks[i];
-                            const trackId = t.track_key || t.uri;
-                            const trackName = t.name || t.track || 'Unknown';
-                            const artistName = t.artists ? t.artists.map(a => a.name).join(', ') : (t.artist || 'Unknown');
-
-                            if (trackId && !seenIds.has(trackId)) {
-                                seenIds.add(trackId);
-                                addedTracks.push(t);
-                                avgAdded++;
-                                console.log(`   ✅ [${avgAdded}] ${trackName} - ${artistName}`);
-                            } else {
-                                avgDuplicates++;
-                                console.log(`   ❌ [DUP] ${trackName} - ${artistName} (already in main)`);
-                            }
-                        }
-
-                        console.log(`   ✅ Added: ${avgAdded} tracks`);
-                        console.log(`   ❌ Duplicates: ${avgDuplicates} tracks (overlap with main recommendations)`);
-                    }
-
-                    // 최종 플레이리스트: 모든 추천곡 사용 (최소 15개 목표)
-                    playlist = addedTracks;
-
-                    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('📝 FINAL PLAYLIST SUMMARY');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log(`   Clicked track: 1`);
-                    console.log(`   Main recommendations: ${mainAdded} (${mainDuplicates} duplicates filtered)`);
-                    console.log(`   Average-based: ${avgAdded} (${avgDuplicates} duplicates filtered)`);
-                    console.log(`   Total unique tracks: ${playlist.length}`);
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-
-                    if (playlist.length < 15) {
-                        console.warn(`⚠️ Only ${playlist.length} unique tracks available (target: 15)`)
-                    }
-
-                    currentTrackIndex = 0;
-
-                    console.log(`✅ New playlist loaded from track: ${playlist.length} tracks`);
-                    console.log(`📊 Clicked tracks history: ${clickedTracks.length}/5`);
-                    if (averageBasedTracks.length > 0) {
-                        console.log(`🎯 Average-based recommendations added: ${averageBasedTracks.length}`);
-                    }
-
-                    // UI 업데이트
-                    updateAllTracks();
-
-                } else {
-                    // 로그인 안되어 있는 경우 - DB 트랙 사용 (중복 제거 적용)
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('🔍 DEDUPLICATION DEBUG (No Spotify Login)');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-                    const seenIds = new Set();
-                    const addedTracks = [];
-                    let mainAdded = 0;
-                    let mainDuplicates = 0;
-                    let avgAdded = 0;
-                    let avgDuplicates = 0;
-
-                    // 1. 클릭한 트랙 추가
-                    const clickedId = track.track_key;
-                    if (clickedId) {
-                        seenIds.add(clickedId);
-                        addedTracks.push(track);
-                        console.log(`✅ [CLICKED] ${track.track} - ${track.artist}`);
-                    }
-
-                    console.log('\n📊 MAIN RECOMMENDATIONS (from single track similarity):');
-                    console.log(`   Total received: ${recData.recommendations.length} tracks`);
-
-                    // 2. 메인 추천 추가 (중복 제거)
-                    for (let i = 0; i < recData.recommendations.length; i++) {
-                        const t = recData.recommendations[i];
+                    for (let i = 0; i < averageBasedTracks.length; i++) {
+                        const t = averageBasedTracks[i];
                         const trackId = t.track_key;
                         const trackName = t.track || 'Unknown';
                         const artistName = t.artist || 'Unknown';
@@ -1285,58 +1194,33 @@
                         if (trackId && !seenIds.has(trackId)) {
                             seenIds.add(trackId);
                             addedTracks.push(t);
-                            mainAdded++;
-                            if (i < 15) {
-                                console.log(`   ✅ [${mainAdded}] ${trackName} - ${artistName}`);
-                            }
+                            avgAdded++;
+                            console.log(`   ✅ [${avgAdded}] ${trackName} - ${artistName}`);
                         } else {
-                            mainDuplicates++;
-                            if (i < 15) {
-                                console.log(`   ❌ [DUP] ${trackName} - ${artistName}`);
-                            }
+                            avgDuplicates++;
+                            console.log(`   ❌ [DUP] ${trackName} - ${artistName} (already in main)`);
                         }
                     }
 
-                    console.log(`   ✅ Added: ${mainAdded} tracks`);
-                    console.log(`   ❌ Duplicates: ${mainDuplicates} tracks`);
-
-                    // 3. 평균 기반 추천 추가 (중복 제거)
-                    if (averageBasedTracks.length > 0) {
-                        console.log('\n🎯 AVERAGE-BASED RECOMMENDATIONS (from 5-track history):');
-                        console.log(`   Total received: ${averageBasedTracks.length} tracks`);
-
-                        for (let i = 0; i < averageBasedTracks.length; i++) {
-                            const t = averageBasedTracks[i];
-                            const trackId = t.track_key;
-                            const trackName = t.track || 'Unknown';
-                            const artistName = t.artist || 'Unknown';
-
-                            if (trackId && !seenIds.has(trackId)) {
-                                seenIds.add(trackId);
-                                addedTracks.push(t);
-                                avgAdded++;
-                                console.log(`   ✅ [${avgAdded}] ${trackName} - ${artistName}`);
-                            } else {
-                                avgDuplicates++;
-                                console.log(`   ❌ [DUP] ${trackName} - ${artistName} (already in main)`);
-                            }
-                        }
-
-                        console.log(`   ✅ Added: ${avgAdded} tracks`);
-                        console.log(`   ❌ Duplicates: ${avgDuplicates} tracks (overlap with main recommendations)`);
-                    }
-
-                    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log('📝 FINAL PLAYLIST SUMMARY (No Spotify)');
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    console.log(`   Clicked track: 1`);
-                    console.log(`   Main recommendations: ${mainAdded} (${mainDuplicates} duplicates filtered)`);
-                    console.log(`   Average-based: ${avgAdded} (${avgDuplicates} duplicates filtered)`);
-                    console.log(`   Total unique tracks: ${addedTracks.length}`);
-                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-
-                    updateTrackDisplayOnly(addedTracks, 0);
+                    console.log(`   ✅ Added: ${avgAdded} tracks`);
+                    console.log(`   ❌ Duplicates: ${avgDuplicates} tracks (overlap with main recommendations)`);
                 }
+
+                console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('📝 FINAL PLAYLIST SUMMARY');
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log(`   Clicked track: 1`);
+                console.log(`   Main recommendations: ${mainAdded} (${mainDuplicates} duplicates filtered)`);
+                console.log(`   Average-based: ${avgAdded} (${avgDuplicates} duplicates filtered)`);
+                console.log(`   Total unique tracks: ${addedTracks.length}`);
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+                if (addedTracks.length < 15) {
+                    console.warn(`⚠️ Only ${addedTracks.length} unique tracks available (target: 15)`)
+                }
+
+                // UI 업데이트
+                updateTrackDisplayOnly(addedTracks, 0);
 
             } catch (e) {
                 console.error('⚠️ Failed to fetch recommendations:', e);
@@ -1390,28 +1274,9 @@
                         console.log(`      ${i+1}. ${t.track} - ${t.artist}`);
                     });
 
-                    // Spotify 매칭 (access_token이 있는 경우만)
-                    if (access_token) {
-                        const spotifyResp = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                tracks: data.recommendations,
-                                access_token
-                            })
-                        });
-
-                        if (spotifyResp.ok) {
-                            const spotifyData = await spotifyResp.json();
-                            averageBasedTracks = spotifyData.spotify_tracks;
-                            console.log(`   ✅ Spotify matched: ${averageBasedTracks.length} tracks`);
-                            console.log('   Average-based tracks ready for deduplication');
-                        }
-                    } else {
-                        // 로그인 안되어 있으면 그냥 추천 데이터 사용
-                        averageBasedTracks = data.recommendations;
-                        console.log(`   ✅ Using DB tracks (no Spotify): ${averageBasedTracks.length} tracks`);
-                    }
+                    // DB 트랙 직접 사용 (Spotify 매칭 불필요)
+                    averageBasedTracks = data.recommendations;
+                    console.log(`   ✅ Using DB tracks: ${averageBasedTracks.length} tracks`);
                 }
                 console.log('🎯 ═══════════════════════════════════════════\n');
             } catch (e) {
