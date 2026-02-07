@@ -1599,25 +1599,16 @@
             // 5개씩 3줄 = 총 15개 트랙 표시
             const endIdx = Math.min(tracks.length, currentIndex + 15);
 
-            // 첫 번째 트랙(원곡)은 그대로, 나머지는 랜덤 섞기
+            // 순서대로 표시 (섞지 않음)
             const tracksToDisplay = [];
             for (let i = currentIndex; i < endIdx; i++) {
                 tracksToDisplay.push({ track: tracks[i], originalIndex: i });
             }
 
-            // 첫 번째 트랙 제외하고 나머지 섞기
-            if (tracksToDisplay.length > 1) {
-                const firstTrack = tracksToDisplay[0];
-                const remainingTracks = tracksToDisplay.slice(1);
-
-                // Fisher-Yates 셔플
-                for (let i = remainingTracks.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [remainingTracks[i], remainingTracks[j]] = [remainingTracks[j], remainingTracks[i]];
-                }
-
-                tracksToDisplay.splice(0, tracksToDisplay.length, firstTrack, ...remainingTracks);
-            }
+            console.log('📋 Tracks to display (순서대로):');
+            tracksToDisplay.forEach(({ track }, i) => {
+                console.log(`   ${i+1}. ${track.track || track.name} - ${track.artist}`);
+            });
 
             tracksToDisplay.forEach(({ track, originalIndex }) => {
                 const isCurrent = originalIndex === currentIndex;
