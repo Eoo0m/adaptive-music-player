@@ -1,0 +1,511 @@
+body {
+    margin: 0;
+    padding: 50px;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    overflow: hidden;
+    position: relative;
+    user-select: none
+}
+
+.login-screen {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, .9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    color: #fff
+}
+
+.login-button {
+    background: #1db954;
+    color: #fff;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .3s;
+    margin-top: 20px
+}
+
+.login-button:hover {
+    background: #1ed760
+}
+
+.track-info {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    pointer-events: none;
+    max-width: 90vw;
+    max-height: 85vh;
+}
+
+.track-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 25px;
+}
+
+.guide-text {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    animation: blink 2s ease-in-out infinite;
+    margin-bottom: 5px;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+
+.track-info>* {
+    pointer-events: auto;
+}
+
+.track-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.3s ease;
+    opacity: 0;
+    animation: slideIn 0.5s ease forwards;
+}
+
+/* 첫 번째 줄 - 왼쪽에서 오른쪽으로 */
+.track-item:nth-child(1) { animation-delay: 0s; }
+.track-item:nth-child(2) { animation-delay: 0.08s; }
+.track-item:nth-child(3) { animation-delay: 0.16s; }
+.track-item:nth-child(4) { animation-delay: 0.24s; }
+.track-item:nth-child(5) { animation-delay: 0.32s; }
+
+/* 두 번째 줄 - 오른쪽에서 왼쪽으로 (역순) */
+.track-item:nth-child(6) { animation-delay: 0.32s; }
+.track-item:nth-child(7) { animation-delay: 0.24s; }
+.track-item:nth-child(8) { animation-delay: 0.16s; }
+.track-item:nth-child(9) { animation-delay: 0.08s; }
+.track-item:nth-child(10) { animation-delay: 0s; }
+
+/* 세 번째 줄 - 왼쪽에서 오른쪽으로 */
+.track-item:nth-child(11) { animation-delay: 0s; }
+.track-item:nth-child(12) { animation-delay: 0.08s; }
+.track-item:nth-child(13) { animation-delay: 0.16s; }
+.track-item:nth-child(14) { animation-delay: 0.24s; }
+.track-item:nth-child(15) { animation-delay: 0.32s; }
+
+@keyframes slideIn {
+    0% {
+        opacity: 0;
+        transform: translateX(-100px) scale(0.5) rotate(-10deg);
+    }
+    60% {
+        transform: translateX(10px) scale(1.1) rotate(2deg);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1) rotate(0);
+    }
+}
+
+/* 두 번째 줄은 오른쪽에서 들어옴 */
+.track-item:nth-child(6),
+.track-item:nth-child(7),
+.track-item:nth-child(8),
+.track-item:nth-child(9),
+.track-item:nth-child(10) {
+    animation-name: slideInFromRight;
+}
+
+/* 세 번째 줄은 왼쪽에서 들어옴 */
+.track-item:nth-child(n+11) {
+    animation-name: slideIn;
+}
+
+@keyframes slideInFromRight {
+    0% {
+        opacity: 0;
+        transform: translateX(100px) scale(0.5) rotate(10deg);
+    }
+    60% {
+        transform: translateX(-10px) scale(1.1) rotate(-2deg);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1) rotate(0);
+    }
+}
+
+.track-item.current {
+    border: 3px solid #1db954;
+    border-radius: 12px;
+    padding: 8px;
+    background: rgba(29, 185, 84, 0.15);
+    box-shadow: 0 0 20px rgba(29, 185, 84, 0.4);
+}
+
+.track-item img {
+    width: 140px;
+    height: 140px;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, .6);
+    object-fit: cover;
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid rgba(255, 255, 255, .1);
+    cursor: pointer;
+    transition: transform .2s ease, box-shadow .2s ease;
+    animation: subtleFloat 3s ease-in-out infinite;
+}
+
+/* 각 트랙마다 다른 타이밍으로 흔들림 */
+.track-item:nth-child(1) img { animation-delay: 0s; }
+.track-item:nth-child(2) img { animation-delay: 0.2s; }
+.track-item:nth-child(3) img { animation-delay: 0.4s; }
+.track-item:nth-child(4) img { animation-delay: 0.6s; }
+.track-item:nth-child(5) img { animation-delay: 0.8s; }
+.track-item:nth-child(6) img { animation-delay: 1.0s; }
+.track-item:nth-child(7) img { animation-delay: 1.2s; }
+.track-item:nth-child(8) img { animation-delay: 1.4s; }
+.track-item:nth-child(9) img { animation-delay: 1.6s; }
+.track-item:nth-child(10) img { animation-delay: 1.8s; }
+.track-item:nth-child(11) img { animation-delay: 2.0s; }
+.track-item:nth-child(12) img { animation-delay: 2.2s; }
+.track-item:nth-child(13) img { animation-delay: 2.4s; }
+.track-item:nth-child(14) img { animation-delay: 2.6s; }
+.track-item:nth-child(15) img { animation-delay: 2.8s; }
+
+@keyframes subtleFloat {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    25% {
+        transform: translateY(-3px) rotate(0.5deg);
+    }
+    50% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    75% {
+        transform: translateY(-2px) rotate(-0.5deg);
+    }
+}
+
+.track-item img:hover {
+    transform: scale(1.08) !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .8);
+    animation: none;
+}
+
+.track-item-info {
+    margin-top: 8px;
+    text-align: center;
+    width: 140px;
+}
+
+.track-item-title {
+    font-size: 13px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #fff;
+}
+
+.track-item-artist {
+    font-size: 11px;
+    opacity: 0.7;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 4px;
+}
+
+.album-cover.hidden {
+    display: none !important;
+}
+
+.album-cover[src=""],
+.album-cover:not([src]) {
+    display: none
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(.95)
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1)
+    }
+}
+
+.track-name {
+    font-weight: 600;
+    margin-bottom: 5px
+}
+
+.artist-name {
+    opacity: .8;
+    font-size: 12px
+}
+
+.space-background {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+    z-index: -2
+}
+
+.stars {
+    position: fixed;
+    inset: 0;
+    z-index: -1
+}
+
+.star {
+    position: absolute;
+    background: #fff;
+    border-radius: 50%;
+    animation: twinkle 2s infinite
+}
+
+.star.small {
+    width: 1px;
+    height: 1px
+}
+
+.star.medium {
+    width: 2px;
+    height: 2px
+}
+
+.star.large {
+    width: 3px;
+    height: 3px
+}
+
+@keyframes twinkle {
+
+    0%,
+    100% {
+        opacity: .3
+    }
+
+    50% {
+        opacity: 1
+    }
+}
+
+.dust {
+    position: absolute;
+    background: rgba(255, 255, 255, .1);
+    border-radius: 50%;
+    animation: float 10s infinite linear
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(100vh) translateX(0)
+    }
+
+    100% {
+        transform: translateY(-100px) translateX(50px)
+    }
+}
+
+.hidden {
+    display: none !important
+}
+
+.error-message {
+    color: #ff6b6b;
+    text-align: center;
+    margin-top: 20px
+}
+
+.github-link {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    text-decoration: none;
+    background: rgba(255, 255, 255, .1);
+    padding: 10px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    transition: .3s;
+    border: 1px solid rgba(255, 255, 255, .2);
+    backdrop-filter: blur(10px)
+}
+
+.github-link:hover {
+    background: rgba(255, 255, 255, .2);
+    transform: translateY(-2px);
+    color: #fff
+}
+
+.search-interface {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, .9);
+    padding: 15px 18px;
+    border-radius: 10px;
+    color: #fff;
+    text-align: center;
+    max-width: 360px;
+    width: 80%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
+    border: 1px solid rgba(255, 255, 255, .1);
+    backdrop-filter: blur(10px);
+    z-index: 100
+}
+
+.search-interface h2 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+}
+
+.search-section {
+    margin-bottom: 10px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 14px;
+    margin: 0 0 8px 0;
+    border: 2px solid rgba(255, 255, 255, .3);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, .1);
+    color: #fff;
+    font-size: 13px;
+    outline: none;
+    transition: .3s;
+    box-sizing: border-box;
+}
+
+.search-input:focus {
+    border-color: #1db954;
+}
+
+.search-input::placeholder {
+    color: rgba(255, 255, 255, .5);
+    font-size: 12px;
+}
+
+.search-input:focus {
+    border-color: #1db954
+}
+
+.search-input::placeholder {
+    color: rgba(255, 255, 255, .6)
+}
+
+.search-button {
+    background: #1db954;
+    color: #fff;
+    border: none;
+    padding: 9px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .3s;
+    margin-bottom: 5px;
+}
+
+.search-button:hover {
+    background: #1ed760
+}
+
+.search-button:disabled {
+    background: #666;
+    cursor: not-allowed
+}
+
+.recommendation-list {
+    margin-top: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+    text-align: left
+}
+
+.recommendation-item {
+    background: rgba(255, 255, 255, .1);
+    margin: 10px 0;
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: .3s;
+    border: 1px solid rgba(255, 255, 255, .1);
+    display: flex;
+    align-items: center;
+    gap: 12px
+}
+
+.recommendation-item:hover {
+    background: rgba(255, 255, 255, .2)
+}
+
+.recommendation-item.selected {
+    background: rgba(29, 185, 84, .3);
+    border-color: #1db954
+}
+
+.rec-album-cover {
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+    object-fit: cover;
+    background: rgba(255, 255, 255, .05);
+    flex-shrink: 0;
+    display: block
+}
+
+.rec-album-cover[src=""],
+.rec-album-cover:not([src]) {
+    display: none
+}
+
+.rec-info {
+    flex: 1;
+    min-width: 0
+}
+
+.rec-title {
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis
+}
+
+.rec-artist {
+    color: rgba(255, 255, 255, .8);
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis
+}
