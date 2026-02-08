@@ -1071,6 +1071,13 @@
                     trackDiv.onclick = () => loadRecommendationsFromTrack(track, originalIndex);
                 }
 
+                // 더블 클릭 이벤트 - 유튜브 검색
+                trackDiv.ondblclick = (e) => {
+                    e.stopPropagation();
+                    const query = encodeURIComponent(`${track.track || track.track_name} ${track.artist || track.artist_name}`);
+                    window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
+                };
+
                 trackInfoContainer.appendChild(trackDiv);
             });
         }
@@ -1629,6 +1636,13 @@
                 } else {
                     trackDiv.onclick = () => loadRecommendationsFromTrack(track, originalIndex);
                 }
+
+                // 더블 클릭 이벤트 - 유튜브 검색
+                trackDiv.ondblclick = (e) => {
+                    e.stopPropagation();
+                    const query = encodeURIComponent(`${track.track || track.track_name} ${track.artist || track.artist_name}`);
+                    window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
+                };
 
                 trackInfoContainer.appendChild(trackDiv);
             });
