@@ -1,4 +1,4 @@
-// ===== Search Interface =====
+// ===== Search UI =====
 function showSearchInterface() {
     const searchInterface = document.getElementById('initialSongInput');
     const trackInfo = document.getElementById('trackInfo');
@@ -16,13 +16,14 @@ function showSearchInterface() {
     }
 }
 
-// ===== Initial Song Search =====
+// ===== Title Search =====
 async function searchInitialSongs(retryCount = 0) {
     const query = document.getElementById('initialSongTitle').value.trim();
     if (!query) {
         alert('검색어를 입력해주세요.');
         return;
     }
+
     const btn = document.getElementById('initialSearchBtn');
     btn.disabled = true;
     btn.textContent = retryCount > 0 ? `재시도 중... (${retryCount}/2)` : '검색 중...';
@@ -42,7 +43,6 @@ async function searchInitialSongs(retryCount = 0) {
         const d = await r.json();
 
         console.log('🔍 Search response:', d);
-        console.log('🔍 First result cover_image_url:', d.results?.[0]?.cover_image_url);
 
         if (d.error) {
             document.getElementById('initialSearchResults').innerHTML = `<div class="error-message">${d.error}</div>`;
@@ -76,20 +76,12 @@ async function displayInitialSearchResults(results) {
         return;
     }
 
-    // Supabase 데이터로 바로 표시 (Spotify API 호출 없음)
     let html = '<div class="recommendation-list" style="max-height:200px;">';
     results.slice(0, 10).forEach((r, idx) => {
-        // cover_image_url이 있으면 사용, 없으면 빈 문자열
         const coverImageSrc = r.cover_image_url || '';
 
         html += `
-      <div class="recommendation-item" onclick="selectAndStartPlaylist({
-          track_key: '${r.track_key}',
-          track: '${(r.track || '').replace(/'/g, "\\'")}',
-          artist: '${(r.artist || '').replace(/'/g, "\\'")}',
-          album: '${(r.album || '').replace(/'/g, "\\'")}',
-          cover_image_url: '${r.cover_image_url || ''}'
-      })">
+      <div class="recommendation-item" onclick='selectTrack(${JSON.stringify(r).replace(/'/g, "\\'")})'>
         <img class="rec-album-cover" src="${coverImageSrc}" alt="" style="${!coverImageSrc ? 'display:none;' : ''}">
         <div class="rec-info">
           <div class="rec-title">${r.track || 'Unknown'}</div>
@@ -112,7 +104,6 @@ async function searchByKeyword(retryCount = 0) {
     const btn = document.getElementById('keywordSearchBtn');
     btn.disabled = true;
 
-    // 재시도 중인 경우 버튼 텍스트 변경
     if (retryCount > 0) {
         btn.textContent = `재시도 중... (${retryCount}/3)`;
     } else {
@@ -149,7 +140,6 @@ async function searchByKeyword(retryCount = 0) {
             console.log('✅ 반환된 트랙 수:', data.debug.tracks_returned);
         }
 
-        // 결과를 songs 테이블에서 조회하여 메타데이터 가져오기
         await displayKeywordSearchResults(data.results);
 
     } catch (e) {
@@ -159,12 +149,10 @@ async function searchByKeyword(retryCount = 0) {
         // 재시도 로직 (최대 3번)
         if (retryCount < 3) {
             console.log(`⚠️ 검색 실패, ${retryCount + 1}번째 재시도 중...`);
-            // 지수 백오프: 2초, 4초, 8초 대기
             const delayMs = Math.pow(2, retryCount) * 2000;
             await new Promise(resolve => setTimeout(resolve, delayMs));
             return searchByKeyword(retryCount + 1);
         } else {
-            // 3번 재시도 후에도 실패하면 에러 메시지 표시
             alert('키워드 검색 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
         }
     } finally {
@@ -173,7 +161,6 @@ async function searchByKeyword(retryCount = 0) {
     }
 }
 
-// 키워드 검색 결과 표시 (Supabase 데이터만 사용, Spotify API 호출 제거)
 async function displayKeywordSearchResults(results) {
     const div = document.getElementById('keywordSearchResults');
 
@@ -182,20 +169,12 @@ async function displayKeywordSearchResults(results) {
         return;
     }
 
-    // Supabase 데이터로 바로 표시 (Spotify API 호출 없음)
     let html = '<div class="recommendation-list" style="max-height:200px;">';
     results.forEach((r, idx) => {
-        // cover_image_url이 있으면 사용, 없으면 빈 문자열
         const coverImageSrc = r.cover_image_url || '';
 
         html += `
-      <div class="recommendation-item" onclick="selectAndStartPlaylist({
-          track_key: '${r.track_key}',
-          track: '${(r.track_name || '').replace(/'/g, "\\'")}',
-          artist: '${(r.artist || '').replace(/'/g, "\\'")}',
-          album: '${(r.album || '').replace(/'/g, "\\'")}',
-          cover_image_url: '${r.cover_image_url || ''}'
-      })">
+      <div class="recommendation-item" onclick='selectTrack(${JSON.stringify(r).replace(/'/g, "\\'")})'>
         <img class="rec-album-cover" src="${coverImageSrc}" alt="" style="${!coverImageSrc ? 'display:none;' : ''}">
         <div class="rec-info">
           <div class="rec-title">${r.track_name || 'Unknown'}</div>
@@ -207,21 +186,17 @@ async function displayKeywordSearchResults(results) {
     div.innerHTML = html;
 }
 
-// ===== Playlist Start =====
-async function selectAndStartPlaylist(trackData) {
+// ===== Track Selection =====
+async function selectTrack(trackData) {
     console.log('Selected track:', trackData);
-    console.log('Track key being passed:', trackData.track_key);
-    document.getElementById('initialSearchResults').innerHTML = '';
-    document.getElementById('initialSongTitle').value = `${trackData.track} - ${trackData.artist}`;
 
-    // Spotify 로그인 여부 확인
-    if (access_token) {
-        // 로그인 되어있으면 재생
-        await startRecommendationPlaylist(trackData);
-    } else {
-        // 로그인 안되어있으면 재생 없이 추천만
-        await showRecommendationsOnly(trackData);
-    }
+    // 검색 결과 초기화
+    document.getElementById('initialSearchResults').innerHTML = '';
+    document.getElementById('keywordSearchResults').innerHTML = '';
+    document.getElementById('initialSongTitle').value = `${trackData.track || trackData.track_name} - ${trackData.artist}`;
+
+    // 추천 표시
+    await showRecommendations(trackData);
 
     // 검색창 숨기고 트랙 정보 보이기
     document.getElementById('initialSongInput').classList.add('hidden');
@@ -229,13 +204,14 @@ async function selectAndStartPlaylist(trackData) {
     if (trackInfo) trackInfo.classList.remove('hidden');
 }
 
-async function startRecommendationPlaylist(selectedTrack) {
+// ===== Show Recommendations =====
+async function showRecommendations(selectedTrack) {
     if (!selectedTrack || !selectedTrack.track_key) {
         alert('먼저 노래를 검색하고 선택해주세요.');
         return;
     }
 
-    console.log('🎵 Starting playlist with track_key:', selectedTrack.track_key);
+    console.log('🎵 Showing recommendations for track_key:', selectedTrack.track_key);
 
     try {
         const r = await fetch(`${API_BASE_URL}/recommend`, {
@@ -247,154 +223,98 @@ async function startRecommendationPlaylist(selectedTrack) {
             })
         });
         const d = await r.json();
+
         if (d.error) {
             alert(d.error);
-        }
-        else if (d.recommendations?.length > 0) {
-            await setupInitialPlaylist(d.recommendations, selectedTrack);
-        }
-        else {
-            alert('추천곡을 찾을 수 없습니다. 다른 노래를 시도해보세요.');
-        }
-    } catch (e) {
-        console.error('Initial recommendation error:', e);
-        alert('추천 시스템에 연결할 수 없습니다.');
-    }
-}
-
-async function setupInitialPlaylist(recommendations, originalSong) {
-    try {
-        console.log(`🎵 Setting up initial playlist with ${recommendations.length} recommendations`);
-
-        // 기존 플레이리스트 완전히 초기화
-        console.log('🔄 Clearing existing playlist...');
-        playlist = [];
-        currentTrackIndex = 0;
-        current_track = null;
-
-        // UI 초기화
-        const playPauseIcon = document.getElementById('playPauseIcon');
-        if (playPauseIcon) {
-            playPauseIcon.textContent = '▶';
-        }
-
-        // 재생 중이면 완전히 중지
-        if (player) {
-            try {
-                const state = await player.getCurrentState();
-                if (state && !state.paused) {
-                    console.log('⏸️ Stopping current playback...');
-                    await player.pause();
-                }
-            } catch (e) {
-                console.warn('Failed to pause player:', e);
-            }
-        }
-
-        console.log('✅ Playlist cleared');
-
-        // 먼저 선택한 원곡의 Spotify 정보 가져오기
-        let originalSpotifyTrack = null;
-        if (originalSong?.track && originalSong?.artist) {
-            try {
-                const query = `track:"${originalSong.track}" artist:"${originalSong.artist}"`;
-                const origResponse = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=1`, {
-                    headers: { 'Authorization': `Bearer ${access_token}` }
-                });
-                if (origResponse.ok) {
-                    const data = await origResponse.json();
-                    originalSpotifyTrack = data?.tracks?.items?.[0];
-                }
-            } catch (e) {
-                console.warn('Failed to fetch original track:', e);
-            }
-        }
-
-        const r = await fetch(`${API_BASE_URL}/find-spotify-tracks`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tracks: recommendations, access_token })
-        });
-        if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
-        const d = await r.json();
-
-        if (d.spotify_tracks?.length > 0) {
-            // 원곡을 플레이리스트 맨 앞에 추가
-            if (originalSpotifyTrack) {
-                playlist.push({
-                    track_key: originalSong.track_key,
-                    track: originalSong.track,
-                    artist: originalSong.artist,
-                    spotify_track: originalSpotifyTrack,
-                    uri: originalSpotifyTrack.uri,
-                    preview_url: originalSpotifyTrack.preview_url
-                });
-            }
-
-            // 추천곡들 추가 (원곡 제외하고 14개) + track_key 매핑
-            console.log('📋 Adding recommended tracks to playlist:');
-            d.spotify_tracks.slice(0, 14).forEach((spotifyTrack, idx) => {
-                const recTrack = recommendations[idx];
-                const trackName = spotifyTrack.spotify_track?.name || spotifyTrack.track;
-                const artistName = spotifyTrack.spotify_track?.artists?.[0]?.name || spotifyTrack.artist;
-                const similarity = recTrack?.similarity || spotifyTrack.similarity;
-
-                console.log(`  ${idx + 2}. ${trackName} - ${artistName} (${similarity ? (similarity * 100).toFixed(1) + '% similar' : 'N/A'})`);
-
-                playlist.push({
-                    ...spotifyTrack,
-                    track_key: recTrack?.track_key || spotifyTrack.track_key
-                });
-            });
-
-            console.log(`✅ Playlist created: ${playlist.length} tracks (starting with selected track)`);
-            document.getElementById('initialSongInput').classList.add('hidden');
-
-            if (!player) initializeSpotifyPlayer();
-            else playTrackAtIndex(0);
-        } else {
-            alert('Spotify에서 추천곡들을 찾을 수 없습니다. 다른 노래를 시도해보세요.');
-        }
-    } catch (e) {
-        console.error('Error setting up playlist:', e);
-        alert('플레이리스트 생성 중 오류: ' + e.message);
-    }
-}
-
-// 재생 없이 추천만 보여주기
-async function showRecommendationsOnly(selectedTrack) {
-    if (!selectedTrack || !selectedTrack.track_key) {
-        alert('먼저 노래를 검색하고 선택해주세요.');
-        return;
-    }
-
-    console.log('🎵 Showing recommendations without playback for track_key:', selectedTrack.track_key);
-
-    try {
-        const r = await fetch(`${API_BASE_URL}/recommend`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                track_key: selectedTrack.track_key,
-                num_recommendations: 30
-            })
-        });
-        const d = await r.json();
-        if (d.error) {
-            alert(d.error);
-        }
-        else if (d.recommendations?.length > 0) {
+        } else if (d.recommendations?.length > 0) {
             // 선택한 곡 + 추천 14곡
             const displayTracks = [selectedTrack, ...d.recommendations.slice(0, 14)];
-
-            // 커버 이미지만 업데이트 (재생 없음)
-            updateTrackDisplayOnly(displayTracks, 0);
-        }
-        else {
+            updateTrackDisplay(displayTracks, 0);
+        } else {
             alert('추천곡을 찾을 수 없습니다. 다른 노래를 시도해보세요.');
         }
     } catch (e) {
         console.error('Recommendation error:', e);
         alert('추천 시스템에 연결할 수 없습니다.');
     }
+}
+
+// ===== Track Display =====
+function updateTrackDisplay(tracks, currentIndex) {
+    console.log('🎨 Updating track display, total tracks:', tracks.length, 'current index:', currentIndex);
+
+    const trackInfoContainer = document.getElementById('trackInfo');
+    trackInfoContainer.innerHTML = '';
+    trackInfoContainer.style.pointerEvents = 'auto';
+
+    // 안내 문구 추가
+    const guideText = document.createElement('div');
+    guideText.className = 'guide-text';
+    guideText.textContent = '앨범 커버를 클릭해 추천을 받고, 더블클릭해 바로 재생해보세요.';
+    trackInfoContainer.appendChild(guideText);
+
+    // 트랙 그리드 컨테이너 생성
+    const trackGrid = document.createElement('div');
+    trackGrid.className = 'track-grid';
+    trackInfoContainer.appendChild(trackGrid);
+
+    // 5개씩 3줄 = 총 15개 트랙 표시
+    const endIdx = Math.min(tracks.length, currentIndex + 15);
+
+    const tracksToDisplay = [];
+    for (let i = currentIndex; i < endIdx; i++) {
+        tracksToDisplay.push({ track: tracks[i], originalIndex: i });
+    }
+
+    console.log('📋 Tracks to display:');
+    tracksToDisplay.forEach(({ track }, i) => {
+        console.log(`   ${i+1}. ${track.track || track.track_name} - ${track.artist}`);
+    });
+
+    tracksToDisplay.forEach(({ track, originalIndex }) => {
+        const isCurrent = originalIndex === currentIndex;
+
+        const trackDiv = document.createElement('div');
+        trackDiv.className = 'track-item' + (isCurrent ? ' current' : '');
+        trackDiv.style.cursor = 'pointer';
+
+        const img = document.createElement('img');
+        img.src = track.cover_image_url || '';
+        img.alt = track.track || track.track_name || 'Unknown';
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'track-item-info';
+
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'track-item-title';
+        titleDiv.textContent = track.track || track.track_name || 'Unknown';
+
+        const artistDiv = document.createElement('div');
+        artistDiv.className = 'track-item-artist';
+        artistDiv.textContent = track.artist || 'Unknown Artist';
+
+        infoDiv.appendChild(titleDiv);
+        infoDiv.appendChild(artistDiv);
+
+        trackDiv.appendChild(img);
+        trackDiv.appendChild(infoDiv);
+
+        // 클릭 이벤트 - 현재 트랙(초록색)은 검색창, 다른 트랙은 추천
+        if (isCurrent) {
+            trackDiv.onclick = showSearchInterface;
+        } else {
+            trackDiv.onclick = () => loadRecommendationsFromTrack(track, originalIndex);
+        }
+
+        // 더블 클릭 이벤트 - 유튜브 검색
+        trackDiv.ondblclick = (e) => {
+            e.stopPropagation();
+            const query = encodeURIComponent(`${track.track || track.track_name} ${track.artist}`);
+            window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
+        };
+
+        trackGrid.appendChild(trackDiv);
+    });
+
+    console.log('✅ Track display updated');
 }
