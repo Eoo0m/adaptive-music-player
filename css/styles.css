@@ -423,7 +423,7 @@ body {
 }
 
 .search-button {
-    background: #1db954;
+    background: linear-gradient(135deg, #1ed760 0%, #1db954 100%);
     color: #fff;
     border: none;
     padding: 9px 20px;
@@ -431,17 +431,40 @@ body {
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: .3s;
+    transition: all .2s ease;
     margin-bottom: 5px;
+    box-shadow:
+        0 4px 15px rgba(29, 185, 84, 0.4),
+        0 2px 4px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    position: relative;
+    transform: translateY(0);
 }
 
 .search-button:hover {
-    background: #1ed760
+    background: linear-gradient(135deg, #1fdf6b 0%, #1ed760 100%);
+    box-shadow:
+        0 6px 20px rgba(29, 185, 84, 0.5),
+        0 3px 6px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.search-button:active {
+    transform: translateY(0);
+    box-shadow:
+        0 2px 8px rgba(29, 185, 84, 0.3),
+        0 1px 2px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .search-button:disabled {
-    background: #666;
-    cursor: not-allowed
+    background: linear-gradient(135deg, #888 0%, #666 100%);
+    cursor: not-allowed;
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: translateY(0);
 }
 
 .recommendation-list {
