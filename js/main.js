@@ -86,15 +86,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') searchByKeyword();
     });
 
-    // 검색창 바깥쪽 클릭 시 검색창 닫기
+    // 검색창 바깥쪽 클릭 시 검색창 닫기 (단, 추천이 있을 때만)
     document.addEventListener('click', (e) => {
         const searchInterface = document.getElementById('initialSongInput');
         const trackInfo = document.getElementById('trackInfo');
 
-        // 검색창이 열려있고, 클릭한 곳이 검색창 내부가 아니고, track-info도 아니면
+        // trackInfo에 실제 트랙이 있는지 확인
+        const hasRecommendations = trackInfo && trackInfo.children.length > 0;
+
+        // 검색창이 열려있고, 클릭한 곳이 검색창 내부가 아니고,
+        // track-info도 아니고, 추천이 있을 때만 닫기
         if (!searchInterface.classList.contains('hidden') &&
             !searchInterface.contains(e.target) &&
-            !trackInfo.contains(e.target)) {
+            !trackInfo.contains(e.target) &&
+            hasRecommendations) {
             searchInterface.classList.add('hidden');
             if (trackInfo) trackInfo.classList.remove('hidden');
         }
