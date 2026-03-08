@@ -37,6 +37,19 @@ async function searchByTrack(retryCount = 0) {
         });
 
         clearTimeout(timeoutId);
+
+        // 500 에러 시 재시도
+        if (!r.ok) {
+            console.warn(`Search failed with status ${r.status}, retrying...`);
+            if (retryCount < 3) {
+                await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+                return searchByTrack(retryCount + 1);
+            } else {
+                document.getElementById('searchResults').innerHTML = '<div class="error-message">서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.</div>';
+                return;
+            }
+        }
+
         const d = await r.json();
 
         console.log('🔍 Search response:', d);
@@ -50,8 +63,8 @@ async function searchByTrack(retryCount = 0) {
         }
     } catch (e) {
         console.error('Search error:', e);
-        if (retryCount < 2) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+        if (retryCount < 3) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
             return searchByTrack(retryCount + 1);
         } else {
             document.getElementById('searchResults').innerHTML = '<div class="error-message">검색 서비스에 연결할 수 없습니다.</div>';
@@ -84,6 +97,20 @@ async function searchByKeyword(retryCount = 0) {
         });
 
         clearTimeout(timeoutId);
+
+        // 500 에러 시 재시도
+        if (!response.ok) {
+            console.warn(`Keyword search failed with status ${response.status}, retrying...`);
+            if (retryCount < 3) {
+                const delayMs = Math.pow(2, retryCount) * 1000;
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+                return searchByKeyword(retryCount + 1);
+            } else {
+                alert('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                return;
+            }
+        }
+
         const data = await response.json();
 
         if (data.error) {
@@ -102,7 +129,7 @@ async function searchByKeyword(retryCount = 0) {
         clearTimeout(timeoutId);
         console.error('Keyword search error:', e);
         if (retryCount < 3) {
-            const delayMs = Math.pow(2, retryCount) * 2000;
+            const delayMs = Math.pow(2, retryCount) * 1000;
             await new Promise(resolve => setTimeout(resolve, delayMs));
             return searchByKeyword(retryCount + 1);
         } else {
