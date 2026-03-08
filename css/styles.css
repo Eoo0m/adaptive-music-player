@@ -392,7 +392,7 @@ body {
 .search-interface.mini {
     position: fixed;
     top: 20px;
-    right: 80px;
+    right: 20px;
     left: auto;
     transform: none;
     background: transparent;
