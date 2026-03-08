@@ -426,6 +426,10 @@ body {
     font-size: 11px;
 }
 
+.search-interface.mini #searchResults:empty {
+    display: none;
+}
+
 .search-interface.mini #searchResults {
     position: absolute;
     top: 100%;
