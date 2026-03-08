@@ -22,8 +22,8 @@ async function searchByTrack(retryCount = 0) {
         return;
     }
 
-    const btn = document.getElementById('searchBtn');
-    btn.disabled = true;
+    const searchInput = document.getElementById('searchInput');
+    searchInput.disabled = true;
 
     try {
         const controller = new AbortController();
@@ -57,7 +57,7 @@ async function searchByTrack(retryCount = 0) {
             document.getElementById('searchResults').innerHTML = '<div class="error-message">검색 서비스에 연결할 수 없습니다.</div>';
         }
     } finally {
-        btn.disabled = false;
+        searchInput.disabled = false;
     }
 }
 
@@ -69,8 +69,8 @@ async function searchByKeyword(retryCount = 0) {
         return;
     }
 
-    const btn = document.getElementById('searchBtn');
-    btn.disabled = true;
+    const searchInput = document.getElementById('searchInput');
+    searchInput.disabled = true;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -109,7 +109,7 @@ async function searchByKeyword(retryCount = 0) {
             alert('키워드 검색 중 오류가 발생했습니다.');
         }
     } finally {
-        btn.disabled = false;
+        searchInput.disabled = false;
     }
 }
 
