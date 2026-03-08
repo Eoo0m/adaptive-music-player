@@ -122,7 +122,7 @@ function displaySearchResults(results, type) {
         return;
     }
 
-    let html = '<div class="recommendation-list" style="max-height:200px;">';
+    let html = '<div class="recommendation-list">';
     results.slice(0, 10).forEach((r, index) => {
         const coverImageSrc = r.cover_image_url || '';
         const trackName = type === 'keyword' ? (r.track_name || 'Unknown') : (r.track || 'Unknown');
