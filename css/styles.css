@@ -453,26 +453,26 @@ body {
 }
 
 .search-interface.mini .recommendation-item {
-    padding: 16px;
-    margin: 8px 0;
-    gap: 16px;
+    padding: 10px;
+    margin: 5px 0;
+    gap: 12px;
     background: rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
+    border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
 }
 
 .search-interface.mini .rec-album-cover {
-    width: 65px;
-    height: 65px;
+    width: 45px;
+    height: 45px;
 }
 
 .search-interface.mini .rec-title {
-    font-size: 17px;
+    font-size: 14px;
 }
 
 .search-interface.mini .rec-artist {
-    font-size: 14px;
+    font-size: 12px;
 }
 
 .search-section {
