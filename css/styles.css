@@ -414,12 +414,33 @@ body {
 }
 
 .search-interface.mini .search-input {
-    width: 200px;
-    padding: 8px 14px;
-    font-size: 12px;
+    width: 150px;
+    padding: 6px 10px;
+    font-size: 11px;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
+}
+
+.search-interface.mini .mode-toggle-btn {
+    padding: 4px 8px;
+    font-size: 10px;
+    border-radius: 12px;
+}
+
+.search-interface.mini .search-button {
+    width: 28px;
+    height: 28px;
+    padding: 6px;
+}
+
+.search-interface.mini .search-button svg {
+    width: 12px;
+    height: 12px;
+}
+
+.search-interface.mini .search-row {
+    gap: 6px;
 }
 
 .search-interface.mini .search-input::placeholder {
@@ -434,13 +455,13 @@ body {
     position: absolute;
     top: 100%;
     right: 0;
-    margin-top: 8px;
+    margin-top: 6px;
     background: linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%);
-    border-radius: 10px;
-    padding: 8px;
-    width: 200px;
+    border-radius: 8px;
+    padding: 6px;
+    width: 150px;
     min-width: unset;
-    max-height: 250px;
+    max-height: 200px;
     overflow-y: auto;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     border: 1px solid rgba(255, 255, 255, .15);
@@ -448,22 +469,22 @@ body {
 }
 
 .search-interface.mini .recommendation-item {
-    padding: 8px;
-    margin: 4px 0;
-    gap: 8px;
+    padding: 6px;
+    margin: 3px 0;
+    gap: 6px;
 }
 
 .search-interface.mini .rec-album-cover {
-    width: 35px;
-    height: 35px;
+    width: 28px;
+    height: 28px;
 }
 
 .search-interface.mini .rec-title {
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .search-interface.mini .rec-artist {
-    font-size: 10px;
+    font-size: 9px;
 }
 
 .search-section {
