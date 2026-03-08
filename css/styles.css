@@ -467,7 +467,11 @@ body {
 }
 
 .search-section {
-    margin-bottom: 10px;
+    margin-bottom: 0;
+}
+
+#searchResults:empty {
+    display: none;
 }
 
 .search-row {
