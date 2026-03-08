@@ -387,9 +387,42 @@ body {
     z-index: 100;
 }
 
-.search-interface h2 {
-    margin: 0 0 12px 0;
-    font-size: 16px;
+.search-header {
+    margin-bottom: 15px;
+}
+
+.search-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 25px;
+    padding: 4px;
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 20px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.toggle-btn:hover {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.toggle-btn.active {
+    background: linear-gradient(135deg, #1ed760 0%, #1db954 100%);
+    color: #fff;
+    box-shadow:
+        0 4px 12px rgba(29, 185, 84, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .search-section {

@@ -1,5 +1,6 @@
 // ===== Global Variables =====
 let currentTrackIndex = 0;        // 현재 선택된 트랙 인덱스
+let searchMode = 'track';         // 검색 모드: 'track' or 'keyword'
 
 // ===== Click History Tracking =====
 let clickedTracks = [];           // 클릭한 트랙들의 track_key 저장 (최대 10개)
@@ -15,6 +16,28 @@ function generateSessionId() {
 
 let sessionId = generateSessionId(); // 페이지 로드 시 세션 ID 생성
 console.log('🎵 Session initialized:', sessionId);
+
+// ===== Search Mode Toggle =====
+function setSearchMode(mode) {
+    searchMode = mode;
+    const trackBtn = document.getElementById('trackModeBtn');
+    const keywordBtn = document.getElementById('keywordModeBtn');
+    const searchInput = document.getElementById('searchInput');
+
+    if (mode === 'track') {
+        trackBtn.classList.add('active');
+        keywordBtn.classList.remove('active');
+        searchInput.placeholder = '노래 제목을 입력하세요 (예: Shape of You, Ed Sheeran)';
+    } else {
+        trackBtn.classList.remove('active');
+        keywordBtn.classList.add('active');
+        searchInput.placeholder = '키워드를 입력하세요 (예: 공부할 때 듣는 재즈, 드라이브 팝송)';
+    }
+
+    // 검색 결과 초기화
+    document.getElementById('searchResults').innerHTML = '';
+    searchInput.focus();
+}
 
 // ===== Listening Log =====
 async function logListeningData(trackData) {
@@ -79,11 +102,8 @@ function createDust() {
 // ===== Event Listeners =====
 document.addEventListener('DOMContentLoaded', () => {
     // 엔터로 검색
-    document.getElementById('initialSongTitle').addEventListener('keypress', e => {
-        if (e.key === 'Enter') searchInitialSongs();
-    });
-    document.getElementById('keywordSearchInput').addEventListener('keypress', e => {
-        if (e.key === 'Enter') searchByKeyword();
+    document.getElementById('searchInput').addEventListener('keypress', e => {
+        if (e.key === 'Enter') doSearch();
     });
 
     // 검색창 바깥쪽 클릭 시 검색창 닫기 (단, 추천이 있을 때만)
