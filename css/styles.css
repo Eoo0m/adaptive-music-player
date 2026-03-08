@@ -444,7 +444,7 @@ body {
     background: transparent;
     border-radius: 12px;
     padding: 15px;
-    max-height: 50vh;
+    max-height: 65vh;
     overflow-y: auto;
     box-shadow: none;
     border: none;
@@ -453,9 +453,9 @@ body {
 }
 
 .search-interface.mini .recommendation-item {
-    padding: 14px;
-    margin: 10px 0;
-    gap: 14px;
+    padding: 12px;
+    margin: 6px 0;
+    gap: 12px;
     background: rgba(255, 255, 255, 0.2);
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.15);
