@@ -134,14 +134,18 @@ function displaySearchResults(results, type) {
     }
 
     let html = '<div class="recommendation-list" style="max-height:200px;">';
-    results.slice(0, 10).forEach((r) => {
+    results.slice(0, 10).forEach((r, index) => {
         const coverImageSrc = r.cover_image_url || '';
         const trackName = type === 'keyword' ? (r.track_name || 'Unknown') : (r.track || 'Unknown');
         const artistName = r.artist || 'Unknown';
         const albumName = r.album || 'Unknown';
 
+        // Store track data in a global array to avoid JSON escaping issues
+        if (!window.searchResultsData) window.searchResultsData = [];
+        window.searchResultsData[index] = r;
+
         html += `
-      <div class="recommendation-item" onclick='selectTrack(${JSON.stringify(r).replace(/'/g, "\\'")})'>
+      <div class="recommendation-item" onclick="selectTrack(window.searchResultsData[${index}])">
         <img class="rec-album-cover" src="${coverImageSrc}" alt="" style="${!coverImageSrc ? 'display:none;' : ''}">
         <div class="rec-info">
           <div class="rec-title">${trackName}</div>
