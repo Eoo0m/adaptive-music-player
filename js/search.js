@@ -35,7 +35,6 @@ async function searchByTrack(retryCount = 0) {
 
     const btn = document.getElementById('searchBtn');
     btn.disabled = true;
-    btn.textContent = retryCount > 0 ? `재시도 중... (${retryCount}/2)` : '검색 중...';
 
     try {
         const controller = new AbortController();
@@ -70,7 +69,6 @@ async function searchByTrack(retryCount = 0) {
         }
     } finally {
         btn.disabled = false;
-        btn.textContent = '검색';
     }
 }
 
@@ -84,7 +82,6 @@ async function searchByKeyword(retryCount = 0) {
 
     const btn = document.getElementById('searchBtn');
     btn.disabled = true;
-    btn.textContent = retryCount > 0 ? `재시도 중... (${retryCount}/3)` : '검색 중...';
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -124,7 +121,6 @@ async function searchByKeyword(retryCount = 0) {
         }
     } finally {
         btn.disabled = false;
-        btn.textContent = '검색';
     }
 }
 
@@ -162,12 +158,15 @@ async function selectTrack(trackData) {
     console.log('Selected track:', trackData);
 
     document.getElementById('searchResults').innerHTML = '';
-    const trackName = trackData.track || trackData.track_name;
-    document.getElementById('searchInput').value = `${trackName} - ${trackData.artist}`;
+    document.getElementById('searchInput').value = '';
 
     await showRecommendations(trackData);
 
-    document.getElementById('initialSongInput').classList.add('hidden');
+    // 검색 인터페이스를 미니 모드로 전환하고 오른쪽 상단에 표시
+    const searchInterface = document.getElementById('initialSongInput');
+    searchInterface.classList.add('mini');
+    searchInterface.classList.remove('hidden');
+
     const trackInfo = document.getElementById('trackInfo');
     if (trackInfo) trackInfo.classList.remove('hidden');
 }
@@ -258,7 +257,11 @@ function updateTrackDisplay(tracks, currentIndex) {
         trackDiv.appendChild(infoDiv);
 
         if (isCurrent) {
-            trackDiv.onclick = showSearchInterface;
+            // 현재 트랙 클릭 시 YouTube 링크로 이동
+            trackDiv.onclick = () => {
+                const query = encodeURIComponent(`${track.track || track.track_name} ${track.artist}`);
+                window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
+            };
         } else {
             trackDiv.onclick = () => loadRecommendationsFromTrack(track, originalIndex);
         }

@@ -385,6 +385,59 @@ body {
     border-top: 1px solid rgba(255, 255, 255, .2);
     backdrop-filter: blur(15px);
     z-index: 100;
+    transition: all 0.3s ease;
+}
+
+/* Mini search bar mode - top right corner */
+.search-interface.mini {
+    position: fixed;
+    top: 20px;
+    right: 80px;
+    left: auto;
+    transform: none;
+    background: transparent;
+    padding: 0;
+    border-radius: 25px;
+    max-width: none;
+    width: auto;
+    box-shadow: none;
+    border: none;
+    backdrop-filter: none;
+}
+
+.search-interface.mini .search-section {
+    margin-bottom: 0;
+}
+
+.search-interface.mini .search-row {
+    margin-bottom: 0;
+}
+
+.search-interface.mini .search-input {
+    width: 200px;
+    padding: 8px 14px;
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.search-interface.mini .search-input::placeholder {
+    font-size: 11px;
+}
+
+.search-interface.mini #searchResults {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 10px;
+    background: linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%);
+    border-radius: 12px;
+    padding: 10px;
+    min-width: 300px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, .15);
+    backdrop-filter: blur(15px);
 }
 
 .search-section {
@@ -469,19 +522,22 @@ body {
     background: linear-gradient(135deg, #1ed760 0%, #1db954 100%);
     color: #fff;
     border: none;
-    padding: 9px 20px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 600;
+    padding: 8px;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     transition: all .2s ease;
-    margin-bottom: 5px;
     box-shadow:
         0 4px 15px rgba(29, 185, 84, 0.4),
         0 2px 4px rgba(0, 0, 0, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
     position: relative;
     transform: translateY(0);
+    flex-shrink: 0;
 }
 
 .search-button:hover {
