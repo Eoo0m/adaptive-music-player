@@ -456,7 +456,7 @@ body {
     padding: 12px;
     margin: 8px 0;
     gap: 12px;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
@@ -613,7 +613,7 @@ body {
 }
 
 .recommendation-item {
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(255, 255, 255, .1);
     margin: 10px 0;
     padding: 15px;
     border-radius: 10px;
