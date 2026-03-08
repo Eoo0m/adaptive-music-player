@@ -459,7 +459,7 @@ body {
     background: linear-gradient(135deg, rgba(20, 20, 20, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%);
     border-radius: 8px;
     padding: 6px;
-    width: 150px;
+    width: 180px;
     min-width: unset;
     max-height: 200px;
     overflow-y: auto;
