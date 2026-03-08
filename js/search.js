@@ -177,6 +177,10 @@ function displaySearchResults(results, type) {
 async function selectTrack(trackData) {
     console.log('Selected track:', trackData);
 
+    // 세션 히스토리 초기화 (새 검색 시작)
+    clickedTracks = [];
+    console.log('🔄 Session history cleared for new search');
+
     document.getElementById('searchResults').innerHTML = '';
     document.getElementById('searchInput').value = '';
 
@@ -198,10 +202,14 @@ async function showRecommendations(selectedTrack) {
         return;
     }
 
-    console.log('🎵 Showing recommendations for track_key:', selectedTrack.track_key);
+    console.log('🎵 Showing similar tracks for track_key:', selectedTrack.track_key);
+
+    // 세션에 첫 트랙 추가
+    addClickedTrack(selectedTrack.track_key);
 
     try {
-        const r = await fetch(`${API_BASE_URL}/recommend`, {
+        // 검색 결과 클릭 시 /find-similar-tracks 사용
+        const r = await fetch(`${API_BASE_URL}/find-similar-tracks`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

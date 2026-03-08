@@ -3,8 +3,7 @@ let currentTrackIndex = 0;        // 현재 선택된 트랙 인덱스
 let searchMode = 'track';         // 검색 모드: 'track' or 'keyword'
 
 // ===== Click History Tracking =====
-let clickedTracks = [];           // 클릭한 트랙들의 track_key 저장 (최대 10개)
-let averageBasedTracks = [];      // 평균 기반 추천 트랙들
+let clickedTracks = [];           // 클릭한 트랙들의 track_key 저장 (최대 16개, Two-Tower 모델용)
 
 // ===== API Configuration =====
 const API_BASE_URL = 'https://api.dynplayer.win';

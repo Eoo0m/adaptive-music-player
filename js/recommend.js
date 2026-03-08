@@ -4,17 +4,17 @@ function addClickedTrack(trackKey) {
     if (!clickedTracks.includes(trackKey)) {
         clickedTracks.push(trackKey);
 
-        // 최대 10개 유지 (FIFO)
-        if (clickedTracks.length > 10) {
+        // 최대 16개 유지 (Two-Tower max_seq_len)
+        if (clickedTracks.length > 16) {
             clickedTracks.shift();
         }
 
         console.log(`📝 Added to click history: ${trackKey}`);
-        console.log(`📊 Click history (${clickedTracks.length}/10):`, clickedTracks);
+        console.log(`📊 Click history (${clickedTracks.length}/16):`, clickedTracks);
     }
 }
 
-// ===== Track-based Recommendations =====
+// ===== Track-based Recommendations (Two-Tower Model) =====
 async function loadRecommendationsFromTrack(track, trackIndex) {
     // track_key가 있는지 확인
     if (!track.track_key) {
@@ -25,10 +25,10 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
 
     console.log('🎵 Loading recommendations from track:', track.track_key);
 
-    // 클릭한 트랙을 히스토리에 추가 (최대 5개 유지)
+    // 클릭한 트랙을 히스토리에 추가
     addClickedTrack(track.track_key);
 
-    // 앨범 커버 클릭 로그 전송 (트랙기반 유사 음악 로드시)
+    // 앨범 커버 클릭 로그 전송
     const trackName = track.track || track.name || 'Unknown Track';
     const artistName = track.artist || (track.artists ? track.artists.map(a => a.name).join(', ') : 'Unknown Artist');
     const albumName = track.album || (track.album_name) || null;
@@ -44,13 +44,15 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
     }).catch(err => console.error('Failed to log album cover click:', err));
 
     try {
-        // 추천 받기 (중복 제거를 고려해 더 많이 요청)
+        console.log(`🎯 Two-Tower recommend with ${clickedTracks.length} session tracks`);
+
+        // Two-Tower 기반 세션 추천 (/recommend)
         const recResp = await fetch(`${API_BASE_URL}/recommend`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                track_key: track.track_key,
-                num_recommendations: 50  // 중복 제거 후에도 충분하도록 50개 요청
+                track_keys: clickedTracks,
+                num_recommendations: 30
             })
         });
 
@@ -61,87 +63,21 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
             throw new Error('No recommendations found');
         }
 
-        console.log(`🎯 Main recommendations received: ${recData.recommendations.length} tracks`);
-        console.log('📋 Main recommendations (first 10):', recData.recommendations.slice(0, 10).map(t => `${t.track} - ${t.artist}`));
+        console.log(`✅ Two-Tower recommendations received: ${recData.recommendations.length} tracks`);
+        console.log('📋 Recommendations (first 10):', recData.recommendations.slice(0, 10).map(t => `${t.track} - ${t.artist}`));
 
-        // 클릭 히스토리가 10개 이상이면 매번 평균 기반 추천 새로 가져오기
-        if (clickedTracks.length >= 10) {
-            await fetchAverageBasedRecommendations();
-        } else {
-            // 10개 미만이면 평균 기반 추천 초기화
-            averageBasedTracks = [];
-        }
-
-        // 중복 제거 및 플레이리스트 구성
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('🔍 DEDUPLICATION DEBUG');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-        // 먼저 평균 기반 추천에서 중복 제거된 곡들만 추출
-        const seenIds = new Set();
-        seenIds.add(track.track_key);  // 클릭한 트랙 먼저 추가
-
-        // 메인 추천 track_key 모두 추가 (중복 체크용)
-        recData.recommendations.forEach(t => {
-            if (t.track_key) seenIds.add(t.track_key);
+        // 중복 제거 (세션 트랙 제외)
+        const seenIds = new Set(clickedTracks);
+        const uniqueTracks = recData.recommendations.filter(t => {
+            if (seenIds.has(t.track_key)) return false;
+            seenIds.add(t.track_key);
+            return true;
         });
 
-        console.log('\n🎯 AVERAGE-BASED RECOMMENDATIONS (deduplication check):');
-        console.log(`   Total received: ${averageBasedTracks.length} tracks`);
+        // 플레이리스트 구성: 클릭한 트랙(1) + 추천(14) = 15곡
+        const displayTracks = [track, ...uniqueTracks.slice(0, 14)];
 
-        // 평균 기반에서 중복 제거
-        const uniqueAvgTracks = [];
-        let avgDuplicates = 0;
-
-        for (let i = 0; i < averageBasedTracks.length; i++) {
-            const t = averageBasedTracks[i];
-            const trackId = t.track_key;
-            const trackName = t.track || 'Unknown';
-            const artistName = t.artist || 'Unknown';
-
-            if (trackId && !seenIds.has(trackId)) {
-                uniqueAvgTracks.push(t);
-                seenIds.add(trackId);
-                console.log(`   ✅ [${uniqueAvgTracks.length}] ${trackName} - ${artistName}`);
-            } else {
-                avgDuplicates++;
-                console.log(`   ❌ [DUP] ${trackName} - ${artistName} (already in main)`);
-            }
-        }
-
-        console.log(`   ✅ Unique: ${uniqueAvgTracks.length} tracks`);
-        console.log(`   ❌ Duplicates: ${avgDuplicates} tracks\n`);
-
-        // 플레이리스트 구성 결정
-        let displayTracks = [];
-
-        if (uniqueAvgTracks.length >= 5) {
-            // 평균 기반이 5곡 이상: 원곡(1) + 메인(9) + 평균(5) = 15곡
-            console.log('📝 LAYOUT: Original(1) + Main(9) + Average(5) = 15 tracks');
-            displayTracks = [
-                track,
-                ...recData.recommendations.slice(0, 9),
-                ...uniqueAvgTracks.slice(0, 5)
-            ];
-
-            console.log('   Row 1 (5): Original + Main(4)');
-            console.log('   Row 2 (5): Main(5)');
-            console.log('   Row 3 (5): Average(5)');
-        } else {
-            // 평균 기반이 5곡 미만: 원곡(1) + 메인(14) = 15곡
-            console.log('📝 LAYOUT: Original(1) + Main(14) = 15 tracks');
-            console.log(`   (Average-based insufficient: only ${uniqueAvgTracks.length} unique tracks)`);
-            displayTracks = [
-                track,
-                ...recData.recommendations.slice(0, 14)
-            ];
-        }
-
-        console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('📝 FINAL DISPLAY');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log(`   Total tracks to display: ${displayTracks.length}`);
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+        console.log(`📝 Display: ${displayTracks.length} tracks (1 selected + ${displayTracks.length - 1} recommendations)`);
 
         // UI 업데이트
         updateTrackDisplayOnly(displayTracks, 0);
@@ -149,47 +85,6 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
     } catch (e) {
         console.error('⚠️ Failed to fetch recommendations:', e);
         alert('추천곡을 가져올 수 없습니다.');
-    }
-}
-
-// ===== Average-based Recommendations =====
-async function fetchAverageBasedRecommendations() {
-    try {
-        console.log('\n🎯 ═══════════════════════════════════════════');
-        console.log('🎯 FETCHING AVERAGE-BASED RECOMMENDATIONS');
-        console.log('🎯 ═══════════════════════════════════════════');
-        console.log(`   Click history (${clickedTracks.length} tracks):`, clickedTracks);
-
-        const response = await fetch(`${API_BASE_URL}/recommend-average`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                track_keys: clickedTracks,
-                num_recommendations: 15  // 중복 제거 후에도 5개 확보하도록 15개 요청
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('Average-based recommendation failed');
-        }
-
-        const data = await response.json();
-        console.log(`   Received ${data.recommendations ? data.recommendations.length : 0} recommendations from backend`);
-
-        if (data.recommendations && data.recommendations.length > 0) {
-            console.log('   Raw recommendations (first 10):');
-            data.recommendations.slice(0, 10).forEach((t, i) => {
-                console.log(`      ${i+1}. ${t.track} - ${t.artist}`);
-            });
-
-            // DB 트랙 직접 사용 (Spotify 매칭 불필요)
-            averageBasedTracks = data.recommendations;
-            console.log(`   ✅ Using DB tracks: ${averageBasedTracks.length} tracks`);
-        }
-        console.log('🎯 ═══════════════════════════════════════════\n');
-    } catch (e) {
-        console.error('⚠️ Failed to fetch average-based recommendations:', e);
-        averageBasedTracks = [];
     }
 }
 
