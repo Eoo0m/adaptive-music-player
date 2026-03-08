@@ -613,7 +613,7 @@ body {
 }
 
 .recommendation-item {
-    background: rgba(255, 255, 255, .1);
+    background: rgba(0, 0, 0, 0.85);
     margin: 10px 0;
     padding: 15px;
     border-radius: 10px;
@@ -622,7 +622,8 @@ body {
     border: 1px solid rgba(255, 255, 255, .1);
     display: flex;
     align-items: center;
-    gap: 12px
+    gap: 12px;
+    backdrop-filter: blur(10px);
 }
 
 .recommendation-item:hover {
