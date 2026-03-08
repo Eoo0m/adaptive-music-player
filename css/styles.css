@@ -441,16 +441,15 @@ body {
 }
 
 .search-interface.mini #searchResults {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 10px;
     background: linear-gradient(135deg, rgba(20, 20, 20, 0.98) 0%, rgba(0, 0, 0, 0.99) 100%);
     border-radius: 12px;
     padding: 15px;
-    width: 400px;
-    max-width: 90vw;
-    max-height: 60vh;
+    max-height: 50vh;
     overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
     border: 1px solid rgba(255, 255, 255, .15);
