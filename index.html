@@ -35,16 +35,12 @@
     </a>
 
     <div class="search-interface" id="initialSongInput">
-        <div class="search-header">
-            <div class="search-toggle">
-                <button class="toggle-btn active" id="trackModeBtn" onclick="setSearchMode('track')">트랙</button>
-                <button class="toggle-btn" id="keywordModeBtn" onclick="setSearchMode('keyword')">키워드</button>
-            </div>
-        </div>
-
         <div class="search-section">
-            <input type="text" class="search-input" id="searchInput"
-                placeholder="노래 제목을 입력하세요 (예: Shape of You, Ed Sheeran)">
+            <div class="search-row">
+                <button class="mode-toggle-btn" id="modeToggleBtn" onclick="toggleSearchMode()">트랙</button>
+                <input type="text" class="search-input" id="searchInput"
+                    placeholder="노래 제목을 입력하세요 (예: Shape of You, Ed Sheeran)">
+            </div>
             <button class="search-button" onclick="doSearch()" id="searchBtn">검색</button>
             <div id="searchResults"></div>
         </div>

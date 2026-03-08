@@ -18,20 +18,18 @@ let sessionId = generateSessionId(); // 페이지 로드 시 세션 ID 생성
 console.log('🎵 Session initialized:', sessionId);
 
 // ===== Search Mode Toggle =====
-function setSearchMode(mode) {
-    searchMode = mode;
-    const trackBtn = document.getElementById('trackModeBtn');
-    const keywordBtn = document.getElementById('keywordModeBtn');
+function toggleSearchMode() {
+    const btn = document.getElementById('modeToggleBtn');
     const searchInput = document.getElementById('searchInput');
 
-    if (mode === 'track') {
-        trackBtn.classList.add('active');
-        keywordBtn.classList.remove('active');
-        searchInput.placeholder = '노래 제목을 입력하세요 (예: Shape of You, Ed Sheeran)';
-    } else {
-        trackBtn.classList.remove('active');
-        keywordBtn.classList.add('active');
+    if (searchMode === 'track') {
+        searchMode = 'keyword';
+        btn.textContent = '키워드';
         searchInput.placeholder = '키워드를 입력하세요 (예: 공부할 때 듣는 재즈, 드라이브 팝송)';
+    } else {
+        searchMode = 'track';
+        btn.textContent = '트랙';
+        searchInput.placeholder = '노래 제목을 입력하세요 (예: Shape of You, Ed Sheeran)';
     }
 
     // 검색 결과 초기화
