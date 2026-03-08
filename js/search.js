@@ -1,19 +1,8 @@
 // ===== Search UI =====
+// 검색창은 항상 표시되므로 이 함수는 더 이상 필요하지 않음
 function showSearchInterface() {
-    const searchInterface = document.getElementById('initialSongInput');
-    const trackInfo = document.getElementById('trackInfo');
-
-    // 토글 방식: 이미 보이면 숨기고, 숨겨져 있으면 보이기
-    if (searchInterface.classList.contains('hidden')) {
-        searchInterface.classList.remove('hidden');
-        if (trackInfo) trackInfo.classList.add('hidden');
-        document.getElementById('searchInput').focus();
-    } else {
-        searchInterface.classList.add('hidden');
-        if (trackInfo) trackInfo.classList.remove('hidden');
-        document.getElementById('searchResults').innerHTML = '';
-        document.getElementById('searchInput').value = '';
-    }
+    // 검색창 포커스만 설정
+    document.getElementById('searchInput').focus();
 }
 
 // ===== Unified Search =====
