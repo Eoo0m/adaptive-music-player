@@ -444,7 +444,7 @@ body {
     background: transparent;
     border-radius: 12px;
     padding: 15px;
-    max-height: 80vh;
+    max-height: calc(100vh - 150px);
     overflow-y: auto;
     box-shadow: none;
     border: none;
