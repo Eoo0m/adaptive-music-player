@@ -481,10 +481,10 @@ body {
 
 .searching-indicator {
     color: #fff;
-    font-size: 12px;
+    font-size: 14px;
     text-align: center;
-    padding: 8px 0;
-    opacity: 0.8;
+    padding: 10px 0;
+    opacity: 0.85;
 }
 
 #searchResults:empty {
