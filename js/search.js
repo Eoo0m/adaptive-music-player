@@ -5,6 +5,26 @@ function showSearchInterface() {
     document.getElementById('searchInput').focus();
 }
 
+// ===== Search Loading Indicator =====
+function showSearchingIndicator() {
+    let indicator = document.getElementById('searchingIndicator');
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'searchingIndicator';
+        indicator.className = 'searching-indicator';
+        indicator.textContent = '검색중입니다...';
+        document.querySelector('.search-section').insertBefore(indicator, document.getElementById('searchResults'));
+    }
+    indicator.style.display = 'block';
+}
+
+function hideSearchingIndicator() {
+    const indicator = document.getElementById('searchingIndicator');
+    if (indicator) {
+        indicator.style.display = 'none';
+    }
+}
+
 // ===== Unified Search =====
 async function doSearch() {
     if (searchMode === 'track') {
@@ -24,6 +44,7 @@ async function searchByTrack(retryCount = 0) {
 
     const searchInput = document.getElementById('searchInput');
     searchInput.disabled = true;
+    showSearchingIndicator();
 
     try {
         const controller = new AbortController();
@@ -71,6 +92,7 @@ async function searchByTrack(retryCount = 0) {
         }
     } finally {
         searchInput.disabled = false;
+        hideSearchingIndicator();
     }
 }
 
@@ -84,6 +106,7 @@ async function searchByKeyword(retryCount = 0) {
 
     const searchInput = document.getElementById('searchInput');
     searchInput.disabled = true;
+    showSearchingIndicator();
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -137,6 +160,7 @@ async function searchByKeyword(retryCount = 0) {
         }
     } finally {
         searchInput.disabled = false;
+        hideSearchingIndicator();
     }
 }
 
