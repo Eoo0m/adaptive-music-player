@@ -16,7 +16,7 @@ function showLoadingIndicator(message) {
         indicator = document.createElement('div');
         indicator.id = 'loadingIndicator';
         indicator.className = 'loading-indicator';
-        document.querySelector('.search-section').appendChild(indicator);
+        document.body.appendChild(indicator);
     }
     indicator.textContent = message;
     indicator.style.display = 'block';
