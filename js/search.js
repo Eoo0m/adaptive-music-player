@@ -44,7 +44,7 @@ async function searchByTrack(retryCount = 0) {
 
     const searchInput = document.getElementById('searchInput');
     searchInput.disabled = true;
-    showLoadingIndicator('검색중...');
+    showLoadingIndicator('검색중입니다.');
 
     try {
         const controller = new AbortController();
@@ -106,7 +106,7 @@ async function searchByKeyword(retryCount = 0) {
 
     const searchInput = document.getElementById('searchInput');
     searchInput.disabled = true;
-    showLoadingIndicator('검색중...');
+    showLoadingIndicator('검색중입니다.');
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -231,7 +231,7 @@ async function showRecommendations(selectedTrack) {
     // 세션에 첫 트랙 추가
     addClickedTrack(selectedTrack.track_key);
 
-    showLoadingIndicator('추천곡을 찾는 중...');
+    showLoadingIndicator('추천곡을 찾는 중입니다.');
 
     try {
         // 검색 결과 클릭 시 /find-similar-tracks 사용

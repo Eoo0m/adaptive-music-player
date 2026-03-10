@@ -43,7 +43,7 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
         spotify_track_id: spotifyTrackId
     }).catch(err => console.error('Failed to log album cover click:', err));
 
-    showLoadingIndicator('추천곡을 찾는 중...');
+    showLoadingIndicator('추천곡을 찾는 중입니다.');
 
     try {
         console.log(`🎯 Two-Tower recommend with ${clickedTracks.length} session tracks`);
