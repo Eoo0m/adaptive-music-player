@@ -16,8 +16,22 @@ function showLoadingIndicator(message) {
         indicator = document.createElement('div');
         indicator.id = 'loadingIndicator';
         indicator.className = 'loading-indicator';
-        document.body.appendChild(indicator);
     }
+
+    // trackInfo가 있으면 그 안에, 없으면 body에 추가
+    const trackInfo = document.getElementById('trackInfo');
+    if (trackInfo && !trackInfo.classList.contains('hidden')) {
+        // trackInfo 맨 앞에 추가 (guide-text 위치)
+        if (indicator.parentElement !== trackInfo) {
+            trackInfo.insertBefore(indicator, trackInfo.firstChild);
+        }
+    } else {
+        // 초기 검색 시 body에 추가
+        if (indicator.parentElement !== document.body) {
+            document.body.appendChild(indicator);
+        }
+    }
+
     indicator.textContent = message;
     indicator.style.display = 'block';
 }

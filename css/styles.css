@@ -480,10 +480,6 @@ body {
 }
 
 .loading-indicator {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     color: rgba(255, 255, 255, 0.7);
     font-size: 15px;
     font-weight: 500;
@@ -491,8 +487,16 @@ body {
     padding: 10px 20px;
     white-space: nowrap;
     animation: blink 2s ease-in-out infinite;
-    z-index: 1000;
     pointer-events: none;
+}
+
+/* 초기 검색 시 화면 중앙에 표시 */
+body > .loading-indicator {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
 }
 
 #searchResults:empty {
