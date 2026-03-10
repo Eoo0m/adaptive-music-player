@@ -5,21 +5,21 @@ function showSearchInterface() {
     document.getElementById('searchInput').focus();
 }
 
-// ===== Search Loading Indicator =====
-function showSearchingIndicator() {
-    let indicator = document.getElementById('searchingIndicator');
+// ===== Loading Indicator =====
+function showLoadingIndicator(message) {
+    let indicator = document.getElementById('loadingIndicator');
     if (!indicator) {
         indicator = document.createElement('div');
-        indicator.id = 'searchingIndicator';
-        indicator.className = 'searching-indicator';
-        indicator.textContent = '검색중입니다...';
-        document.querySelector('.search-section').insertBefore(indicator, document.getElementById('searchResults'));
+        indicator.id = 'loadingIndicator';
+        indicator.className = 'loading-indicator';
+        document.querySelector('.search-section').insertBefore(indicator, document.querySelector('.search-row'));
     }
+    indicator.textContent = message;
     indicator.style.display = 'block';
 }
 
-function hideSearchingIndicator() {
-    const indicator = document.getElementById('searchingIndicator');
+function hideLoadingIndicator() {
+    const indicator = document.getElementById('loadingIndicator');
     if (indicator) {
         indicator.style.display = 'none';
     }
@@ -44,7 +44,7 @@ async function searchByTrack(retryCount = 0) {
 
     const searchInput = document.getElementById('searchInput');
     searchInput.disabled = true;
-    showSearchingIndicator();
+    showLoadingIndicator('검색중...');
 
     try {
         const controller = new AbortController();
@@ -92,7 +92,7 @@ async function searchByTrack(retryCount = 0) {
         }
     } finally {
         searchInput.disabled = false;
-        hideSearchingIndicator();
+        hideLoadingIndicator();
     }
 }
 
@@ -106,7 +106,7 @@ async function searchByKeyword(retryCount = 0) {
 
     const searchInput = document.getElementById('searchInput');
     searchInput.disabled = true;
-    showSearchingIndicator();
+    showLoadingIndicator('검색중...');
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -160,7 +160,7 @@ async function searchByKeyword(retryCount = 0) {
         }
     } finally {
         searchInput.disabled = false;
-        hideSearchingIndicator();
+        hideLoadingIndicator();
     }
 }
 
@@ -231,6 +231,8 @@ async function showRecommendations(selectedTrack) {
     // 세션에 첫 트랙 추가
     addClickedTrack(selectedTrack.track_key);
 
+    showLoadingIndicator('추천곡을 찾는 중...');
+
     try {
         // 검색 결과 클릭 시 /find-similar-tracks 사용
         const r = await fetch(`${API_BASE_URL}/find-similar-tracks`, {
@@ -243,6 +245,8 @@ async function showRecommendations(selectedTrack) {
         });
         const d = await r.json();
 
+        hideLoadingIndicator();
+
         if (d.error) {
             alert(d.error);
         } else if (d.recommendations?.length > 0) {
@@ -252,6 +256,7 @@ async function showRecommendations(selectedTrack) {
             alert('추천곡을 찾을 수 없습니다.');
         }
     } catch (e) {
+        hideLoadingIndicator();
         console.error('Recommendation error:', e);
         alert('추천 시스템에 연결할 수 없습니다.');
     }

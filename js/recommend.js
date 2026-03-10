@@ -43,6 +43,8 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
         spotify_track_id: spotifyTrackId
     }).catch(err => console.error('Failed to log album cover click:', err));
 
+    showLoadingIndicator('추천곡을 찾는 중...');
+
     try {
         console.log(`🎯 Two-Tower recommend with ${clickedTracks.length} session tracks`);
 
@@ -79,10 +81,13 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
 
         console.log(`📝 Display: ${displayTracks.length} tracks (1 selected + ${displayTracks.length - 1} recommendations)`);
 
+        hideLoadingIndicator();
+
         // UI 업데이트
         updateTrackDisplayOnly(displayTracks, 0);
 
     } catch (e) {
+        hideLoadingIndicator();
         console.error('⚠️ Failed to fetch recommendations:', e);
         alert('추천곡을 가져올 수 없습니다.');
     }
