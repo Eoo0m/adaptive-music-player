@@ -7,6 +7,10 @@ function showSearchInterface() {
 
 // ===== Loading Indicator =====
 function showLoadingIndicator(message) {
+    // 가이드 텍스트 숨기기
+    const guideText = document.querySelector('.guide-text');
+    if (guideText) guideText.style.display = 'none';
+
     let indicator = document.getElementById('loadingIndicator');
     if (!indicator) {
         indicator = document.createElement('div');
@@ -23,6 +27,10 @@ function hideLoadingIndicator() {
     if (indicator) {
         indicator.style.display = 'none';
     }
+
+    // 가이드 텍스트 다시 표시
+    const guideText = document.querySelector('.guide-text');
+    if (guideText) guideText.style.display = 'block';
 }
 
 // ===== Unified Search =====
