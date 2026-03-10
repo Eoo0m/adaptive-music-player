@@ -12,7 +12,7 @@ function showLoadingIndicator(message) {
         indicator = document.createElement('div');
         indicator.id = 'loadingIndicator';
         indicator.className = 'loading-indicator';
-        document.querySelector('.search-section').insertBefore(indicator, document.querySelector('.search-row'));
+        document.querySelector('.search-section').appendChild(indicator);
     }
     indicator.textContent = message;
     indicator.style.display = 'block';

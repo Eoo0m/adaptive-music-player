@@ -480,11 +480,16 @@ body {
 }
 
 .loading-indicator {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
     color: #fff;
     font-size: 14px;
     text-align: center;
     padding: 10px 0;
     opacity: 0.85;
+    white-space: nowrap;
 }
 
 #searchResults:empty {
