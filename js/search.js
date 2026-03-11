@@ -6,45 +6,39 @@ function showSearchInterface() {
 }
 
 // ===== Loading Indicator =====
+const GUIDE_TEXT_DEFAULT = '앨범 커버를 클릭해 추천을 받고, 더블클릭해 바로 재생해보세요.';
+
 function showLoadingIndicator(message) {
-    // 가이드 텍스트 숨기기
     const guideText = document.querySelector('.guide-text');
-    if (guideText) guideText.style.display = 'none';
-
-    let indicator = document.getElementById('loadingIndicator');
-    if (!indicator) {
-        indicator = document.createElement('div');
-        indicator.id = 'loadingIndicator';
-        indicator.className = 'loading-indicator';
-    }
-
-    // trackInfo가 있으면 그 안에, 없으면 body에 추가
-    const trackInfo = document.getElementById('trackInfo');
-    if (trackInfo && !trackInfo.classList.contains('hidden')) {
-        // trackInfo 맨 앞에 추가 (guide-text 위치)
-        if (indicator.parentElement !== trackInfo) {
-            trackInfo.insertBefore(indicator, trackInfo.firstChild);
-        }
+    if (guideText) {
+        // 가이드 텍스트 내용만 변경
+        guideText.textContent = message;
     } else {
-        // 초기 검색 시 body에 추가
-        if (indicator.parentElement !== document.body) {
+        // 가이드 텍스트가 없으면 (초기 검색 시) body에 표시
+        let indicator = document.getElementById('loadingIndicator');
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'loadingIndicator';
+            indicator.className = 'loading-indicator';
             document.body.appendChild(indicator);
         }
+        indicator.textContent = message;
+        indicator.style.display = 'block';
     }
-
-    indicator.textContent = message;
-    indicator.style.display = 'block';
 }
 
 function hideLoadingIndicator() {
+    // 가이드 텍스트 원래대로 복원
+    const guideText = document.querySelector('.guide-text');
+    if (guideText) {
+        guideText.textContent = GUIDE_TEXT_DEFAULT;
+    }
+
+    // body에 추가된 인디케이터 숨기기
     const indicator = document.getElementById('loadingIndicator');
     if (indicator) {
         indicator.style.display = 'none';
     }
-
-    // 가이드 텍스트 다시 표시
-    const guideText = document.querySelector('.guide-text');
-    if (guideText) guideText.style.display = 'block';
 }
 
 // ===== Unified Search =====
