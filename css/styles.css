@@ -655,6 +655,30 @@ body > .loading-indicator {
     border-color: #1db954
 }
 
+.recommendation-item.selected .rec-album-cover {
+    box-shadow:
+        0 0 8px rgba(29, 185, 84, 0.6),
+        0 0 16px rgba(29, 185, 84, 0.4),
+        inset 0 0 20px rgba(255, 255, 255, 0.1);
+    animation: albumShine 2s ease-in-out infinite;
+}
+
+@keyframes albumShine {
+    0%, 100% {
+        box-shadow:
+            0 0 8px rgba(29, 185, 84, 0.6),
+            0 0 16px rgba(29, 185, 84, 0.4);
+        filter: brightness(1);
+    }
+    50% {
+        box-shadow:
+            0 0 12px rgba(29, 185, 84, 0.8),
+            0 0 24px rgba(29, 185, 84, 0.5),
+            0 0 32px rgba(30, 215, 96, 0.3);
+        filter: brightness(1.1);
+    }
+}
+
 .rec-album-cover {
     width: 50px;
     height: 50px;
