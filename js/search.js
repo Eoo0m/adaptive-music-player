@@ -9,12 +9,14 @@ function showSearchInterface() {
 const GUIDE_TEXT_DEFAULT = '앨범 커버를 클릭해 추천을 받고, 더블클릭해 바로 재생해보세요.';
 
 function showLoadingIndicator(message) {
+    // 로켓 불꽃 발사
+    const rocket = document.getElementById('pixelRocket');
+    if (rocket) rocket.classList.add('firing');
+
     const guideText = document.querySelector('.guide-text');
     if (guideText) {
-        // 가이드 텍스트 내용만 변경
         guideText.textContent = message;
     } else {
-        // 가이드 텍스트가 없으면 (초기 검색 시) body에 표시
         let indicator = document.getElementById('loadingIndicator');
         if (!indicator) {
             indicator = document.createElement('div');
@@ -28,13 +30,15 @@ function showLoadingIndicator(message) {
 }
 
 function hideLoadingIndicator() {
-    // 가이드 텍스트 원래대로 복원
+    // 로켓 불꽃 끄기
+    const rocket = document.getElementById('pixelRocket');
+    if (rocket) rocket.classList.remove('firing');
+
     const guideText = document.querySelector('.guide-text');
     if (guideText) {
         guideText.textContent = GUIDE_TEXT_DEFAULT;
     }
 
-    // body에 추가된 인디케이터 숨기기
     const indicator = document.getElementById('loadingIndicator');
     if (indicator) {
         indicator.style.display = 'none';
