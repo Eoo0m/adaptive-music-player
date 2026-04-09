@@ -40,41 +40,6 @@
                 <button class="mode-toggle-btn" id="modeToggleBtn" onclick="toggleSearchMode()">트랙</button>
                 <input type="text" class="search-input" id="searchInput"
                     placeholder="노래 제목을 입력하세요 (예: Shape of You, Ed Sheeran)">
-                <div class="pixel-rocket" id="pixelRocket">
-                    <svg width="20" height="24" viewBox="0 0 10 12" shape-rendering="crispEdges">
-                        <!-- 로켓 본체 (흰) -->
-                        <rect x="4" y="0" width="2" height="1" fill="#fff"/>
-                        <rect x="3" y="1" width="4" height="1" fill="#fff"/>
-                        <rect x="3" y="2" width="4" height="1" fill="#fff"/>
-                        <rect x="3" y="3" width="4" height="1" fill="#eee"/>
-                        <rect x="3" y="4" width="4" height="1" fill="#eee"/>
-                        <!-- 창문 -->
-                        <rect x="4" y="2" width="2" height="2" fill="#87ceeb"/>
-                        <!-- 날개 (빨강) -->
-                        <rect x="2" y="5" width="1" height="2" fill="#e74c3c"/>
-                        <rect x="7" y="5" width="1" height="2" fill="#e74c3c"/>
-                        <rect x="1" y="6" width="1" height="1" fill="#e74c3c"/>
-                        <rect x="8" y="6" width="1" height="1" fill="#e74c3c"/>
-                        <!-- 본체 하단 -->
-                        <rect x="3" y="5" width="4" height="2" fill="#ddd"/>
-                        <!-- 노즐 -->
-                        <rect x="4" y="7" width="2" height="1" fill="#c0392b"/>
-                    </svg>
-                    <!-- 불꽃 (로딩 시만 표시) -->
-                    <div class="rocket-flame">
-                        <svg width="20" height="14" viewBox="0 0 10 7" shape-rendering="crispEdges">
-                            <rect x="4" y="0" width="2" height="1" fill="#f39c12"/>
-                            <rect x="3" y="1" width="4" height="1" fill="#e67e22"/>
-                            <rect x="4" y="2" width="2" height="1" fill="#e74c3c"/>
-                            <rect x="4" y="3" width="1" height="1" fill="#f39c12" class="flame-flicker-1"/>
-                            <rect x="5" y="4" width="1" height="1" fill="#e67e22" class="flame-flicker-2"/>
-                        </svg>
-                    </div>
-                    <!-- 주파수 바 (평소 표시) -->
-                    <div class="rocket-bars">
-                        <span></span><span></span><span></span>
-                    </div>
-                </div>
             </div>
             <div id="searchResults"></div>
         </div>
