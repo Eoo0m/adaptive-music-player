@@ -169,19 +169,15 @@ function updateTrackDisplayOnly(tracks, currentIndex) {
         trackDiv.appendChild(imgWrapper);
         trackDiv.appendChild(infoDiv);
 
-        // 클릭 이벤트 - 현재 트랙(초록색)은 검색창, 다른 트랙은 추천
-        if (isCurrent) {
-            trackDiv.onclick = showSearchInterface;
-        } else {
-            trackDiv.onclick = () => loadRecommendationsFromTrack(track, originalIndex);
-        }
-
-        // 더블 클릭 이벤트 - 유튜브 검색
-        trackDiv.ondblclick = (e) => {
-            e.stopPropagation();
+        // 클릭: 추천 / 더블클릭: 유튜브 재생
+        const singleAction = isCurrent
+            ? () => showSearchInterface()
+            : () => loadRecommendationsFromTrack(track, originalIndex);
+        const dblAction = () => {
             const query = encodeURIComponent(`${track.track || track.track_name} ${track.artist || track.artist_name}`);
             window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
         };
+        onClickOrDblClick(trackDiv, singleAction, dblAction);
 
         trackGrid.appendChild(trackDiv);
     });

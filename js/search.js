@@ -343,21 +343,14 @@ function updateTrackDisplay(tracks, currentIndex) {
         trackDiv.appendChild(imgWrapper);
         trackDiv.appendChild(infoDiv);
 
-        if (isCurrent) {
-            // 현재 트랙 클릭 시 YouTube 링크로 이동
-            trackDiv.onclick = () => {
-                const query = encodeURIComponent(`${track.track || track.track_name} ${track.artist}`);
-                window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
-            };
-        } else {
-            trackDiv.onclick = () => loadRecommendationsFromTrack(track, originalIndex);
-        }
-
-        trackDiv.ondblclick = (e) => {
-            e.stopPropagation();
+        const singleAction = isCurrent
+            ? () => showSearchInterface()
+            : () => loadRecommendationsFromTrack(track, originalIndex);
+        const dblAction = () => {
             const query = encodeURIComponent(`${track.track || track.track_name} ${track.artist}`);
             window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
         };
+        onClickOrDblClick(trackDiv, singleAction, dblAction);
 
         trackGrid.appendChild(trackDiv);
     });

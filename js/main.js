@@ -112,23 +112,23 @@ async function loadFavorites() {
             trackDiv.appendChild(imgWrapper);
             trackDiv.appendChild(infoDiv);
 
-            trackDiv.onclick = () => {
-                switchTab('search');
-                selectTrack({
-                    track_key: fav.track_key,
-                    track: fav.title,
-                    artist: fav.artist,
-                    album: fav.album,
-                    cover_image_url: fav.cover_image_url,
-                    playlist_count: fav.playlist_count
-                });
-            };
-
-            trackDiv.ondblclick = (e) => {
-                e.stopPropagation();
-                const query = encodeURIComponent(`${fav.title} ${fav.artist}`);
-                window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
-            };
+            onClickOrDblClick(trackDiv,
+                () => {
+                    switchTab('search');
+                    selectTrack({
+                        track_key: fav.track_key,
+                        track: fav.title,
+                        artist: fav.artist,
+                        album: fav.album,
+                        cover_image_url: fav.cover_image_url,
+                        playlist_count: fav.playlist_count
+                    });
+                },
+                () => {
+                    const query = encodeURIComponent(`${fav.title} ${fav.artist}`);
+                    window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
+                }
+            );
 
             list.appendChild(trackDiv);
         });
@@ -217,6 +217,23 @@ async function checkAuth() {
     } catch (e) {
         console.error('Auth check failed:', e);
     }
+}
+
+// ===== Click/DoubleClick Helper =====
+function onClickOrDblClick(element, onSingle, onDouble) {
+    let clickTimer = null;
+    element.addEventListener('click', (e) => {
+        if (clickTimer) {
+            clearTimeout(clickTimer);
+            clickTimer = null;
+            onDouble(e);
+        } else {
+            clickTimer = setTimeout(() => {
+                clickTimer = null;
+                onSingle(e);
+            }, 250);
+        }
+    });
 }
 
 // ===== Global Variables =====
