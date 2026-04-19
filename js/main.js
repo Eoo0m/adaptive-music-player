@@ -11,6 +11,7 @@ function loginWithGoogle() {
 
 function continueAsGuest() {
     document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('initialSongInput').classList.remove('hidden');
 }
 
 function logout() {
