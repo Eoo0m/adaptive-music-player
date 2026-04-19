@@ -112,10 +112,18 @@ body {
 }
 
 .favorites-title {
-    font-size: 22px;
+    font-size: 28px;
     font-weight: 700;
-    margin: 0 0 20px;
+    margin: 0 0 6px;
     text-align: center;
+    flex-shrink: 0
+}
+
+.favorites-guide {
+    font-size: 13px;
+    color: rgba(255, 255, 255, .5);
+    text-align: center;
+    margin: 0 0 20px;
     flex-shrink: 0
 }
 
