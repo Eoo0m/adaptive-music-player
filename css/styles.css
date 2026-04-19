@@ -37,6 +37,10 @@ body {
     margin-top: 20px
 }
 
+.login-logo {
+    margin-bottom: 16px
+}
+
 .login-title {
     font-size: 42px;
     font-weight: 700;
