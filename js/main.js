@@ -42,6 +42,9 @@ async function toggleFavorite(track, btn) {
             if (res.ok) {
                 btn.classList.add('favorited');
                 btn.innerHTML = '&#9829;';
+                btn.classList.remove('pop');
+                void btn.offsetWidth;
+                btn.classList.add('pop');
             }
         }
     } catch (e) {
