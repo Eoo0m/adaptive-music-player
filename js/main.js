@@ -124,6 +124,12 @@ async function loadFavorites() {
                 });
             };
 
+            trackDiv.ondblclick = (e) => {
+                e.stopPropagation();
+                const query = encodeURIComponent(`${fav.title} ${fav.artist}`);
+                window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
+            };
+
             list.appendChild(trackDiv);
         });
     } catch (e) {
