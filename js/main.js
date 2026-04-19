@@ -12,10 +12,16 @@ function loginWithGoogle() {
 function continueAsGuest() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('initialSongInput').classList.remove('hidden');
+    document.getElementById('sideTab').classList.remove('hidden');
 }
 
 // ===== Tab Navigation =====
 function switchTab(tab) {
+    if (tab === 'favorites' && !authToken) {
+        alert('로그인 후 이용할 수 있습니다.');
+        return;
+    }
+
     document.getElementById('tabSearch').classList.toggle('active', tab === 'search');
     document.getElementById('tabFavorites').classList.toggle('active', tab === 'favorites');
 
@@ -291,7 +297,7 @@ setInterval(createDust, 2000);
 document.addEventListener('DOMContentLoaded', async () => {
     await checkAuth();
     if (currentUser) {
-        // 로그인 상태 → 바로 검색 화면 + 사이드 탭
+        // 로그인 상태 → 바로 검색 화면
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('initialSongInput').classList.remove('hidden');
         document.getElementById('sideTab').classList.remove('hidden');
