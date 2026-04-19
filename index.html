@@ -31,6 +31,27 @@
         <button class="login-button" onclick="continueAsGuest()">로그인 없이 이용하기</button>
     </div>
 
+    <!-- 좌측 사이드 탭 -->
+    <nav class="side-tab hidden" id="sideTab">
+        <button class="side-tab-btn active" id="tabSearch" onclick="switchTab('search')">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+        </button>
+        <button class="side-tab-btn" id="tabFavorites" onclick="switchTab('favorites')">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+        </button>
+    </nav>
+
+    <!-- 찜 목록 화면 -->
+    <div class="favorites-view hidden" id="favoritesView">
+        <h2 class="favorites-title">찜 목록</h2>
+        <div class="favorites-list" id="favoritesList"></div>
+    </div>
+
     <a href="https://github.com/Eoo0m/adaptive-music-player-backend" target="_blank" class="github-link">
         <svg class="github-logo" viewBox="0 0 16 16" width="20" height="20" fill="currentColor">
             <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54

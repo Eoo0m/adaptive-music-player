@@ -14,6 +14,79 @@ function continueAsGuest() {
     document.getElementById('initialSongInput').classList.remove('hidden');
 }
 
+// ===== Tab Navigation =====
+function switchTab(tab) {
+    document.getElementById('tabSearch').classList.toggle('active', tab === 'search');
+    document.getElementById('tabFavorites').classList.toggle('active', tab === 'favorites');
+
+    const searchInterface = document.getElementById('initialSongInput');
+    const favoritesView = document.getElementById('favoritesView');
+    const trackInfo = document.getElementById('trackInfo');
+
+    if (tab === 'search') {
+        favoritesView.classList.add('hidden');
+        searchInterface.classList.remove('hidden');
+        trackInfo.classList.remove('hidden');
+    } else {
+        searchInterface.classList.add('hidden');
+        trackInfo.classList.add('hidden');
+        favoritesView.classList.remove('hidden');
+        loadFavorites();
+    }
+}
+
+async function loadFavorites() {
+    const list = document.getElementById('favoritesList');
+    if (!authToken) {
+        list.innerHTML = '<div class="favorites-empty">로그인 후 이용할 수 있습니다.</div>';
+        return;
+    }
+
+    list.innerHTML = '<div class="favorites-empty">불러오는 중...</div>';
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/favorites`, {
+            headers: getAuthHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to load favorites');
+
+        const data = await res.json();
+        if (!data.favorites || data.favorites.length === 0) {
+            list.innerHTML = '<div class="favorites-empty">찜한 곡이 없습니다.</div>';
+            return;
+        }
+
+        list.innerHTML = '';
+        data.favorites.forEach(fav => {
+            const item = document.createElement('div');
+            item.className = 'recommendation-item';
+            item.style.cursor = 'pointer';
+            item.innerHTML = `
+                <img class="rec-album-cover" src="${fav.cover_image_url || ''}" alt="" style="${!fav.cover_image_url ? 'display:none;' : ''}">
+                <div class="rec-info">
+                    <div class="rec-title">${fav.title || 'Unknown'}</div>
+                    <div class="rec-artist">${fav.artist || 'Unknown'}</div>
+                </div>
+            `;
+            item.onclick = () => {
+                switchTab('search');
+                selectTrack({
+                    track_key: fav.track_key,
+                    track: fav.title,
+                    artist: fav.artist,
+                    album: fav.album,
+                    cover_image_url: fav.cover_image_url,
+                    playlist_count: fav.playlist_count
+                });
+            };
+            list.appendChild(item);
+        });
+    } catch (e) {
+        console.error('Load favorites error:', e);
+        list.innerHTML = '<div class="favorites-empty">찜 목록을 불러올 수 없습니다.</div>';
+    }
+}
+
 // ===== Favorites =====
 async function toggleFavorite(track, btn) {
     if (!authToken) {
@@ -218,9 +291,10 @@ setInterval(createDust, 2000);
 document.addEventListener('DOMContentLoaded', async () => {
     await checkAuth();
     if (currentUser) {
-        // 로그인 상태 → 바로 검색 화면
+        // 로그인 상태 → 바로 검색 화면 + 사이드 탭
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('initialSongInput').classList.remove('hidden');
+        document.getElementById('sideTab').classList.remove('hidden');
     } else {
         // 비로그인 → 로그인 선택 화면 표시
         document.getElementById('loginScreen').classList.remove('hidden');
