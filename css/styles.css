@@ -373,7 +373,10 @@ body {
 }
 
 .heart-btn.favorited {
-    color: #ff6b81;
+    color: #ff6b81
+}
+
+.album-cover-wrapper:hover .heart-btn.favorited {
     opacity: 1
 }
 
