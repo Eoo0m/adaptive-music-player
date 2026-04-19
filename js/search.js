@@ -326,7 +326,21 @@ function updateTrackDisplay(tracks, currentIndex) {
         infoDiv.appendChild(titleDiv);
         infoDiv.appendChild(artistDiv);
 
-        trackDiv.appendChild(img);
+        const imgWrapper = document.createElement('div');
+        imgWrapper.className = 'album-cover-wrapper';
+
+        const heartBtn = document.createElement('button');
+        heartBtn.className = 'heart-btn';
+        heartBtn.innerHTML = '&#9825;';
+        heartBtn.onclick = (e) => {
+            e.stopPropagation();
+            toggleFavorite(track, heartBtn);
+        };
+
+        imgWrapper.appendChild(img);
+        imgWrapper.appendChild(heartBtn);
+
+        trackDiv.appendChild(imgWrapper);
         trackDiv.appendChild(infoDiv);
 
         if (isCurrent) {
