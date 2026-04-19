@@ -121,11 +121,12 @@ body {
 }
 
 .favorites-guide {
-    font-size: 13px;
-    color: rgba(255, 255, 255, .5);
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.7);
     text-align: center;
     margin: 0 0 20px;
-    flex-shrink: 0
+    flex-shrink: 0;
+    animation: blink 2s ease-in-out infinite
 }
 
 .favorites-list {
