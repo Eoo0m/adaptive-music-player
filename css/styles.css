@@ -37,6 +37,35 @@ body {
     margin-top: 20px
 }
 
+.login-title {
+    font-size: 42px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    letter-spacing: -1px
+}
+
+.login-subtitle {
+    font-size: 15px;
+    opacity: .6;
+    margin: 0 0 40px
+}
+
+.google-login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center
+}
+
+.guest-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, .3);
+    margin-top: 12px
+}
+
+.guest-btn:hover {
+    background: rgba(255, 255, 255, .1)
+}
+
 .login-button:hover {
     background: #1ed760
 }

@@ -1,12 +1,67 @@
+// ===== API Configuration =====
+const API_BASE_URL = 'https://api.dynplayer.win';
+
+// ===== Auth =====
+let authToken = localStorage.getItem('auth_token');
+let currentUser = null;
+
+function loginWithGoogle() {
+    window.location.href = `${API_BASE_URL}/auth/google/login`;
+}
+
+function continueAsGuest() {
+    document.getElementById('loginScreen').classList.add('hidden');
+}
+
+function logout() {
+    authToken = null;
+    currentUser = null;
+    localStorage.removeItem('auth_token');
+    window.location.reload();
+}
+
+function getAuthHeaders() {
+    if (!authToken) return {};
+    return { 'Authorization': `Bearer ${authToken}` };
+}
+
+async function checkAuth() {
+    // URL에서 토큰 파라미터 확인 (Google OAuth 콜백 후)
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (token) {
+        authToken = token;
+        localStorage.setItem('auth_token', token);
+        // URL에서 토큰 제거
+        window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    if (!authToken) return;
+
+    // 토큰 유효성 확인
+    try {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
+            headers: getAuthHeaders()
+        });
+        if (res.ok) {
+            currentUser = await res.json();
+            console.log('✅ Logged in as:', currentUser.email);
+        } else {
+            // 토큰 만료
+            authToken = null;
+            localStorage.removeItem('auth_token');
+        }
+    } catch (e) {
+        console.error('Auth check failed:', e);
+    }
+}
+
 // ===== Global Variables =====
 let currentTrackIndex = 0;        // 현재 선택된 트랙 인덱스
 let searchMode = 'track';         // 검색 모드: 'track' or 'keyword'
 
 // ===== Click History Tracking =====
 let clickedTracks = [];           // 클릭한 트랙들의 track_key 저장 (최대 16개, Two-Tower 모델용)
-
-// ===== API Configuration =====
-const API_BASE_URL = 'https://api.dynplayer.win';
 
 // ===== Session Management =====
 function generateSessionId() {
@@ -120,7 +175,15 @@ document.addEventListener('DOMContentLoaded', () => {
 createStars();
 setInterval(createDust, 2000);
 
-// 페이지 로드 시 바로 검색창 표시
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('initialSongInput').classList.remove('hidden');
+// 페이지 로드 시 인증 확인 후 화면 결정
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuth();
+    if (currentUser) {
+        // 로그인 상태 → 바로 검색 화면
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('initialSongInput').classList.remove('hidden');
+    } else {
+        // 비로그인 → 로그인 선택 화면 표시
+        document.getElementById('loginScreen').classList.remove('hidden');
+    }
 });
