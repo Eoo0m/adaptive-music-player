@@ -64,17 +64,55 @@ async function loadFavorites() {
 
         list.innerHTML = '';
         data.favorites.forEach(fav => {
-            const item = document.createElement('div');
-            item.className = 'recommendation-item';
-            item.style.cursor = 'pointer';
-            item.innerHTML = `
-                <img class="rec-album-cover" src="${fav.cover_image_url || ''}" alt="" style="${!fav.cover_image_url ? 'display:none;' : ''}">
-                <div class="rec-info">
-                    <div class="rec-title">${fav.title || 'Unknown'}</div>
-                    <div class="rec-artist">${fav.artist || 'Unknown'}</div>
-                </div>
-            `;
-            item.onclick = () => {
+            const trackDiv = document.createElement('div');
+            trackDiv.className = 'track-item';
+            trackDiv.style.cursor = 'pointer';
+
+            const imgWrapper = document.createElement('div');
+            imgWrapper.className = 'album-cover-wrapper';
+
+            const img = document.createElement('img');
+            img.src = fav.cover_image_url || '';
+            img.alt = fav.title || 'Unknown';
+
+            const heartBtn = document.createElement('button');
+            heartBtn.className = 'heart-btn favorited';
+            heartBtn.innerHTML = '&#9829;';
+            heartBtn.onclick = (e) => {
+                e.stopPropagation();
+                toggleFavorite({ track_key: fav.track_key }, heartBtn);
+                // 찜 해제 시 목록에서 제거
+                setTimeout(() => {
+                    if (!heartBtn.classList.contains('favorited')) {
+                        trackDiv.remove();
+                        if (list.children.length === 0) {
+                            list.innerHTML = '<div class="favorites-empty">찜한 곡이 없습니다.</div>';
+                        }
+                    }
+                }, 300);
+            };
+
+            imgWrapper.appendChild(img);
+            imgWrapper.appendChild(heartBtn);
+
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'track-item-info';
+
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'track-item-title';
+            titleDiv.textContent = fav.title || 'Unknown';
+
+            const artistDiv = document.createElement('div');
+            artistDiv.className = 'track-item-artist';
+            artistDiv.textContent = fav.artist || 'Unknown';
+
+            infoDiv.appendChild(titleDiv);
+            infoDiv.appendChild(artistDiv);
+
+            trackDiv.appendChild(imgWrapper);
+            trackDiv.appendChild(infoDiv);
+
+            trackDiv.onclick = () => {
                 switchTab('search');
                 selectTrack({
                     track_key: fav.track_key,
@@ -85,7 +123,8 @@ async function loadFavorites() {
                     playlist_count: fav.playlist_count
                 });
             };
-            list.appendChild(item);
+
+            list.appendChild(trackDiv);
         });
     } catch (e) {
         console.error('Load favorites error:', e);

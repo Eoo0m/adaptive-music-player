@@ -103,22 +103,33 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     color: #fff;
-    width: 80%;
-    max-width: 600px;
-    max-height: 70vh;
-    z-index: 100
+    width: 90%;
+    max-width: 900px;
+    max-height: 85vh;
+    z-index: 100;
+    display: flex;
+    flex-direction: column
 }
 
 .favorites-title {
     font-size: 22px;
     font-weight: 700;
     margin: 0 0 20px;
-    text-align: center
+    text-align: center;
+    flex-shrink: 0
 }
 
 .favorites-list {
     overflow-y: auto;
-    max-height: 60vh
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 25px;
+    padding: 10px 0
+}
+
+.favorites-list .track-item {
+    opacity: 1;
+    animation: none
 }
 
 .favorites-empty {
