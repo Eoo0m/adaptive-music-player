@@ -14,6 +14,41 @@ function continueAsGuest() {
     document.getElementById('initialSongInput').classList.remove('hidden');
 }
 
+// ===== Favorites =====
+async function toggleFavorite(track, btn) {
+    if (!authToken) {
+        alert('로그인 후 이용할 수 있습니다.');
+        return;
+    }
+
+    const isFavorited = btn.classList.contains('favorited');
+
+    try {
+        if (isFavorited) {
+            const res = await fetch(`${API_BASE_URL}/favorites/${track.track_key}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+            if (res.ok) {
+                btn.classList.remove('favorited');
+                btn.innerHTML = '&#9825;';
+            }
+        } else {
+            const res = await fetch(`${API_BASE_URL}/favorites`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                body: JSON.stringify({ track_key: track.track_key })
+            });
+            if (res.ok) {
+                btn.classList.add('favorited');
+                btn.innerHTML = '&#9829;';
+            }
+        }
+    } catch (e) {
+        console.error('Favorite toggle failed:', e);
+    }
+}
+
 function logout() {
     authToken = null;
     currentUser = null;

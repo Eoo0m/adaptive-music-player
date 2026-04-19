@@ -151,7 +151,22 @@ function updateTrackDisplayOnly(tracks, currentIndex) {
         infoDiv.appendChild(titleDiv);
         infoDiv.appendChild(artistDiv);
 
-        trackDiv.appendChild(img);
+        // 앨범 커버 + 하트 버튼을 감싸는 wrapper
+        const imgWrapper = document.createElement('div');
+        imgWrapper.className = 'album-cover-wrapper';
+
+        const heartBtn = document.createElement('button');
+        heartBtn.className = 'heart-btn';
+        heartBtn.innerHTML = '&#9825;'; // 빈 하트
+        heartBtn.onclick = (e) => {
+            e.stopPropagation();
+            toggleFavorite(track, heartBtn);
+        };
+
+        imgWrapper.appendChild(img);
+        imgWrapper.appendChild(heartBtn);
+
+        trackDiv.appendChild(imgWrapper);
         trackDiv.appendChild(infoDiv);
 
         // 클릭 이벤트 - 현재 트랙(초록색)은 검색창, 다른 트랙은 추천

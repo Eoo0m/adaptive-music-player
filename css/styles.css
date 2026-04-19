@@ -246,6 +246,50 @@ body {
     animation: none;
 }
 
+.album-cover-wrapper {
+    position: relative
+}
+
+.heart-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(0, 0, 0, .4);
+    border: none;
+    color: rgba(255, 255, 255, .7);
+    font-size: 20px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .2s, color .2s, background .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+    backdrop-filter: blur(4px)
+}
+
+.album-cover-wrapper:hover .heart-btn {
+    opacity: 1
+}
+
+.heart-btn:hover {
+    background: rgba(0, 0, 0, .6);
+    color: #fff
+}
+
+.heart-btn.favorited {
+    color: #e74c3c;
+    opacity: 1
+}
+
+.heart-btn.favorited:hover {
+    color: #c0392b
+}
+
 .track-item-info {
     margin-top: 8px;
     text-align: center;
