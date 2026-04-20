@@ -43,6 +43,17 @@ function switchTab(tab) {
 
 async function loadFavorites() {
     const list = document.getElementById('favoritesList');
+    const profileCard = document.getElementById('favProfileCard');
+
+    // 프로필 카드 업데이트
+    if (currentUser) {
+        document.getElementById('favProfileImg').src = currentUser.profile_image_url || '';
+        document.getElementById('favProfileName').textContent = currentUser.display_name || currentUser.email || '';
+        profileCard.classList.remove('hidden');
+    } else {
+        profileCard.classList.add('hidden');
+    }
+
     if (!authToken) {
         list.innerHTML = '<div class="favorites-empty">로그인 후 이용할 수 있습니다.</div>';
         return;

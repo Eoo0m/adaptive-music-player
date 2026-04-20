@@ -48,9 +48,17 @@
 
     <!-- 찜 목록 화면 -->
     <div class="favorites-view hidden" id="favoritesView">
-        <h2 class="favorites-title">저장한 곡들</h2>
-        <p class="favorites-guide">앨범 커버를 클릭해 추천을 받고, 더블클릭해 바로 재생해보세요.</p>
-        <div class="favorites-list" id="favoritesList"></div>
+        <!-- 유저 프로필 카드 -->
+        <div class="fav-profile-card" id="favProfileCard">
+            <img class="fav-profile-img" id="favProfileImg" src="" alt="">
+            <span class="fav-profile-name" id="favProfileName"></span>
+        </div>
+        <!-- 저장한 곡들 -->
+        <div class="fav-songs-card">
+            <h2 class="favorites-title">저장한 곡들</h2>
+            <p class="favorites-guide">앨범 커버를 클릭해 추천을 받고, 더블클릭해 바로 재생해보세요.</p>
+            <div class="favorites-list" id="favoritesList"></div>
+        </div>
     </div>
 
     <a href="https://github.com/Eoo0m/adaptive-music-player-backend" target="_blank" class="github-link">
