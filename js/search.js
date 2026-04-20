@@ -226,7 +226,7 @@ async function selectTrack(trackData) {
 
     logAction('select_from_search', {
         selected_track_key: trackData.track_key,
-        candidate_track_keys: window.searchCandidateKeys || []
+        candidate_track_keys: window.searchCandidateKeys || [trackData.track_key]
     });
 
     // 세션 히스토리 초기화 (새 검색 시작)
