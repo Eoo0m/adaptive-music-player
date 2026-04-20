@@ -43,6 +43,10 @@ function hideLoadingIndicator() {
 
 // ===== Unified Search =====
 async function doSearch() {
+    const query = document.getElementById('searchInput').value.trim();
+    if (query) {
+        logAction('search', { search_query: query, search_mode: searchMode });
+    }
     if (searchMode === 'track') {
         await searchByTrack();
     } else {
@@ -189,6 +193,9 @@ function displaySearchResults(results, type) {
         return;
     }
 
+    // 검색 결과 후보 저장
+    window.searchCandidateKeys = results.slice(0, 10).map(r => r.track_key).filter(Boolean);
+
     let html = '<div class="recommendation-list">';
     results.slice(0, 10).forEach((r, index) => {
         const coverImageSrc = r.cover_image_url || '';
@@ -216,6 +223,11 @@ function displaySearchResults(results, type) {
 // ===== Track Selection =====
 async function selectTrack(trackData) {
     console.log('Selected track:', trackData);
+
+    logAction('select_from_search', {
+        selected_track_key: trackData.track_key,
+        candidate_track_keys: window.searchCandidateKeys || []
+    });
 
     // 세션 히스토리 초기화 (새 검색 시작)
     clickedTracks = [];
@@ -280,6 +292,7 @@ async function showRecommendations(selectedTrack) {
 
 // ===== Track Display =====
 function updateTrackDisplay(tracks, currentIndex) {
+    setCurrentCandidates(tracks);
     console.log('🎨 Updating track display, total tracks:', tracks.length);
 
     const trackInfoContainer = document.getElementById('trackInfo');
@@ -347,6 +360,7 @@ function updateTrackDisplay(tracks, currentIndex) {
             ? () => showSearchInterface()
             : () => loadRecommendationsFromTrack(track, originalIndex);
         const dblAction = () => {
+            logAction('play', { selected_track_key: track.track_key, candidate_track_keys: currentCandidateKeys });
             const query = encodeURIComponent(`${track.track || track.track_name} ${track.artist}`);
             window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
         };

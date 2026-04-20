@@ -136,6 +136,7 @@ async function loadFavorites() {
                     });
                 },
                 () => {
+                    logAction('play', { selected_track_key: fav.track_key, candidate_track_keys: currentCandidateKeys });
                     const query = encodeURIComponent(`${fav.title} ${fav.artist}`);
                     window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
                 }
@@ -167,6 +168,7 @@ async function toggleFavorite(track, btn) {
             if (res.ok) {
                 btn.classList.remove('favorited');
                 btn.innerHTML = '&#9825;';
+                logAction('favorite', { selected_track_key: track.track_key, candidate_track_keys: currentCandidateKeys, extra: 'remove' });
             }
         } else {
             const res = await fetch(`${API_BASE_URL}/favorites`, {
@@ -180,6 +182,7 @@ async function toggleFavorite(track, btn) {
                 btn.classList.remove('pop');
                 void btn.offsetWidth;
                 btn.classList.add('pop');
+                logAction('favorite', { selected_track_key: track.track_key, candidate_track_keys: currentCandidateKeys, extra: 'add' });
             }
         }
     } catch (e) {
@@ -282,36 +285,33 @@ function toggleSearchMode() {
     searchInput.focus();
 }
 
-// ===== Listening Log =====
-async function logListeningData(trackData) {
-    if (!trackData || !trackData.track_name || !trackData.artist_name) {
-        console.warn('⚠️ Skipping log: missing track data', trackData);
-        return;
-    }
+// ===== Action Log =====
+// 현재 화면에 표시된 트랙 키 목록 (후보 추적용)
+let currentCandidateKeys = [];
 
+function setCurrentCandidates(tracks) {
+    currentCandidateKeys = tracks.map(t => t.track_key).filter(Boolean);
+}
+
+async function logAction(actionType, data = {}) {
     const payload = {
-        ...trackData,
-        session_id: sessionId
+        session_id: sessionId,
+        action_type: actionType,
+        search_query: data.search_query || null,
+        search_mode: data.search_mode || null,
+        selected_track_key: data.selected_track_key || null,
+        candidate_track_keys: data.candidate_track_keys || null,
+        extra: data.extra || null
     };
 
-    console.log('📤 Sending listening log:', payload);
-
     try {
-        const response = await fetch(`${API_BASE_URL}/log-listening`, {
+        await fetch(`${API_BASE_URL}/log-action`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
             body: JSON.stringify(payload)
         });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Failed to log listening data:', response.status, errorText);
-        } else {
-            const result = await response.json();
-            console.log('✅ Listening data logged successfully:', result);
-        }
     } catch (e) {
-        console.error('❌ Error logging listening data:', e);
+        console.error('Action log failed:', e);
     }
 }
 

@@ -28,20 +28,11 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
     // 클릭한 트랙을 히스토리에 추가
     addClickedTrack(track.track_key);
 
-    // 앨범 커버 클릭 로그 전송
-    const trackName = track.track || track.name || 'Unknown Track';
-    const artistName = track.artist || (track.artists ? track.artists.map(a => a.name).join(', ') : 'Unknown Artist');
-    const albumName = track.album || (track.album_name) || null;
-    const spotifyUri = track.uri || null;
-    const spotifyTrackId = spotifyUri ? spotifyUri.split(':').pop() : null;
-
-    logListeningData({
-        track_name: trackName,
-        artist_name: artistName,
-        album_name: albumName,
-        spotify_uri: spotifyUri,
-        spotify_track_id: spotifyTrackId
-    }).catch(err => console.error('Failed to log album cover click:', err));
+    // 추천에서 선택 로그
+    logAction('select_from_recommend', {
+        selected_track_key: track.track_key,
+        candidate_track_keys: currentCandidateKeys
+    });
 
     showLoadingIndicator('추천곡을 찾는 중입니다.');
 
@@ -95,6 +86,7 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
 
 // ===== Display Functions =====
 function updateTrackDisplayOnly(tracks, currentIndex) {
+    setCurrentCandidates(tracks);
     console.log('🎨 Updating track display, total tracks:', tracks.length, 'current index:', currentIndex);
 
     const trackInfoContainer = document.getElementById('trackInfo');
@@ -174,6 +166,7 @@ function updateTrackDisplayOnly(tracks, currentIndex) {
             ? () => showSearchInterface()
             : () => loadRecommendationsFromTrack(track, originalIndex);
         const dblAction = () => {
+            logAction('play', { selected_track_key: track.track_key, candidate_track_keys: currentCandidateKeys });
             const query = encodeURIComponent(`${track.track || track.track_name} ${track.artist || track.artist_name}`);
             window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
         };
