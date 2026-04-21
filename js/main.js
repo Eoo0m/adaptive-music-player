@@ -17,27 +17,34 @@ function continueAsGuest() {
 
 // ===== Tab Navigation =====
 function switchTab(tab) {
-    if (tab === 'favorites' && !authToken) {
+    if ((tab === 'favorites' || tab === 'home') && !authToken) {
         alert('로그인 후 이용할 수 있습니다.');
         return;
     }
 
+    document.getElementById('tabHome').classList.toggle('active', tab === 'home');
     document.getElementById('tabSearch').classList.toggle('active', tab === 'search');
     document.getElementById('tabFavorites').classList.toggle('active', tab === 'favorites');
 
     const searchInterface = document.getElementById('initialSongInput');
     const favoritesView = document.getElementById('favoritesView');
+    const homeFeedView = document.getElementById('homeFeedView');
     const trackInfo = document.getElementById('trackInfo');
 
+    searchInterface.classList.add('hidden');
+    favoritesView.classList.add('hidden');
+    homeFeedView.classList.add('hidden');
+    trackInfo.classList.add('hidden');
+
     if (tab === 'search') {
-        favoritesView.classList.add('hidden');
         searchInterface.classList.remove('hidden');
         trackInfo.classList.remove('hidden');
-    } else {
-        searchInterface.classList.add('hidden');
-        trackInfo.classList.add('hidden');
+    } else if (tab === 'favorites') {
         favoritesView.classList.remove('hidden');
         loadFavorites();
+    } else if (tab === 'home') {
+        homeFeedView.classList.remove('hidden');
+        loadHomeFeed();
     }
 }
 
@@ -147,6 +154,108 @@ async function loadFavorites() {
     } catch (e) {
         console.error('Load favorites error:', e);
         list.innerHTML = '<div class="favorites-empty">찜 목록을 불러올 수 없습니다.</div>';
+    }
+}
+
+// ===== Home Feed =====
+async function loadHomeFeed() {
+    const list = document.getElementById('homeFeedList');
+    list.innerHTML = '<div class="favorites-empty">불러오는 중...</div>';
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/home-feed`, {
+            headers: getAuthHeaders()
+        });
+        if (!res.ok) throw new Error('Failed to load home feed');
+
+        const data = await res.json();
+        if (!data.feeds || data.feeds.length === 0) {
+            list.innerHTML = '<div class="favorites-empty">먼저 곡을 찜해보세요.</div>';
+            return;
+        }
+
+        list.innerHTML = '';
+        data.feeds.forEach(feed => {
+            const card = document.createElement('div');
+            card.className = 'home-feed-card';
+
+            const title = document.createElement('h3');
+            title.className = 'home-feed-card-title';
+            title.textContent = `저장한 '${feed.seed_track.title}'와 유사한 곡들`;
+            card.appendChild(title);
+
+            const grid = document.createElement('div');
+            grid.className = 'home-feed-grid';
+
+            feed.similar.forEach(track => {
+                const trackDiv = document.createElement('div');
+                trackDiv.className = 'track-item';
+                trackDiv.style.cursor = 'pointer';
+
+                const imgWrapper = document.createElement('div');
+                imgWrapper.className = 'album-cover-wrapper';
+
+                const img = document.createElement('img');
+                img.src = track.cover_image_url || '';
+                img.alt = track.title || 'Unknown';
+
+                const heartBtn = document.createElement('button');
+                heartBtn.className = 'heart-btn';
+                heartBtn.innerHTML = '&#9825;';
+                heartBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    toggleFavorite({ track_key: track.track_key }, heartBtn);
+                };
+
+                imgWrapper.appendChild(img);
+                imgWrapper.appendChild(heartBtn);
+
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'track-item-info';
+
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'track-item-title';
+                titleDiv.textContent = track.title || 'Unknown';
+
+                const artistDiv = document.createElement('div');
+                artistDiv.className = 'track-item-artist';
+                artistDiv.textContent = track.artist || 'Unknown';
+
+                infoDiv.appendChild(titleDiv);
+                infoDiv.appendChild(artistDiv);
+
+                trackDiv.appendChild(imgWrapper);
+                trackDiv.appendChild(infoDiv);
+
+                const feedTrackKeys = feed.similar.map(t => t.track_key);
+                onClickOrDblClick(trackDiv,
+                    () => {
+                        switchTab('search');
+                        selectTrack({
+                            track_key: track.track_key,
+                            track: track.title,
+                            artist: track.artist,
+                            album: track.album,
+                            cover_image_url: track.cover_image_url,
+                            playlist_count: track.playlist_count
+                        });
+                    },
+                    () => {
+                        logAction('play', { selected_track_key: track.track_key, candidate_track_keys: feedTrackKeys });
+                        const query = encodeURIComponent(`${track.title} ${track.artist}`);
+                        window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
+                    }
+                );
+
+                grid.appendChild(trackDiv);
+            });
+
+            card.appendChild(grid);
+            list.appendChild(card);
+        });
+    } catch (e) {
+        console.error('Home feed error:', e);
+        list.innerHTML = '<div class="favorites-empty">홈 피드를 불러올 수 없습니다.</div>';
     }
 }
 
