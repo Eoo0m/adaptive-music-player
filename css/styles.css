@@ -226,7 +226,7 @@ body {
     display: grid;
     grid-template-columns: repeat(6, auto);
     justify-content: center;
-    gap: 12px
+    gap: 16px 24px
 }
 
 .home-feed-grid .track-item img {
