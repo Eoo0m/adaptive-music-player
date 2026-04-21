@@ -34,7 +34,9 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: .3s;
-    margin-top: 20px
+    margin-top: 20px;
+    width: 250px;
+    text-align: center
 }
 
 .login-logo {
