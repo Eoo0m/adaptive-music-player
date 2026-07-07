@@ -371,7 +371,7 @@ body {
 .track-grid.track-list {
     display: flex;
     flex-direction: column;
-    width: min(760px, 86vw);
+    width: min(560px, 82vw);
     max-height: 70vh;
     gap: 10px;
     overflow-y: auto;
@@ -387,8 +387,9 @@ body {
     justify-content: flex-start;
     align-items: stretch;
     gap: 10px;
-    width: 100%;
+    width: min(560px, 100%);
     max-width: 100%;
+    margin: 0 auto;
     box-sizing: border-box;
     overflow-x: hidden;
 }
@@ -404,7 +405,7 @@ body {
     width: 100%;
     max-width: 100%;
     min-height: 56px;
-    padding: 6px 56px 6px 8px;
+    padding: 6px 46px 6px 8px;
     box-sizing: border-box;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 10px;
@@ -413,7 +414,7 @@ body {
 }
 
 .track-list .track-item.current {
-    padding: 6px 56px 6px 8px;
+    padding: 6px 46px 6px 8px;
     box-sizing: border-box;
     border: 1px solid rgba(29, 185, 84, 0.9);
     border-radius: 10px;
@@ -456,13 +457,13 @@ body {
 
 .track-play-btn {
     position: absolute;
-    top: 8px;
-    right: 10px;
+    top: 12px;
+    right: 8px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border: 1px solid rgba(255, 79, 79, 0.38);
     border-radius: 50%;
     color: #fff;
