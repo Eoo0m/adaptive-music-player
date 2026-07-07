@@ -411,15 +411,7 @@ body {
     border-radius: 10px;
     background: rgba(10, 10, 14, 0.58);
     backdrop-filter: blur(14px);
-    animation: listSlideInLeft 0.34s ease forwards;
-}
-
-.track-list .track-item:nth-child(odd) {
-    animation-name: listSlideInLeft;
-}
-
-.track-list .track-item:nth-child(even) {
-    animation-name: listSlideInRight;
+    animation: listFadeIn 0.18s ease forwards;
 }
 
 .track-list .track-item.current {
@@ -489,25 +481,12 @@ body {
     background: rgba(255, 255, 255, 0.18);
 }
 
-@keyframes listSlideInLeft {
+@keyframes listFadeIn {
     0% {
         opacity: 0;
-        transform: translateX(-26px);
     }
     100% {
         opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-@keyframes listSlideInRight {
-    0% {
-        opacity: 0;
-        transform: translateX(26px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateX(0);
     }
 }
 
