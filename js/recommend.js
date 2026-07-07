@@ -70,10 +70,7 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
 
         // 플레이리스트 구성: 클릭한 트랙(1) + 추천(14) = 15곡
         const displayTracks = [track, ...uniqueTracks.slice(0, 14)];
-        shownRecommendationKeys = [...new Set([
-            ...shownRecommendationKeys,
-            ...displayTracks.slice(1).map(t => t.track_key).filter(Boolean)
-        ])].slice(-500);
+        shownRecommendationKeys = displayTracks.slice(1).map(t => t.track_key).filter(Boolean);
 
         console.log(`📝 Display: ${displayTracks.length} tracks (1 selected + ${displayTracks.length - 1} recommendations)`);
 
