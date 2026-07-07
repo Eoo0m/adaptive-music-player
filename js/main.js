@@ -305,6 +305,7 @@ let lastHomeFeeds = [];
 
 // ===== Click History Tracking =====
 let clickedTracks = [];           // 클릭한 트랙들의 track_key 저장 (최대 16개, Two-Tower 모델용)
+let shownRecommendationKeys = [];      // 이미 화면에 보여준 추천 track_key 저장
 
 // ===== Session Management =====
 function generateSessionId() {

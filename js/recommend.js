@@ -45,7 +45,8 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 track_keys: clickedTracks,
-                num_recommendations: 30
+                num_recommendations: 30,
+                exclude_track_keys: shownRecommendationKeys
             })
         });
 
@@ -69,6 +70,10 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
 
         // 플레이리스트 구성: 클릭한 트랙(1) + 추천(14) = 15곡
         const displayTracks = [track, ...uniqueTracks.slice(0, 14)];
+        shownRecommendationKeys = [...new Set([
+            ...shownRecommendationKeys,
+            ...displayTracks.slice(1).map(t => t.track_key).filter(Boolean)
+        ])].slice(-500);
 
         console.log(`📝 Display: ${displayTracks.length} tracks (1 selected + ${displayTracks.length - 1} recommendations)`);
 
