@@ -411,7 +411,7 @@ body {
     border-radius: 10px;
     background: rgba(10, 10, 14, 0.58);
     backdrop-filter: blur(14px);
-    animation: listFadeIn 0.18s ease forwards;
+    animation: none;
 }
 
 .track-list .track-item.current {
@@ -481,14 +481,6 @@ body {
     background: rgba(255, 255, 255, 0.18);
 }
 
-@keyframes listFadeIn {
-    0% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 1;
-    }
-}
 
 .guide-text {
     font-size: 15px;
