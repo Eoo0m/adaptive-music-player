@@ -13,6 +13,7 @@ function continueAsGuest() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('initialSongInput').classList.remove('hidden');
     document.getElementById('sideTab').classList.remove('hidden');
+    document.getElementById('layoutToggle').classList.remove('hidden');
 }
 
 // ===== Tab Navigation =====
@@ -85,15 +86,6 @@ async function loadFavorites() {
 
 function renderFavorites(favorites) {
     const list = document.getElementById('favoritesList');
-    const card = document.querySelector('.fav-songs-card');
-
-    if (card) {
-        const oldToggle = card.querySelector('.collection-view-toggle');
-        if (oldToggle) oldToggle.remove();
-        const title = card.querySelector('.favorites-title');
-        if (title) title.insertAdjacentElement('afterend', createCollectionViewToggle());
-    }
-
     if (!favorites || favorites.length === 0) {
         list.className = 'favorites-list';
         list.innerHTML = '<div class="favorites-empty">찜한 곡이 없습니다.</div>';
@@ -162,7 +154,6 @@ function renderHomeFeeds(feeds) {
     }
 
     list.innerHTML = '';
-    list.appendChild(createCollectionViewToggle());
 
     feeds.forEach(feed => {
         const card = document.createElement('div');
@@ -373,6 +364,7 @@ function isVisible(id) {
 function setRecommendationViewMode(mode) {
     recommendationViewMode = mode;
     localStorage.setItem('recommendationViewMode', mode);
+    renderLayoutToggle();
 
     if (isVisible('favoritesView')) {
         renderFavorites(lastFavorites);
@@ -406,11 +398,17 @@ function createViewToggle() {
     return viewToggle;
 }
 
-function createCollectionViewToggle() {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'collection-view-toggle';
-    wrapper.appendChild(createViewToggle());
-    return wrapper;
+function renderLayoutToggle() {
+    let layoutToggle = document.getElementById('layoutToggle');
+    if (!layoutToggle) {
+        layoutToggle = document.createElement('div');
+        layoutToggle.id = 'layoutToggle';
+        layoutToggle.className = 'layout-toggle';
+        layoutToggle.setAttribute('aria-label', '보기 방식 선택');
+        document.body.appendChild(layoutToggle);
+    }
+    layoutToggle.innerHTML = '';
+    layoutToggle.appendChild(createViewToggle());
 }
 
 function appendRecommendationHeader(container, tracks, currentIndex) {
@@ -424,9 +422,7 @@ function appendRecommendationHeader(container, tracks, currentIndex) {
     guideText.className = 'guide-text';
     guideText.textContent = '앨범 커버를 클릭해 추천을 받고, 더블클릭해 바로 재생해보세요.';
 
-    const viewToggle = createViewToggle();
     header.appendChild(guideText);
-    header.appendChild(viewToggle);
     container.appendChild(header);
 }
 
@@ -541,6 +537,8 @@ function createDust() {
 
 // ===== Event Listeners =====
 document.addEventListener('DOMContentLoaded', () => {
+    renderLayoutToggle();
+
     // 엔터로 검색
     document.getElementById('searchInput').addEventListener('keypress', e => {
         if (e.key === 'Enter') doSearch();
@@ -571,8 +569,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('initialSongInput').classList.remove('hidden');
         document.getElementById('sideTab').classList.remove('hidden');
+        document.getElementById('layoutToggle').classList.remove('hidden');
     } else {
         // 비로그인 → 로그인 선택 화면 표시
         document.getElementById('loginScreen').classList.remove('hidden');
+        document.getElementById('layoutToggle').classList.add('hidden');
     }
 });
