@@ -93,15 +93,11 @@ function updateTrackDisplayOnly(tracks, currentIndex) {
     trackInfoContainer.innerHTML = '';
     trackInfoContainer.style.pointerEvents = 'auto';
 
-    // 안내 문구 추가
-    const guideText = document.createElement('div');
-    guideText.className = 'guide-text';
-    guideText.textContent = '앨범 커버를 클릭해 추천을 받고, 더블클릭해 바로 재생해보세요.';
-    trackInfoContainer.appendChild(guideText);
+    appendRecommendationHeader(trackInfoContainer, tracks, currentIndex);
 
     // 트랙 그리드 컨테이너 생성
     const trackGrid = document.createElement('div');
-    trackGrid.className = 'track-grid';
+    trackGrid.className = `track-grid ${recommendationViewMode === 'list' ? 'track-list' : ''}`;
     trackInfoContainer.appendChild(trackGrid);
 
     // 5개씩 3줄 = 총 15개 트랙 표시
@@ -121,56 +117,11 @@ function updateTrackDisplayOnly(tracks, currentIndex) {
     tracksToDisplay.forEach(({ track, originalIndex }) => {
         const isCurrent = originalIndex === currentIndex;
 
-        const trackDiv = document.createElement('div');
-        trackDiv.className = 'track-item' + (isCurrent ? ' current' : '');
-        trackDiv.style.cursor = 'pointer';
-
-        const img = document.createElement('img');
-        img.src = track.cover_image_url || '';
-        img.alt = track.track || 'Unknown';
-
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'track-item-info';
-
-        const titleDiv = document.createElement('div');
-        titleDiv.className = 'track-item-title';
-        titleDiv.textContent = track.track || 'Unknown';
-
-        const artistDiv = document.createElement('div');
-        artistDiv.className = 'track-item-artist';
-        artistDiv.textContent = track.artist || 'Unknown Artist';
-
-        infoDiv.appendChild(titleDiv);
-        infoDiv.appendChild(artistDiv);
-
-        // 앨범 커버 + 하트 버튼을 감싸는 wrapper
-        const imgWrapper = document.createElement('div');
-        imgWrapper.className = 'album-cover-wrapper';
-
-        const heartBtn = document.createElement('button');
-        heartBtn.className = 'heart-btn';
-        heartBtn.innerHTML = '&#9825;'; // 빈 하트
-        heartBtn.onclick = (e) => {
-            e.stopPropagation();
-            toggleFavorite(track, heartBtn);
-        };
-
-        imgWrapper.appendChild(img);
-        imgWrapper.appendChild(heartBtn);
-
-        trackDiv.appendChild(imgWrapper);
-        trackDiv.appendChild(infoDiv);
-
         // 클릭: 추천 / 더블클릭: 유튜브 재생
         const singleAction = isCurrent
             ? () => showSearchInterface()
             : () => loadRecommendationsFromTrack(track, originalIndex);
-        const dblAction = () => {
-            logAction('play', { selected_track_key: track.track_key, candidate_track_keys: currentCandidateKeys });
-            const query = encodeURIComponent(`${track.track || track.track_name} ${track.artist || track.artist_name}`);
-            window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
-        };
-        onClickOrDblClick(trackDiv, singleAction, dblAction);
+        const trackDiv = createTrackCard(track, isCurrent, singleAction);
 
         trackGrid.appendChild(trackDiv);
     });

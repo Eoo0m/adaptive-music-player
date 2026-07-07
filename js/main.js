@@ -75,86 +75,62 @@ async function loadFavorites() {
         if (!res.ok) throw new Error('Failed to load favorites');
 
         const data = await res.json();
-        if (!data.favorites || data.favorites.length === 0) {
-            list.innerHTML = '<div class="favorites-empty">찜한 곡이 없습니다.</div>';
-            return;
-        }
-
-        list.innerHTML = '';
-        data.favorites.forEach(fav => {
-            const trackDiv = document.createElement('div');
-            trackDiv.className = 'track-item';
-            trackDiv.style.cursor = 'pointer';
-
-            const imgWrapper = document.createElement('div');
-            imgWrapper.className = 'album-cover-wrapper';
-
-            const img = document.createElement('img');
-            img.src = fav.cover_image_url || '';
-            img.alt = fav.title || 'Unknown';
-
-            const heartBtn = document.createElement('button');
-            heartBtn.className = 'heart-btn favorited';
-            heartBtn.innerHTML = '&#9829;';
-            heartBtn.onclick = (e) => {
-                e.stopPropagation();
-                toggleFavorite({ track_key: fav.track_key }, heartBtn);
-                // 찜 해제 시 목록에서 제거
-                setTimeout(() => {
-                    if (!heartBtn.classList.contains('favorited')) {
-                        trackDiv.remove();
-                        if (list.children.length === 0) {
-                            list.innerHTML = '<div class="favorites-empty">찜한 곡이 없습니다.</div>';
-                        }
-                    }
-                }, 300);
-            };
-
-            imgWrapper.appendChild(img);
-            imgWrapper.appendChild(heartBtn);
-
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'track-item-info';
-
-            const titleDiv = document.createElement('div');
-            titleDiv.className = 'track-item-title';
-            titleDiv.textContent = fav.title || 'Unknown';
-
-            const artistDiv = document.createElement('div');
-            artistDiv.className = 'track-item-artist';
-            artistDiv.textContent = fav.artist || 'Unknown';
-
-            infoDiv.appendChild(titleDiv);
-            infoDiv.appendChild(artistDiv);
-
-            trackDiv.appendChild(imgWrapper);
-            trackDiv.appendChild(infoDiv);
-
-            onClickOrDblClick(trackDiv,
-                () => {
-                    switchTab('search');
-                    selectTrack({
-                        track_key: fav.track_key,
-                        track: fav.title,
-                        artist: fav.artist,
-                        album: fav.album,
-                        cover_image_url: fav.cover_image_url,
-                        playlist_count: fav.playlist_count
-                    });
-                },
-                () => {
-                    logAction('play', { selected_track_key: fav.track_key, candidate_track_keys: currentCandidateKeys });
-                    const query = encodeURIComponent(`${fav.title} ${fav.artist}`);
-                    window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
-                }
-            );
-
-            list.appendChild(trackDiv);
-        });
+        lastFavorites = data.favorites || [];
+        renderFavorites(lastFavorites);
     } catch (e) {
         console.error('Load favorites error:', e);
         list.innerHTML = '<div class="favorites-empty">찜 목록을 불러올 수 없습니다.</div>';
     }
+}
+
+function renderFavorites(favorites) {
+    const list = document.getElementById('favoritesList');
+    const card = document.querySelector('.fav-songs-card');
+
+    if (card) {
+        const oldToggle = card.querySelector('.collection-view-toggle');
+        if (oldToggle) oldToggle.remove();
+        const title = card.querySelector('.favorites-title');
+        if (title) title.insertAdjacentElement('afterend', createCollectionViewToggle());
+    }
+
+    if (!favorites || favorites.length === 0) {
+        list.className = 'favorites-list';
+        list.innerHTML = '<div class="favorites-empty">찜한 곡이 없습니다.</div>';
+        return;
+    }
+
+    setCurrentCandidates(favorites);
+    list.className = `favorites-list ${recommendationViewMode === 'list' ? 'track-list compact-track-list' : ''}`;
+    list.innerHTML = '';
+
+    favorites.forEach(fav => {
+        const track = {
+            track_key: fav.track_key,
+            track: fav.title,
+            title: fav.title,
+            artist: fav.artist,
+            album: fav.album,
+            cover_image_url: fav.cover_image_url,
+            playlist_count: fav.playlist_count
+        };
+
+        const trackDiv = createTrackCard(track, false, () => {
+            switchTab('search');
+            selectTrack(track);
+        }, {
+            favorited: true,
+            candidateKeys: currentCandidateKeys,
+            onFavoriteChange: (heartBtn) => {
+                if (!heartBtn.classList.contains('favorited')) {
+                    lastFavorites = lastFavorites.filter(item => item.track_key !== fav.track_key);
+                    renderFavorites(lastFavorites);
+                }
+            }
+        });
+
+        list.appendChild(trackDiv);
+    });
 }
 
 // ===== Home Feed =====
@@ -169,94 +145,62 @@ async function loadHomeFeed() {
         if (!res.ok) throw new Error('Failed to load home feed');
 
         const data = await res.json();
-        if (!data.feeds || data.feeds.length === 0) {
-            list.innerHTML = '<div class="favorites-empty">먼저 곡을 찜해보세요.</div>';
-            return;
-        }
-
-        list.innerHTML = '';
-        data.feeds.forEach(feed => {
-            const card = document.createElement('div');
-            card.className = 'home-feed-card';
-
-            const title = document.createElement('h3');
-            title.className = 'home-feed-card-title';
-            title.textContent = `저장한 '${feed.seed_track.title}'와 유사한 곡들`;
-            card.appendChild(title);
-
-            const grid = document.createElement('div');
-            grid.className = 'home-feed-grid';
-
-            feed.similar.forEach(track => {
-                const trackDiv = document.createElement('div');
-                trackDiv.className = 'track-item';
-                trackDiv.style.cursor = 'pointer';
-
-                const imgWrapper = document.createElement('div');
-                imgWrapper.className = 'album-cover-wrapper';
-
-                const img = document.createElement('img');
-                img.src = track.cover_image_url || '';
-                img.alt = track.title || 'Unknown';
-
-                const heartBtn = document.createElement('button');
-                heartBtn.className = 'heart-btn';
-                heartBtn.innerHTML = '&#9825;';
-                heartBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    toggleFavorite({ track_key: track.track_key }, heartBtn);
-                };
-
-                imgWrapper.appendChild(img);
-                imgWrapper.appendChild(heartBtn);
-
-                const infoDiv = document.createElement('div');
-                infoDiv.className = 'track-item-info';
-
-                const titleDiv = document.createElement('div');
-                titleDiv.className = 'track-item-title';
-                titleDiv.textContent = track.title || 'Unknown';
-
-                const artistDiv = document.createElement('div');
-                artistDiv.className = 'track-item-artist';
-                artistDiv.textContent = track.artist || 'Unknown';
-
-                infoDiv.appendChild(titleDiv);
-                infoDiv.appendChild(artistDiv);
-
-                trackDiv.appendChild(imgWrapper);
-                trackDiv.appendChild(infoDiv);
-
-                const feedTrackKeys = feed.similar.map(t => t.track_key);
-                onClickOrDblClick(trackDiv,
-                    () => {
-                        switchTab('search');
-                        selectTrack({
-                            track_key: track.track_key,
-                            track: track.title,
-                            artist: track.artist,
-                            album: track.album,
-                            cover_image_url: track.cover_image_url,
-                            playlist_count: track.playlist_count
-                        });
-                    },
-                    () => {
-                        logAction('play', { selected_track_key: track.track_key, candidate_track_keys: feedTrackKeys });
-                        const query = encodeURIComponent(`${track.title} ${track.artist}`);
-                        window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
-                    }
-                );
-
-                grid.appendChild(trackDiv);
-            });
-
-            card.appendChild(grid);
-            list.appendChild(card);
-        });
+        lastHomeFeeds = data.feeds || [];
+        renderHomeFeeds(lastHomeFeeds);
     } catch (e) {
         console.error('Home feed error:', e);
         list.innerHTML = '<div class="favorites-empty">홈 피드를 불러올 수 없습니다.</div>';
     }
+}
+
+function renderHomeFeeds(feeds) {
+    const list = document.getElementById('homeFeedList');
+
+    if (!feeds || feeds.length === 0) {
+        list.innerHTML = '<div class="favorites-empty">먼저 곡을 찜해보세요.</div>';
+        return;
+    }
+
+    list.innerHTML = '';
+    list.appendChild(createCollectionViewToggle());
+
+    feeds.forEach(feed => {
+        const card = document.createElement('div');
+        card.className = 'home-feed-card';
+
+        const title = document.createElement('h3');
+        title.className = 'home-feed-card-title';
+        title.textContent = `저장한 '${feed.seed_track.title}'와 유사한 곡들`;
+        card.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = `home-feed-grid ${recommendationViewMode === 'list' ? 'track-list compact-track-list' : ''}`;
+
+        const feedTrackKeys = feed.similar.map(t => t.track_key);
+        feed.similar.forEach(track => {
+            const normalizedTrack = {
+                track_key: track.track_key,
+                track: track.title,
+                title: track.title,
+                artist: track.artist,
+                album: track.album,
+                cover_image_url: track.cover_image_url,
+                playlist_count: track.playlist_count
+            };
+
+            const trackDiv = createTrackCard(normalizedTrack, false, () => {
+                switchTab('search');
+                selectTrack(normalizedTrack);
+            }, {
+                candidateKeys: feedTrackKeys
+            });
+
+            grid.appendChild(trackDiv);
+        });
+
+        card.appendChild(grid);
+        list.appendChild(card);
+    });
 }
 
 // ===== Favorites =====
@@ -362,6 +306,11 @@ function onClickOrDblClick(element, onSingle, onDouble) {
 // ===== Global Variables =====
 let currentTrackIndex = 0;        // 현재 선택된 트랙 인덱스
 let searchMode = 'track';         // 검색 모드: 'track' or 'keyword'
+let recommendationViewMode = localStorage.getItem('recommendationViewMode') || 'grid';
+let lastRecommendationTracks = [];
+let lastRecommendationIndex = 0;
+let lastFavorites = [];
+let lastHomeFeeds = [];
 
 // ===== Click History Tracking =====
 let clickedTracks = [];           // 클릭한 트랙들의 track_key 저장 (최대 16개, Two-Tower 모델용)
@@ -400,6 +349,145 @@ let currentCandidateKeys = [];
 
 function setCurrentCandidates(tracks) {
     currentCandidateKeys = tracks.map(t => t.track_key).filter(Boolean);
+}
+
+function getTrackTitle(track) {
+    return track.track || track.track_name || track.title || track.name || 'Unknown';
+}
+
+function getTrackArtist(track) {
+    return track.artist || track.artist_name || 'Unknown Artist';
+}
+
+function openTrackOnYouTube(track, candidateKeys = currentCandidateKeys) {
+    logAction('play', { selected_track_key: track.track_key, candidate_track_keys: candidateKeys });
+    const query = encodeURIComponent(`${getTrackTitle(track)} ${getTrackArtist(track)}`);
+    window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
+}
+
+function isVisible(id) {
+    const element = document.getElementById(id);
+    return element && !element.classList.contains('hidden');
+}
+
+function setRecommendationViewMode(mode) {
+    recommendationViewMode = mode;
+    localStorage.setItem('recommendationViewMode', mode);
+
+    if (isVisible('favoritesView')) {
+        renderFavorites(lastFavorites);
+    } else if (isVisible('homeFeedView')) {
+        renderHomeFeeds(lastHomeFeeds);
+    } else if (lastRecommendationTracks.length > 0) {
+        updateTrackDisplayOnly(lastRecommendationTracks, lastRecommendationIndex);
+    }
+}
+
+function createViewToggle() {
+    const viewToggle = document.createElement('div');
+    viewToggle.className = 'view-toggle';
+
+    const gridBtn = document.createElement('button');
+    gridBtn.className = `view-toggle-btn${recommendationViewMode === 'grid' ? ' active' : ''}`;
+    gridBtn.type = 'button';
+    gridBtn.setAttribute('aria-label', '앨범 커버형 보기');
+    gridBtn.innerHTML = '<span class="view-icon view-icon-grid" aria-hidden="true"></span>';
+    gridBtn.onclick = () => setRecommendationViewMode('grid');
+
+    const listBtn = document.createElement('button');
+    listBtn.className = `view-toggle-btn${recommendationViewMode === 'list' ? ' active' : ''}`;
+    listBtn.type = 'button';
+    listBtn.setAttribute('aria-label', '가로형 보기');
+    listBtn.innerHTML = '<span class="view-icon view-icon-list" aria-hidden="true"></span>';
+    listBtn.onclick = () => setRecommendationViewMode('list');
+
+    viewToggle.appendChild(gridBtn);
+    viewToggle.appendChild(listBtn);
+    return viewToggle;
+}
+
+function createCollectionViewToggle() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'collection-view-toggle';
+    wrapper.appendChild(createViewToggle());
+    return wrapper;
+}
+
+function appendRecommendationHeader(container, tracks, currentIndex) {
+    lastRecommendationTracks = tracks;
+    lastRecommendationIndex = currentIndex;
+
+    const header = document.createElement('div');
+    header.className = 'track-display-header';
+
+    const guideText = document.createElement('div');
+    guideText.className = 'guide-text';
+    guideText.textContent = '앨범 커버를 클릭해 추천을 받고, 더블클릭해 바로 재생해보세요.';
+
+    const viewToggle = createViewToggle();
+    header.appendChild(guideText);
+    header.appendChild(viewToggle);
+    container.appendChild(header);
+}
+
+function createTrackCard(track, isCurrent, singleAction, options = {}) {
+    const candidateKeys = options.candidateKeys || currentCandidateKeys;
+    const trackDiv = document.createElement('div');
+    trackDiv.className = 'track-item' + (isCurrent ? ' current' : '');
+    trackDiv.style.cursor = 'pointer';
+
+    const img = document.createElement('img');
+    img.src = track.cover_image_url || '';
+    img.alt = getTrackTitle(track);
+
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'track-item-info';
+
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'track-item-title';
+    titleDiv.textContent = getTrackTitle(track);
+
+    const artistDiv = document.createElement('div');
+    artistDiv.className = 'track-item-artist';
+    artistDiv.textContent = getTrackArtist(track);
+
+    infoDiv.appendChild(titleDiv);
+    infoDiv.appendChild(artistDiv);
+
+    const imgWrapper = document.createElement('div');
+    imgWrapper.className = 'album-cover-wrapper';
+
+    const heartBtn = document.createElement('button');
+    heartBtn.className = `heart-btn${options.favorited ? ' favorited' : ''}`;
+    heartBtn.innerHTML = options.favorited ? '&#9829;' : '&#9825;';
+    heartBtn.onclick = (e) => {
+        e.stopPropagation();
+        toggleFavorite(track, heartBtn);
+        if (options.onFavoriteChange) {
+            setTimeout(() => options.onFavoriteChange(heartBtn, track), 300);
+        }
+    };
+
+    imgWrapper.appendChild(img);
+    imgWrapper.appendChild(heartBtn);
+    trackDiv.appendChild(imgWrapper);
+    trackDiv.appendChild(infoDiv);
+
+    if (recommendationViewMode === 'list') {
+        const playBtn = document.createElement('button');
+        playBtn.className = 'track-play-btn';
+        playBtn.type = 'button';
+        playBtn.setAttribute('aria-label', `${getTrackTitle(track)} 유튜브에서 찾기`);
+        playBtn.textContent = '▶';
+        playBtn.onclick = (e) => {
+            e.stopPropagation();
+            openTrackOnYouTube(track, candidateKeys);
+        };
+        trackDiv.appendChild(playBtn);
+    }
+
+    onClickOrDblClick(trackDiv, singleAction, () => openTrackOnYouTube(track, candidateKeys));
+    return trackDiv;
 }
 
 async function logAction(actionType, data = {}) {
