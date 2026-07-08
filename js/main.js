@@ -43,7 +43,7 @@ function switchTab(tab) {
     } else if (tab === 'favorites') {
         favoritesView.classList.remove('hidden');
         if (lastFavorites.length > 0) {
-            renderFavorites(lastFavorites, getSavedPlaylists());
+            renderFavorites(lastFavorites, lastSavedPlaylists);
         } else {
             loadFavorites();
         }
@@ -79,13 +79,21 @@ async function loadFavorites() {
     list.innerHTML = '<div class="favorites-empty">불러오는 중...</div>';
 
     try {
-        const res = await fetch(`${API_BASE_URL}/favorites`, { headers: getAuthHeaders() });
-        if (!res.ok) throw new Error('Failed to load favorites');
+        const [favRes, plRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/favorites`, { headers: getAuthHeaders() }),
+            fetch(`${API_BASE_URL}/playlist-builder/my-playlists`, { headers: getAuthHeaders() }),
+        ]);
+        if (!favRes.ok) throw new Error('Failed to load favorites');
 
-        const data = await res.json();
-        lastFavorites = data.favorites || [];
-        const savedPlaylists = getSavedPlaylists();
-        renderFavorites(lastFavorites, savedPlaylists);
+        const favData = await favRes.json();
+        lastFavorites = favData.favorites || [];
+
+        if (plRes.ok) {
+            const plData = await plRes.json();
+            lastSavedPlaylists = plData.playlists || [];
+        }
+
+        renderFavorites(lastFavorites, lastSavedPlaylists);
     } catch (e) {
         console.error('Load favorites error:', e);
         list.innerHTML = '<div class="favorites-empty">찜 목록을 불러올 수 없습니다.</div>';
@@ -199,7 +207,7 @@ function renderFavorites(favorites, savedPlaylists = []) {
             onFavoriteChange: (heartBtn) => {
                 if (!heartBtn.classList.contains('favorited')) {
                     lastFavorites = lastFavorites.filter(item => item.track_key !== fav.track_key);
-                    renderFavorites(lastFavorites);
+                    renderFavorites(lastFavorites, lastSavedPlaylists);
                 }
             }
         });
@@ -209,12 +217,18 @@ function renderFavorites(favorites, savedPlaylists = []) {
 }
 
 function openSavedPlaylist(playlistId) {
-    const playlists = getSavedPlaylists();
-    const pl = playlists.find(p => p.id === playlistId);
+    const pl = lastSavedPlaylists.find(p => p.id === playlistId);
     if (!pl) return;
 
     pb.state = 'finished';
-    pb.completedPlaylist = pl.tracks || [];
+    pb.completedPlaylist = (pl.tracks || []).map(t => ({
+        track_key: t.track_key,
+        title: t.track_name || t.title,
+        artist: t.artist,
+        album: t.album,
+        cover_image_url: t.cover_image_url,
+        playlist_count: t.playlist_count,
+    }));
     pb.selectedTracks = [];
     pb.userName = '';
     pb.timeOfDay = '';
@@ -409,6 +423,7 @@ let recommendationViewMode = localStorage.getItem('recommendationViewMode') || '
 let lastRecommendationTracks = [];
 let lastRecommendationIndex = 0;
 let lastFavorites = [];
+let lastSavedPlaylists = [];
 let lastHomeFeeds = [];
 
 // ===== Click History Tracking =====
@@ -476,7 +491,7 @@ function setRecommendationViewMode(mode) {
     renderLayoutToggle();
 
     if (isVisible('favoritesView')) {
-        renderFavorites(lastFavorites);
+        renderFavorites(lastFavorites, lastSavedPlaylists);
     } else if (isVisible('homeFeedView')) {
         renderPlaylistBuilder();
         renderHomeFeeds(lastHomeFeeds);
@@ -1078,33 +1093,34 @@ function renderPlaylistBuilderResult(chosenKeys) {
     section.appendChild(card);
 }
 
-function savePlaylist(btn) {
+async function savePlaylist(btn) {
     if (pb.savedPlaylistId) return;
 
-    const name = `${pb.userName}님의 ${pb.season || '여름'} ${pb.timeOfDay} 플레이리스트`;
-    const userId = currentUser?.user_id || currentUser?.id || 'unknown';
-    const key = `dynplayer_playlists_${userId}`;
-
-    const existing = JSON.parse(localStorage.getItem(key) || '[]');
-    const newPlaylist = {
-        id: Date.now(),
-        name,
-        tracks: pb.completedPlaylist || [],
-        created_at: new Date().toISOString(),
-    };
-    existing.unshift(newPlaylist);
-    localStorage.setItem(key, JSON.stringify(existing));
-
-    pb.savedPlaylistId = newPlaylist.id;
     btn.disabled = true;
-    btn.textContent = '저장됨 ♥';
-    btn.style.background = 'rgba(255, 107, 129, 0.5)';
-}
+    btn.textContent = '저장 중...';
 
-function getSavedPlaylists() {
-    const userId = currentUser?.user_id || currentUser?.id || 'unknown';
-    const key = `dynplayer_playlists_${userId}`;
-    return JSON.parse(localStorage.getItem(key) || '[]');
+    const name = `${pb.userName}님의 ${pb.season || '여름'} ${pb.timeOfDay} 플레이리스트`;
+    const trackKeys = (pb.completedPlaylist || []).map(t => t.track_key);
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/playlist-builder/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify({ name, track_keys: trackKeys }),
+        });
+        if (!res.ok) throw new Error('save failed');
+        const data = await res.json();
+
+        pb.savedPlaylistId = data.playlist_id;
+        btn.textContent = '저장됨 ♥';
+        btn.style.background = 'rgba(255, 107, 129, 0.5)';
+        lastFavorites = []; // 찜 탭 캐시 무효화
+        lastSavedPlaylists = []; // 저장된 플레이리스트 캐시 무효화
+    } catch (e) {
+        console.error('Playlist save error:', e);
+        btn.disabled = false;
+        btn.textContent = '저장 실패. 다시 시도';
+    }
 }
 
 function renderPlaylistBuilder() {
