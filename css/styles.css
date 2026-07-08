@@ -254,6 +254,274 @@ body {
     animation: none
 }
 
+/* ===== Playlist Builder ===== */
+.playlist-builder-card {
+    background: rgba(255, 255, 255, .06);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.playlist-builder-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.playlist-builder-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, .9);
+    margin: 0;
+}
+
+.playlist-builder-subtitle {
+    font-size: 12px;
+    color: rgba(255, 255, 255, .5);
+    margin: 2px 0 10px;
+}
+
+.playlist-builder-start-btn {
+    background: linear-gradient(135deg, #1ed760 0%, #1db954 100%);
+    color: #fff;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s ease;
+    box-shadow: 0 3px 10px rgba(29, 185, 84, 0.4);
+    white-space: nowrap;
+}
+
+.playlist-builder-start-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(29, 185, 84, 0.5);
+}
+
+/* 빌더 진행 중 상태 */
+.playlist-builder-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.playlist-builder-guide {
+    font-size: 12px;
+    color: rgba(255, 255, 255, .6);
+    text-align: center;
+    animation: blink 2s ease-in-out infinite;
+}
+
+/* 선택된 곡 행 */
+.playlist-builder-selected-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    min-height: 30px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+
+/* 후보 곡 그리드 (6x2) */
+.playlist-builder-grid {
+    display: grid;
+    grid-template-columns: repeat(6, auto);
+    justify-content: center;
+    gap: 12px 18px;
+}
+
+/* 선택된 곡 미니 카드 */
+.pb-selected-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: default;
+}
+
+.pb-selected-item img {
+    width: 52px;
+    height: 52px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 2px solid #1db954;
+    box-shadow: 0 0 10px rgba(29, 185, 84, 0.5);
+}
+
+.pb-selected-item-num {
+    font-size: 9px;
+    color: #1db954;
+    font-weight: 700;
+}
+
+/* 후보 트랙 카드 (그리드 내) */
+.playlist-builder-grid .track-item img {
+    width: 100px;
+    height: 100px;
+}
+
+.playlist-builder-grid .track-item-info {
+    width: 100px;
+}
+
+.playlist-builder-grid .track-item-title {
+    font-size: 11px;
+}
+
+.playlist-builder-grid .track-item-artist {
+    font-size: 10px;
+}
+
+.playlist-builder-grid .track-item {
+    opacity: 1;
+    animation: none;
+}
+
+/* 리스트 모드 후보 */
+.playlist-builder-grid.compact-track-list {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 8px;
+    width: min(560px, 100%);
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+/* 완성된 플레이리스트 */
+.playlist-builder-result-grid {
+    display: grid;
+    grid-template-columns: repeat(6, auto);
+    justify-content: center;
+    gap: 12px 18px;
+}
+
+.playlist-builder-result-grid .track-item img {
+    width: 100px;
+    height: 100px;
+}
+
+.playlist-builder-result-grid .track-item-info {
+    width: 100px;
+}
+
+.playlist-builder-result-grid .track-item-title {
+    font-size: 11px;
+}
+
+.playlist-builder-result-grid .track-item-artist {
+    font-size: 10px;
+}
+
+.playlist-builder-result-grid .track-item {
+    opacity: 1;
+    animation: none;
+}
+
+/* 선택된 곡 초록 테두리 강조 */
+.playlist-builder-result-grid .track-item.pb-chosen {
+    border: 2px solid #1db954;
+    border-radius: 10px;
+    padding: 6px;
+    background: rgba(29, 185, 84, 0.1);
+    box-shadow: 0 0 12px rgba(29, 185, 84, 0.35);
+}
+
+/* 리스트 모드 완성 그리드 */
+.playlist-builder-result-grid.compact-track-list {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 8px;
+    width: min(560px, 100%);
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+/* 저장 버튼 */
+.playlist-builder-save-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 6px;
+}
+
+.playlist-builder-save-btn {
+    background: linear-gradient(135deg, #1ed760 0%, #1db954 100%);
+    color: #fff;
+    border: none;
+    padding: 7px 18px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s ease;
+    box-shadow: 0 3px 10px rgba(29, 185, 84, 0.4);
+}
+
+.playlist-builder-save-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(29, 185, 84, 0.5);
+}
+
+.playlist-builder-save-btn:disabled {
+    background: linear-gradient(135deg, #888 0%, #666 100%);
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+/* 저장된 플레이리스트 (찜 탭) */
+.saved-playlist-card {
+    background: rgba(255, 255, 255, .06);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(29, 185, 84, .3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: border-color .2s;
+    margin-bottom: 10px;
+}
+
+.saved-playlist-card:hover {
+    border-color: rgba(29, 185, 84, .7);
+}
+
+.saved-playlist-card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 6px;
+}
+
+.saved-playlist-card-meta {
+    font-size: 11px;
+    color: rgba(255, 255, 255, .5);
+    margin: 0 0 8px;
+}
+
+.saved-playlist-cover-row {
+    display: flex;
+    gap: 6px;
+}
+
+.saved-playlist-cover-row img {
+    width: 40px;
+    height: 40px;
+    border-radius: 5px;
+    object-fit: cover;
+}
+
 .favorites-empty {
     text-align: center;
     color: rgba(255, 255, 255, .5);

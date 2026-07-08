@@ -45,6 +45,7 @@ function switchTab(tab) {
         loadFavorites();
     } else if (tab === 'home') {
         homeFeedView.classList.remove('hidden');
+        renderPlaylistBuilder();
         if (lastHomeFeeds.length > 0) {
             renderHomeFeeds(lastHomeFeeds);
         } else {
@@ -74,31 +75,79 @@ async function loadFavorites() {
     list.innerHTML = '<div class="favorites-empty">불러오는 중...</div>';
 
     try {
-        const res = await fetch(`${API_BASE_URL}/favorites`, {
-            headers: getAuthHeaders()
-        });
+        const res = await fetch(`${API_BASE_URL}/favorites`, { headers: getAuthHeaders() });
         if (!res.ok) throw new Error('Failed to load favorites');
 
         const data = await res.json();
         lastFavorites = data.favorites || [];
-        renderFavorites(lastFavorites);
+        const savedPlaylists = getSavedPlaylists();
+        renderFavorites(lastFavorites, savedPlaylists);
     } catch (e) {
         console.error('Load favorites error:', e);
         list.innerHTML = '<div class="favorites-empty">찜 목록을 불러올 수 없습니다.</div>';
     }
 }
 
-function renderFavorites(favorites) {
+function renderFavorites(favorites, savedPlaylists = []) {
     const list = document.getElementById('favoritesList');
+    list.innerHTML = '';
+
+    // 저장된 플레이리스트 섹션
+    if (savedPlaylists.length > 0) {
+        const plSection = document.createElement('div');
+        plSection.style.width = '100%';
+        plSection.style.marginBottom = '16px';
+
+        const plTitle = document.createElement('div');
+        plTitle.style.cssText = 'font-size:13px;font-weight:700;color:rgba(255,255,255,.8);margin-bottom:8px;';
+        plTitle.textContent = '저장된 플레이리스트';
+        plSection.appendChild(plTitle);
+
+        savedPlaylists.forEach(pl => {
+            const plCard = document.createElement('div');
+            plCard.className = 'saved-playlist-card';
+
+            const plCardTitle = document.createElement('div');
+            plCardTitle.className = 'saved-playlist-card-title';
+            plCardTitle.textContent = pl.name;
+
+            const plMeta = document.createElement('div');
+            plMeta.className = 'saved-playlist-card-meta';
+            plMeta.textContent = `${pl.track_count}곡 · ${new Date(pl.created_at).toLocaleDateString('ko-KR')}`;
+
+            const coverRow = document.createElement('div');
+            coverRow.className = 'saved-playlist-cover-row';
+            (pl.tracks_preview || []).forEach(t => {
+                const img = document.createElement('img');
+                img.src = t.cover_image_url || '';
+                img.alt = t.title || '';
+                coverRow.appendChild(img);
+            });
+
+            plCard.appendChild(plCardTitle);
+            plCard.appendChild(plMeta);
+            plCard.appendChild(coverRow);
+
+            plCard.onclick = () => openSavedPlaylist(pl.id);
+            plSection.appendChild(plCard);
+        });
+
+        list.appendChild(plSection);
+    }
+
+    // 찜한 곡 섹션
     if (!favorites || favorites.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'favorites-empty';
+        empty.style.paddingTop = savedPlaylists.length > 0 ? '10px' : '40px';
+        empty.textContent = '찜한 곡이 없습니다.';
+        list.appendChild(empty);
         list.className = 'favorites-list';
-        list.innerHTML = '<div class="favorites-empty">찜한 곡이 없습니다.</div>';
         return;
     }
 
     setCurrentCandidates(favorites);
     list.className = `favorites-list ${recommendationViewMode === 'list' ? 'track-list compact-track-list' : ''}`;
-    list.innerHTML = '';
 
     favorites.forEach(fav => {
         const track = {
@@ -129,8 +178,23 @@ function renderFavorites(favorites) {
     });
 }
 
+function openSavedPlaylist(playlistId) {
+    const playlists = getSavedPlaylists();
+    const pl = playlists.find(p => p.id === playlistId);
+    if (!pl) return;
+
+    pb.state = 'finished';
+    pb.completedPlaylist = pl.tracks || [];
+    pb.selectedTracks = [];
+    pb.userName = '';
+    pb.timeOfDay = '';
+
+    switchTab('home');
+}
+
 // ===== Home Feed =====
 async function loadHomeFeed() {
+    renderPlaylistBuilder();
     const list = document.getElementById('homeFeedList');
     list.innerHTML = '<div class="favorites-empty">불러오는 중...</div>';
 
@@ -374,6 +438,7 @@ function setRecommendationViewMode(mode) {
     if (isVisible('favoritesView')) {
         renderFavorites(lastFavorites);
     } else if (isVisible('homeFeedView')) {
+        renderPlaylistBuilder();
         renderHomeFeeds(lastHomeFeeds);
     } else if (lastRecommendationTracks.length > 0) {
         updateTrackDisplayOnly(lastRecommendationTracks, lastRecommendationIndex);
@@ -561,6 +626,389 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+// ===== Playlist Builder =====
+
+const pb = {
+    state: 'idle',          // idle | selecting | finished
+    keyword: '',
+    userName: '',
+    timeOfDay: '',
+    keywordPoolKeys: [],    // 100곡 pool track_key
+    selectedTracks: [],     // 유저가 선택한 곡들 (최대 6)
+    currentCandidates: [],  // 현재 그리드에 표시 중인 12곡
+    seenTrackKeys: new Set(), // 지금까지 보여준 모든 곡 key
+    completedPlaylist: null,  // 완성 후 12곡 전체
+    savedPlaylistId: null,
+};
+
+function getPbSection() {
+    return document.getElementById('playlistBuilderSection');
+}
+
+function renderPlaylistBuilderIdle() {
+    const section = getPbSection();
+    section.innerHTML = '';
+
+    const card = document.createElement('div');
+    card.className = 'home-feed-card playlist-builder-card';
+
+    const header = document.createElement('div');
+    header.className = 'playlist-builder-header';
+
+    const titleWrap = document.createElement('div');
+    const title = document.createElement('h3');
+    title.className = 'playlist-builder-title';
+    const name = currentUser?.display_name || currentUser?.email?.split('@')[0] || '';
+    title.textContent = `${name}님을 위한 여름 플레이리스트 만들기`;
+    const sub = document.createElement('p');
+    sub.className = 'playlist-builder-subtitle';
+    sub.textContent = '현재 시간대에 맞는 여름 감성 플레이리스트를 만들어드려요.';
+    titleWrap.appendChild(title);
+    titleWrap.appendChild(sub);
+
+    const startBtn = document.createElement('button');
+    startBtn.className = 'playlist-builder-start-btn';
+    startBtn.textContent = '시작하기';
+    startBtn.onclick = startPlaylistBuilder;
+
+    header.appendChild(titleWrap);
+    header.appendChild(startBtn);
+    card.appendChild(header);
+    section.appendChild(card);
+}
+
+async function startPlaylistBuilder() {
+    const section = getPbSection();
+
+    // 로딩 표시
+    section.innerHTML = '';
+    const card = document.createElement('div');
+    card.className = 'home-feed-card playlist-builder-card';
+    card.innerHTML = `<div class="favorites-empty" style="padding:20px 0">후보 곡을 찾고 있어요...</div>`;
+    section.appendChild(card);
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/playlist-builder/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        });
+        if (!res.ok) throw new Error('start failed');
+        const data = await res.json();
+
+        pb.state = 'selecting';
+        pb.keyword = data.keyword;
+        pb.userName = data.user_name;
+        pb.timeOfDay = data.time_of_day;
+        pb.keywordPoolKeys = data.keyword_pool_keys || [];
+        pb.selectedTracks = [];
+        pb.currentCandidates = data.candidates || [];
+        pb.seenTrackKeys = new Set(pb.currentCandidates.map(c => c.track_key));
+        pb.completedPlaylist = null;
+        pb.savedPlaylistId = null;
+
+        renderPlaylistBuilderSelecting();
+    } catch (e) {
+        console.error('Playlist builder start error:', e);
+        section.innerHTML = '';
+        renderPlaylistBuilderIdle();
+    }
+}
+
+function renderPlaylistBuilderSelecting() {
+    const section = getPbSection();
+    section.innerHTML = '';
+
+    const card = document.createElement('div');
+    card.className = 'home-feed-card playlist-builder-card';
+
+    // 헤더
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'playlist-builder-header';
+
+    const titleEl = document.createElement('h3');
+    titleEl.className = 'playlist-builder-title';
+    titleEl.textContent = `${pb.userName}님의 여름 ${pb.timeOfDay} 플레이리스트 만들기`;
+
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'playlist-builder-start-btn';
+    resetBtn.style.background = 'rgba(255,255,255,0.1)';
+    resetBtn.style.boxShadow = 'none';
+    resetBtn.textContent = '처음부터';
+    resetBtn.onclick = () => {
+        pb.state = 'idle';
+        renderPlaylistBuilderIdle();
+    };
+
+    headerDiv.appendChild(titleEl);
+    headerDiv.appendChild(resetBtn);
+    card.appendChild(headerDiv);
+
+    const body = document.createElement('div');
+    body.className = 'playlist-builder-body';
+
+    // 안내 텍스트
+    const guide = document.createElement('div');
+    guide.className = 'playlist-builder-guide';
+    if (pb.selectedTracks.length === 0) {
+        guide.textContent = '앨범 커버를 클릭하세요. (6/6)';
+    } else if (pb.selectedTracks.length < 6) {
+        guide.textContent = `다음 곡을 선택하세요. (${pb.selectedTracks.length}/6)`;
+    }
+    body.appendChild(guide);
+
+    // 선택된 곡들 (위 행)
+    if (pb.selectedTracks.length > 0) {
+        const selectedRow = document.createElement('div');
+        selectedRow.className = 'playlist-builder-selected-row';
+
+        pb.selectedTracks.forEach((track, idx) => {
+            const item = document.createElement('div');
+            item.className = 'pb-selected-item';
+
+            const img = document.createElement('img');
+            img.src = track.cover_image_url || '';
+            img.alt = track.track_name || track.title || '';
+
+            const num = document.createElement('div');
+            num.className = 'pb-selected-item-num';
+            num.textContent = `${idx + 1}`;
+
+            item.appendChild(img);
+            item.appendChild(num);
+            selectedRow.appendChild(item);
+        });
+
+        body.appendChild(selectedRow);
+    }
+
+    // 후보 그리드 (12곡, 6x2)
+    const grid = document.createElement('div');
+    grid.className = `playlist-builder-grid ${recommendationViewMode === 'list' ? 'compact-track-list' : ''}`;
+
+    pb.currentCandidates.forEach(track => {
+        const normalizedTrack = {
+            track_key: track.track_key,
+            track: track.track_name || track.title,
+            title: track.track_name || track.title,
+            artist: track.artist,
+            album: track.album,
+            cover_image_url: track.cover_image_url,
+            playlist_count: track.playlist_count,
+        };
+
+        const trackDiv = createTrackCard(normalizedTrack, false, () => {
+            onPbTrackSelect(normalizedTrack);
+        }, {});
+
+        grid.appendChild(trackDiv);
+    });
+
+    body.appendChild(grid);
+    card.appendChild(body);
+    section.appendChild(card);
+}
+
+async function onPbTrackSelect(track) {
+    pb.selectedTracks.push(track);
+
+    // 6곡 완성
+    if (pb.selectedTracks.length >= 6) {
+        await finishPlaylistBuilder();
+        return;
+    }
+
+    // 다음 후보 로드
+    const section = getPbSection();
+    const card = section.querySelector('.playlist-builder-card');
+    if (card) {
+        const body = card.querySelector('.playlist-builder-body');
+        if (body) {
+            const guide = body.querySelector('.playlist-builder-guide');
+            if (guide) {
+                guide.textContent = '다음 후보를 찾고 있어요...';
+                guide.style.animation = 'blink 1s ease-in-out infinite';
+            }
+        }
+    }
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/playlist-builder/next`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify({
+                selected_track_key: track.track_key,
+                keyword_track_keys: pb.keywordPoolKeys,
+                seen_track_keys: Array.from(pb.seenTrackKeys),
+                step: pb.selectedTracks.length,
+                keyword: pb.keyword,
+            }),
+        });
+        if (!res.ok) throw new Error('next failed');
+        const data = await res.json();
+
+        pb.currentCandidates = data.candidates || [];
+        pb.currentCandidates.forEach(c => pb.seenTrackKeys.add(c.track_key));
+
+        renderPlaylistBuilderSelecting();
+    } catch (e) {
+        console.error('Playlist builder next error:', e);
+        renderPlaylistBuilderSelecting();
+    }
+}
+
+async function finishPlaylistBuilder() {
+    const section = getPbSection();
+    section.innerHTML = '';
+    const card = document.createElement('div');
+    card.className = 'home-feed-card playlist-builder-card';
+    card.innerHTML = `<div class="favorites-empty" style="padding:20px 0">플레이리스트를 완성하고 있어요...</div>`;
+    section.appendChild(card);
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/playlist-builder/finish`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify({
+                selected_track_keys: pb.selectedTracks.map(t => t.track_key),
+            }),
+        });
+        if (!res.ok) throw new Error('finish failed');
+        const data = await res.json();
+
+        pb.state = 'finished';
+        pb.completedPlaylist = data.playlist || [];
+        const chosenKeys = new Set(pb.selectedTracks.map(t => t.track_key));
+
+        renderPlaylistBuilderResult(chosenKeys);
+    } catch (e) {
+        console.error('Playlist builder finish error:', e);
+        pb.state = 'idle';
+        renderPlaylistBuilderIdle();
+    }
+}
+
+function renderPlaylistBuilderResult(chosenKeys) {
+    const section = getPbSection();
+    section.innerHTML = '';
+
+    const card = document.createElement('div');
+    card.className = 'home-feed-card playlist-builder-card';
+
+    // 헤더
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'playlist-builder-header';
+
+    const titleEl = document.createElement('h3');
+    titleEl.className = 'playlist-builder-title';
+    titleEl.textContent = `${pb.userName}님의 여름 ${pb.timeOfDay} 플레이리스트`;
+
+    const restartBtn = document.createElement('button');
+    restartBtn.className = 'playlist-builder-start-btn';
+    restartBtn.style.background = 'rgba(255,255,255,0.1)';
+    restartBtn.style.boxShadow = 'none';
+    restartBtn.textContent = '다시 만들기';
+    restartBtn.onclick = () => {
+        pb.state = 'idle';
+        renderPlaylistBuilderIdle();
+    };
+
+    headerDiv.appendChild(titleEl);
+    headerDiv.appendChild(restartBtn);
+    card.appendChild(headerDiv);
+
+    const body = document.createElement('div');
+    body.className = 'playlist-builder-body';
+
+    // 결과 그리드 (12곡)
+    const grid = document.createElement('div');
+    grid.className = `playlist-builder-result-grid ${recommendationViewMode === 'list' ? 'compact-track-list' : ''}`;
+
+    const playlistTrackKeys = (pb.completedPlaylist || []).map(t => t.track_key);
+
+    (pb.completedPlaylist || []).forEach(track => {
+        const normalizedTrack = {
+            track_key: track.track_key,
+            track: track.track_name || track.title,
+            title: track.track_name || track.title,
+            artist: track.artist,
+            album: track.album,
+            cover_image_url: track.cover_image_url,
+            playlist_count: track.playlist_count,
+        };
+
+        const isChosen = chosenKeys && chosenKeys.has(track.track_key);
+        const trackDiv = createTrackCard(normalizedTrack, false, () => {
+            switchTab('search');
+            selectTrack(normalizedTrack);
+        }, { candidateKeys: playlistTrackKeys });
+
+        if (isChosen) {
+            trackDiv.classList.add('pb-chosen');
+        }
+
+        grid.appendChild(trackDiv);
+    });
+
+    body.appendChild(grid);
+
+    // 저장 버튼
+    const saveRow = document.createElement('div');
+    saveRow.className = 'playlist-builder-save-row';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'playlist-builder-save-btn';
+    saveBtn.textContent = '저장하기';
+    saveBtn.onclick = () => savePlaylist(saveBtn);
+
+    saveRow.appendChild(saveBtn);
+    body.appendChild(saveRow);
+
+    card.appendChild(body);
+    section.appendChild(card);
+}
+
+function savePlaylist(btn) {
+    if (pb.savedPlaylistId) return;
+
+    const name = `${pb.userName}님의 여름 ${pb.timeOfDay} 플레이리스트`;
+    const userId = currentUser?.user_id || currentUser?.id || 'unknown';
+    const key = `dynplayer_playlists_${userId}`;
+
+    const existing = JSON.parse(localStorage.getItem(key) || '[]');
+    const newPlaylist = {
+        id: Date.now(),
+        name,
+        tracks: pb.completedPlaylist || [],
+        created_at: new Date().toISOString(),
+    };
+    existing.unshift(newPlaylist);
+    localStorage.setItem(key, JSON.stringify(existing));
+
+    pb.savedPlaylistId = newPlaylist.id;
+    btn.disabled = true;
+    btn.textContent = '저장됨 ♥';
+    btn.style.background = 'rgba(255, 107, 129, 0.5)';
+}
+
+function getSavedPlaylists() {
+    const userId = currentUser?.user_id || currentUser?.id || 'unknown';
+    const key = `dynplayer_playlists_${userId}`;
+    return JSON.parse(localStorage.getItem(key) || '[]');
+}
+
+function renderPlaylistBuilder() {
+    if (!currentUser) return;
+
+    if (pb.state === 'finished' && pb.completedPlaylist) {
+        const chosenKeys = new Set(pb.selectedTracks.map(t => t.track_key));
+        renderPlaylistBuilderResult(chosenKeys);
+    } else if (pb.state === 'selecting') {
+        renderPlaylistBuilderSelecting();
+    } else {
+        renderPlaylistBuilderIdle();
+    }
+}
 
 // ===== Initialization =====
 createStars();
