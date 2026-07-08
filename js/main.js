@@ -759,6 +759,20 @@ function renderPlaylistBuilderSelecting() {
     titleEl.className = 'playlist-builder-title';
     titleEl.textContent = `${pb.userName}님의 ${pb.season || '여름'} ${pb.timeOfDay} 플레이리스트 만들기`;
 
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;gap:8px;align-items:center;';
+
+    // 새로고침 버튼 (선택 단계에서만)
+    if (pb.selectedTracks.length > 0 && pb.selectedTracks.length < 6) {
+        const refreshBtn = document.createElement('button');
+        refreshBtn.className = 'playlist-builder-start-btn';
+        refreshBtn.style.cssText = 'background:rgba(255,255,255,0.1);box-shadow:none;font-size:16px;padding:6px 10px;';
+        refreshBtn.textContent = '↺';
+        refreshBtn.title = '후보 새로고침';
+        refreshBtn.onclick = refreshPbCandidates;
+        btnRow.appendChild(refreshBtn);
+    }
+
     const resetBtn = document.createElement('button');
     resetBtn.className = 'playlist-builder-start-btn';
     resetBtn.style.background = 'rgba(255,255,255,0.1)';
@@ -769,9 +783,10 @@ function renderPlaylistBuilderSelecting() {
         pb.prefetchPromise = null;
         startPlaylistBuilder();
     };
+    btnRow.appendChild(resetBtn);
 
     headerDiv.appendChild(titleEl);
-    headerDiv.appendChild(resetBtn);
+    headerDiv.appendChild(btnRow);
     card.appendChild(headerDiv);
 
     const body = document.createElement('div');
@@ -847,6 +862,46 @@ function renderPlaylistBuilderSelecting() {
     body.appendChild(grid);
     card.appendChild(body);
     section.appendChild(card);
+}
+
+async function refreshPbCandidates() {
+    // 현재 후보 12곡을 seen 맨 끝으로 (패널티 유지, 재등장 가능하되 후순위)
+    pb.currentCandidates.forEach(c => pb.seenTrackKeys.add(c.track_key));
+
+    const lastSelected = pb.selectedTracks[pb.selectedTracks.length - 1];
+
+    // 로딩 표시
+    const section = getPbSection();
+    const guide = section.querySelector('.playlist-builder-guide');
+    if (guide) {
+        guide.textContent = '다른 후보를 찾고 있어요...';
+    }
+    const grid = section.querySelector('.playlist-builder-grid');
+    if (grid) grid.style.opacity = '0.3';
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/playlist-builder/next`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify({
+                selected_track_key: lastSelected.track_key,
+                keyword_track_keys: pb.keywordPoolKeys,
+                seen_track_keys: Array.from(pb.seenTrackKeys),
+                step: pb.selectedTracks.length,
+                keyword: pb.keyword,
+            }),
+        });
+        if (!res.ok) throw new Error('refresh failed');
+        const data = await res.json();
+
+        pb.currentCandidates = data.candidates || [];
+        pb.currentCandidates.forEach(c => pb.seenTrackKeys.add(c.track_key));
+
+        renderPlaylistBuilderSelecting();
+    } catch (e) {
+        console.error('Playlist builder refresh error:', e);
+        if (grid) grid.style.opacity = '1';
+    }
 }
 
 async function onPbTrackSelect(track) {
