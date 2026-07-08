@@ -42,7 +42,11 @@ function switchTab(tab) {
         trackInfo.classList.remove('hidden');
     } else if (tab === 'favorites') {
         favoritesView.classList.remove('hidden');
-        loadFavorites();
+        if (lastFavorites.length > 0) {
+            renderFavorites(lastFavorites, getSavedPlaylists());
+        } else {
+            loadFavorites();
+        }
     } else if (tab === 'home') {
         homeFeedView.classList.remove('hidden');
         renderPlaylistBuilder();
@@ -306,6 +310,7 @@ async function toggleFavorite(track, btn) {
             if (res.ok) {
                 btn.classList.remove('favorited');
                 btn.innerHTML = '&#9825;';
+                lastFavorites = lastFavorites.filter(f => f.track_key !== track.track_key);
                 logAction('favorite', { selected_track_key: track.track_key, candidate_track_keys: currentCandidateKeys, extra: 'remove' });
             }
         } else {
@@ -320,6 +325,15 @@ async function toggleFavorite(track, btn) {
                 btn.classList.remove('pop');
                 void btn.offsetWidth;
                 btn.classList.add('pop');
+                // 캐시에 추가 (다음 탭 진입 시 재요청 없이 바로 반영)
+                lastFavorites = [{
+                    track_key: track.track_key,
+                    title: track.track || track.title,
+                    artist: track.artist,
+                    album: track.album,
+                    cover_image_url: track.cover_image_url,
+                    playlist_count: track.playlist_count,
+                }, ...lastFavorites];
                 logAction('favorite', { selected_track_key: track.track_key, candidate_track_keys: currentCandidateKeys, extra: 'add' });
             }
         }
