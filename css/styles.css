@@ -180,8 +180,9 @@ body {
 .favorites-list {
     overflow-y: auto;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 25px;
+    grid-template-columns: repeat(6, auto);
+    justify-content: center;
+    gap: 16px 24px;
     padding: 10px 0;
     width: 100%
 }
@@ -189,6 +190,23 @@ body {
 .favorites-list .track-item {
     opacity: 1;
     animation: none
+}
+
+.favorites-list:not(.compact-track-list) .track-item img {
+    width: 100px;
+    height: 100px
+}
+
+.favorites-list:not(.compact-track-list) .track-item-info {
+    width: 100px
+}
+
+.favorites-list:not(.compact-track-list) .track-item-title {
+    font-size: 11px
+}
+
+.favorites-list:not(.compact-track-list) .track-item-artist {
+    font-size: 10px
 }
 
 /* ===== Home Feed ===== */
@@ -482,6 +500,20 @@ body {
 }
 
 /* 저장된 플레이리스트 (찜 탭) */
+.fav-playlists-section {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+}
+
+.fav-playlists-section .home-feed-card {
+    width: 100%;
+    box-sizing: border-box;
+}
+
 .saved-playlist-card {
     background: rgba(255, 255, 255, .06);
     backdrop-filter: blur(10px);

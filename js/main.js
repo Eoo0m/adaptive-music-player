@@ -89,64 +89,76 @@ async function loadFavorites() {
 }
 
 function renderFavorites(favorites, savedPlaylists = []) {
-    const list = document.getElementById('favoritesList');
-    list.innerHTML = '';
+    const container = document.getElementById('favoritesView');
+    // 기존 동적으로 추가된 플레이리스트 섹션 제거
+    const existing = container.querySelector('.fav-playlists-section');
+    if (existing) existing.remove();
 
-    // 저장된 플레이리스트 섹션
+    // 저장된 플레이리스트 → fav-songs-card 위에 별도 카드로 삽입
     if (savedPlaylists.length > 0) {
         const plSection = document.createElement('div');
-        plSection.style.width = '100%';
-        plSection.style.marginBottom = '16px';
-
-        const plTitle = document.createElement('div');
-        plTitle.style.cssText = 'font-size:13px;font-weight:700;color:rgba(255,255,255,.8);margin-bottom:8px;';
-        plTitle.textContent = '저장된 플레이리스트';
-        plSection.appendChild(plTitle);
+        plSection.className = 'fav-playlists-section';
 
         savedPlaylists.forEach(pl => {
-            const plCard = document.createElement('div');
-            plCard.className = 'saved-playlist-card';
+            const card = document.createElement('div');
+            card.className = 'home-feed-card';
 
-            const plCardTitle = document.createElement('div');
-            plCardTitle.className = 'saved-playlist-card-title';
-            plCardTitle.textContent = pl.name;
+            const titleRow = document.createElement('div');
+            titleRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;';
 
-            const plMeta = document.createElement('div');
-            plMeta.className = 'saved-playlist-card-meta';
-            plMeta.textContent = `${pl.track_count}곡 · ${new Date(pl.created_at).toLocaleDateString('ko-KR')}`;
+            const titleEl = document.createElement('h3');
+            titleEl.className = 'home-feed-card-title';
+            titleEl.style.margin = '0';
+            titleEl.textContent = pl.name;
 
-            const coverRow = document.createElement('div');
-            coverRow.className = 'saved-playlist-cover-row';
-            (pl.tracks_preview || []).forEach(t => {
-                const img = document.createElement('img');
-                img.src = t.cover_image_url || '';
-                img.alt = t.title || '';
-                coverRow.appendChild(img);
+            titleRow.appendChild(titleEl);
+            card.appendChild(titleRow);
+
+            // 12곡 그리드 (모두 초록 테두리)
+            const grid = document.createElement('div');
+            grid.className = `home-feed-grid ${recommendationViewMode === 'list' ? 'compact-track-list' : ''}`;
+
+            (pl.tracks || []).forEach(t => {
+                const track = {
+                    track_key: t.track_key,
+                    track: t.track_name || t.title,
+                    title: t.track_name || t.title,
+                    artist: t.artist,
+                    album: t.album,
+                    cover_image_url: t.cover_image_url,
+                    playlist_count: t.playlist_count,
+                };
+                const trackDiv = createTrackCard(track, false, () => {
+                    switchTab('search');
+                    selectTrack(track);
+                }, { candidateKeys: (pl.tracks || []).map(x => x.track_key) });
+
+                // 모두 초록 테두리
+                trackDiv.classList.add('pb-chosen');
+                grid.appendChild(trackDiv);
             });
 
-            plCard.appendChild(plCardTitle);
-            plCard.appendChild(plMeta);
-            plCard.appendChild(coverRow);
-
-            plCard.onclick = () => openSavedPlaylist(pl.id);
-            plSection.appendChild(plCard);
+            card.appendChild(grid);
+            plSection.appendChild(card);
         });
 
-        list.appendChild(plSection);
+        // fav-songs-card 앞에 삽입
+        const songCard = container.querySelector('.fav-songs-card');
+        container.insertBefore(plSection, songCard);
     }
 
     // 찜한 곡 섹션
+    const list = document.getElementById('favoritesList');
+    list.innerHTML = '';
+
     if (!favorites || favorites.length === 0) {
-        const empty = document.createElement('div');
-        empty.className = 'favorites-empty';
-        empty.style.paddingTop = savedPlaylists.length > 0 ? '10px' : '40px';
-        empty.textContent = '찜한 곡이 없습니다.';
-        list.appendChild(empty);
         list.className = 'favorites-list';
+        list.innerHTML = '<div class="favorites-empty">찜한 곡이 없습니다.</div>';
         return;
     }
 
     setCurrentCandidates(favorites);
+    // 항상 6열 그리드 (home-feed-grid 스타일 사용)
     list.className = `favorites-list ${recommendationViewMode === 'list' ? 'track-list compact-track-list' : ''}`;
 
     favorites.forEach(fav => {
