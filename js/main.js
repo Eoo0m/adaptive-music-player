@@ -45,7 +45,11 @@ function switchTab(tab) {
         loadFavorites();
     } else if (tab === 'home') {
         homeFeedView.classList.remove('hidden');
-        loadHomeFeed();
+        if (lastHomeFeeds.length > 0) {
+            renderHomeFeeds(lastHomeFeeds);
+        } else {
+            loadHomeFeed();
+        }
     }
 }
 
@@ -571,6 +575,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('initialSongInput').classList.remove('hidden');
         document.getElementById('sideTab').classList.remove('hidden');
         document.getElementById('layoutToggle').classList.remove('hidden');
+        loadHomeFeed(); // 백그라운드에서 홈 피드 미리 로드
     } else {
         // 비로그인 → 로그인 선택 화면 표시
         document.getElementById('loginScreen').classList.remove('hidden');
