@@ -133,7 +133,9 @@ function renderFavorites(favorites, savedPlaylists = []) {
 
             // 12곡 그리드
             const grid = document.createElement('div');
-            grid.className = `home-feed-grid ${recommendationViewMode === 'list' ? 'compact-track-list' : ''}`;
+            grid.className = recommendationViewMode === 'list'
+                ? 'home-feed-grid track-list compact-track-list'
+                : 'home-feed-grid';
             grid.style.marginTop = '10px';
 
             (pl.tracks || []).forEach(t => {
