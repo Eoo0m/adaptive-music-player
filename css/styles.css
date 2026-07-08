@@ -438,29 +438,19 @@ body {
     transform: none !important;
 }
 
-/* 나열형 — 전역 slideIn/slideInFromRight override */
-.track-list .track-item { animation-name: listItemIn; }
+/* 나열형 — 아이템 개별 애니메이션 제거, 컨테이너 단위로 처리 */
+.track-list .track-item {
+    animation: none;
+    opacity: 1;
+}
 
-/* 나열형 애니메이션 delay — 순차적으로 간결하게 */
-.track-list .track-item:nth-child(1)  { animation-delay: 0s; }
-.track-list .track-item:nth-child(2)  { animation-delay: 0.04s; }
-.track-list .track-item:nth-child(3)  { animation-delay: 0.08s; }
-.track-list .track-item:nth-child(4)  { animation-delay: 0.12s; }
-.track-list .track-item:nth-child(5)  { animation-delay: 0.16s; }
-.track-list .track-item:nth-child(6)  { animation-delay: 0.20s; }
-.track-list .track-item:nth-child(7)  { animation-delay: 0.24s; }
-.track-list .track-item:nth-child(8)  { animation-delay: 0.28s; }
-.track-list .track-item:nth-child(9)  { animation-delay: 0.32s; }
-.track-list .track-item:nth-child(10) { animation-delay: 0.36s; }
-.track-list .track-item:nth-child(11) { animation-delay: 0.40s; }
-.track-list .track-item:nth-child(12) { animation-delay: 0.44s; }
-.track-list .track-item:nth-child(13) { animation-delay: 0.48s; }
-.track-list .track-item:nth-child(14) { animation-delay: 0.52s; }
-.track-list .track-item:nth-child(15) { animation-delay: 0.56s; }
+.track-grid.track-list {
+    animation: listFadeIn 0.18s ease forwards;
+}
 
-@keyframes listItemIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
+@keyframes listFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 
 .track-list .track-item-info {
