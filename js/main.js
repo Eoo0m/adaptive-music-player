@@ -99,24 +99,30 @@ function renderFavorites(favorites, savedPlaylists = []) {
         const plSection = document.createElement('div');
         plSection.className = 'fav-playlists-section';
 
-        savedPlaylists.forEach(pl => {
+        savedPlaylists.forEach((pl, idx) => {
             const card = document.createElement('div');
             card.className = 'home-feed-card';
 
             const titleRow = document.createElement('div');
-            titleRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;';
+            titleRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:0;cursor:pointer;';
 
             const titleEl = document.createElement('h3');
             titleEl.className = 'home-feed-card-title';
             titleEl.style.margin = '0';
             titleEl.textContent = pl.name;
 
+            const toggleBtn = document.createElement('button');
+            toggleBtn.style.cssText = 'background:none;border:none;color:rgba(255,255,255,.5);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;';
+            toggleBtn.textContent = '▲';
+
             titleRow.appendChild(titleEl);
+            titleRow.appendChild(toggleBtn);
             card.appendChild(titleRow);
 
-            // 12곡 그리드 (모두 초록 테두리)
+            // 12곡 그리드
             const grid = document.createElement('div');
             grid.className = `home-feed-grid ${recommendationViewMode === 'list' ? 'compact-track-list' : ''}`;
+            grid.style.marginTop = '10px';
 
             (pl.tracks || []).forEach(t => {
                 const track = {
@@ -133,12 +139,20 @@ function renderFavorites(favorites, savedPlaylists = []) {
                     selectTrack(track);
                 }, { candidateKeys: (pl.tracks || []).map(x => x.track_key) });
 
-                // 모두 초록 테두리
                 trackDiv.classList.add('pb-chosen');
                 grid.appendChild(trackDiv);
             });
 
             card.appendChild(grid);
+
+            // 접기/펼치기
+            titleRow.onclick = () => {
+                const collapsed = grid.style.display === 'none';
+                grid.style.display = collapsed ? '' : 'none';
+                grid.style.marginTop = collapsed ? '10px' : '0';
+                toggleBtn.textContent = collapsed ? '▲' : '▼';
+            };
+
             plSection.appendChild(card);
         });
 
