@@ -911,10 +911,11 @@ async function refreshPbCandidates() {
         let candidates;
 
         if (!lastSelected) {
-            // 아직 아무것도 선택 안 한 경우: /start 재호출로 새 후보 뽑기
+            // 아직 아무것도 선택 안 한 경우: /start 재호출로 새 후보 뽑기 (seen 패널티 포함)
             const res = await fetch(`${API_BASE_URL}/playlist-builder/start`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                body: JSON.stringify({ seen_track_keys: Array.from(pb.seenTrackKeys) }),
             });
             if (!res.ok) throw new Error('refresh failed');
             const data = await res.json();
