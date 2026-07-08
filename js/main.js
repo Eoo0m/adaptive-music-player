@@ -793,12 +793,11 @@ function renderPlaylistBuilderSelecting() {
     const btnRow = document.createElement('div');
     btnRow.style.cssText = 'display:flex;gap:8px;align-items:center;';
 
-    // 새로고침 버튼 (선택 단계에서만)
-    if (pb.selectedTracks.length > 0 && pb.selectedTracks.length < 6) {
+    // 새로고침 버튼 (선택 단계 전체에서 표시)
+    if (pb.selectedTracks.length < 6) {
         const refreshBtn = document.createElement('button');
-        refreshBtn.className = 'playlist-builder-start-btn';
-        refreshBtn.style.cssText = 'background:rgba(255,255,255,0.1);box-shadow:none;font-size:16px;padding:6px 10px;';
-        refreshBtn.textContent = '↺';
+        refreshBtn.className = 'playlist-builder-refresh-btn';
+        refreshBtn.textContent = '↺ 새로고침';
         refreshBtn.title = '후보 새로고침';
         refreshBtn.onclick = refreshPbCandidates;
         btnRow.appendChild(refreshBtn);
@@ -896,7 +895,7 @@ function renderPlaylistBuilderSelecting() {
 }
 
 async function refreshPbCandidates() {
-    // 현재 후보 12곡을 seen 맨 끝으로 (패널티 유지, 재등장 가능하되 후순위)
+    // 현재 후보 12곡을 seen으로 (패널티 유지, 재등장 가능하되 후순위)
     pb.currentCandidates.forEach(c => pb.seenTrackKeys.add(c.track_key));
 
     const lastSelected = pb.selectedTracks[pb.selectedTracks.length - 1];
@@ -904,28 +903,41 @@ async function refreshPbCandidates() {
     // 로딩 표시
     const section = getPbSection();
     const guide = section.querySelector('.playlist-builder-guide');
-    if (guide) {
-        guide.textContent = '다른 후보를 찾고 있어요...';
-    }
+    if (guide) guide.textContent = '다른 후보를 찾고 있어요...';
     const grid = section.querySelector('.playlist-builder-grid');
     if (grid) grid.style.opacity = '0.3';
 
     try {
-        const res = await fetch(`${API_BASE_URL}/playlist-builder/next`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify({
-                selected_track_key: lastSelected.track_key,
-                keyword_track_keys: pb.keywordPoolKeys,
-                seen_track_keys: Array.from(pb.seenTrackKeys),
-                step: pb.selectedTracks.length,
-                keyword: pb.keyword,
-            }),
-        });
-        if (!res.ok) throw new Error('refresh failed');
-        const data = await res.json();
+        let candidates;
 
-        pb.currentCandidates = data.candidates || [];
+        if (!lastSelected) {
+            // 아직 아무것도 선택 안 한 경우: /start 재호출로 새 후보 뽑기
+            const res = await fetch(`${API_BASE_URL}/playlist-builder/start`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            });
+            if (!res.ok) throw new Error('refresh failed');
+            const data = await res.json();
+            // keywordPool은 유지하되 후보만 교체
+            candidates = data.candidates || [];
+        } else {
+            const res = await fetch(`${API_BASE_URL}/playlist-builder/next`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                body: JSON.stringify({
+                    selected_track_key: lastSelected.track_key,
+                    keyword_track_keys: pb.keywordPoolKeys,
+                    seen_track_keys: Array.from(pb.seenTrackKeys),
+                    step: pb.selectedTracks.length,
+                    keyword: pb.keyword,
+                }),
+            });
+            if (!res.ok) throw new Error('refresh failed');
+            const data = await res.json();
+            candidates = data.candidates || [];
+        }
+
+        pb.currentCandidates = candidates;
         pb.currentCandidates.forEach(c => pb.seenTrackKeys.add(c.track_key));
 
         renderPlaylistBuilderSelecting();

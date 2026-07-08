@@ -322,6 +322,26 @@ body {
     box-shadow: 0 5px 16px rgba(29, 185, 84, 0.5);
 }
 
+.playlist-builder-refresh-btn {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all .2s ease;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+}
+
+.playlist-builder-refresh-btn:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
 /* 빌더 진행 중 상태 */
 .playlist-builder-body {
     display: flex;
