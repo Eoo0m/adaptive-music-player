@@ -422,7 +422,8 @@ body {
 }
 
 /* 리스트 모드 후보 */
-.playlist-builder-grid.compact-track-list {
+.playlist-builder-grid.compact-track-list,
+.playlist-builder-result-grid.compact-track-list {
     display: flex;
     flex-direction: column;
     grid-template-columns: none;

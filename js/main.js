@@ -787,7 +787,7 @@ function renderPlaylistBuilderSelecting() {
     }
     body.appendChild(guide);
 
-    // 선택된 곡들 (위 행)
+    // 선택된 곡들 (위 행) — 모드 무관하게 항상 그리드(앨범커버) 표시
     if (pb.selectedTracks.length > 0) {
         const selectedRow = document.createElement('div');
         selectedRow.className = 'playlist-builder-selected-row';
@@ -824,7 +824,7 @@ function renderPlaylistBuilderSelecting() {
 
     // 후보 그리드 (12곡, 6x2)
     const grid = document.createElement('div');
-    grid.className = `playlist-builder-grid ${recommendationViewMode === 'list' ? 'compact-track-list' : ''}`;
+    grid.className = `playlist-builder-grid ${recommendationViewMode === 'list' ? 'track-list compact-track-list' : ''}`;
 
     pb.currentCandidates.forEach(track => {
         const normalizedTrack = {
@@ -963,7 +963,7 @@ function renderPlaylistBuilderResult(chosenKeys) {
 
     // 결과 그리드 (12곡)
     const grid = document.createElement('div');
-    grid.className = `playlist-builder-result-grid ${recommendationViewMode === 'list' ? 'compact-track-list' : ''}`;
+    grid.className = `playlist-builder-result-grid ${recommendationViewMode === 'list' ? 'track-list compact-track-list' : ''}`;
 
     const playlistTrackKeys = (pb.completedPlaylist || []).map(t => t.track_key);
 
