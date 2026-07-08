@@ -693,6 +693,7 @@ const pb = {
     timeOfDay: '',
     season: '여름',
     keywordPoolKeys: [],    // 100곡 pool track_key
+    keywordPoolData: [],    // 100곡 pool 전체 데이터 (새로고침용)
     selectedTracks: [],     // 유저가 선택한 곡들 (최대 6)
     currentCandidates: [],  // 현재 그리드에 표시 중인 12곡
     seenTrackKeys: new Set(), // 지금까지 보여준 모든 곡 key
@@ -760,6 +761,7 @@ async function startPlaylistBuilder() {
         pb.timeOfDay = data.time_of_day;
         pb.season = data.season || '여름';
         pb.keywordPoolKeys = data.keyword_pool_keys || [];
+        pb.keywordPoolData = data.keyword_pool_data || [];
         pb.selectedTracks = [];
         pb.currentCandidates = data.candidates || [];
         pb.seenTrackKeys = new Set(pb.currentCandidates.map(c => c.track_key));
@@ -895,52 +897,50 @@ function renderPlaylistBuilderSelecting() {
 }
 
 async function refreshPbCandidates() {
-    // 현재 후보 12곡을 seen으로 (패널티 유지, 재등장 가능하되 후순위)
+    // 현재 후보 12곡을 seen에 추가 (다시 뽑히지 않도록)
     pb.currentCandidates.forEach(c => pb.seenTrackKeys.add(c.track_key));
 
-    const lastSelected = pb.selectedTracks[pb.selectedTracks.length - 1];
-
-    // 로딩 표시
     const section = getPbSection();
     const guide = section.querySelector('.playlist-builder-guide');
     if (guide) guide.textContent = '다른 후보를 찾고 있어요...';
     const grid = section.querySelector('.playlist-builder-grid');
     if (grid) grid.style.opacity = '0.3';
 
-    try {
-        let candidates;
+    const lastSelected = pb.selectedTracks[pb.selectedTracks.length - 1];
 
-        if (!lastSelected) {
-            // 아직 아무것도 선택 안 한 경우: /start 재호출로 새 후보 뽑기 (seen 패널티 포함)
-            const res = await fetch(`${API_BASE_URL}/playlist-builder/start`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-                body: JSON.stringify({ seen_track_keys: Array.from(pb.seenTrackKeys) }),
-            });
-            if (!res.ok) throw new Error('refresh failed');
-            const data = await res.json();
-            // keywordPool은 유지하되 후보만 교체
-            candidates = data.candidates || [];
-        } else {
-            const res = await fetch(`${API_BASE_URL}/playlist-builder/next`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-                body: JSON.stringify({
-                    selected_track_key: lastSelected.track_key,
-                    keyword_track_keys: pb.keywordPoolKeys,
-                    seen_track_keys: Array.from(pb.seenTrackKeys),
-                    step: pb.selectedTracks.length,
-                    keyword: pb.keyword,
-                }),
-            });
-            if (!res.ok) throw new Error('refresh failed');
-            const data = await res.json();
-            candidates = data.candidates || [];
-        }
+    // 선택이 없는 경우: keywordPoolData에서 unseen 곡을 랜덤 12개 뽑기
+    if (!lastSelected) {
+        const unseen = pb.keywordPoolData.filter(c => !pb.seenTrackKeys.has(c.track_key));
+        // unseen이 12개 미만이면 seen 초기화 후 재시작 (pool 순환)
+        const pool = unseen.length >= 12 ? unseen : pb.keywordPoolData;
+        if (unseen.length < 12) pb.seenTrackKeys = new Set();
 
-        pb.currentCandidates = candidates;
+        // 랜덤 셔플 후 12개
+        const shuffled = pool.slice().sort(() => Math.random() - 0.5);
+        pb.currentCandidates = shuffled.slice(0, 12);
         pb.currentCandidates.forEach(c => pb.seenTrackKeys.add(c.track_key));
+        renderPlaylistBuilderSelecting();
+        return;
+    }
 
+    // 선택이 있는 경우: /next API 호출
+    try {
+        const res = await fetch(`${API_BASE_URL}/playlist-builder/next`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify({
+                selected_track_key: lastSelected.track_key,
+                keyword_track_keys: pb.keywordPoolKeys,
+                seen_track_keys: Array.from(pb.seenTrackKeys),
+                step: pb.selectedTracks.length,
+                keyword: pb.keyword,
+            }),
+        });
+        if (!res.ok) throw new Error('refresh failed');
+        const data = await res.json();
+
+        pb.currentCandidates = data.candidates || [];
+        pb.currentCandidates.forEach(c => pb.seenTrackKeys.add(c.track_key));
         renderPlaylistBuilderSelecting();
     } catch (e) {
         console.error('Playlist builder refresh error:', e);
