@@ -630,76 +630,78 @@ document.addEventListener('DOMContentLoaded', () => {
 // ===== Playlist Builder =====
 
 const pb = {
-    state: 'idle',          // idle | selecting | finished
+    state: 'idle',          // idle | loading | selecting | finished
     keyword: '',
     userName: '',
     timeOfDay: '',
+    season: '여름',
     keywordPoolKeys: [],    // 100곡 pool track_key
     selectedTracks: [],     // 유저가 선택한 곡들 (최대 6)
     currentCandidates: [],  // 현재 그리드에 표시 중인 12곡
     seenTrackKeys: new Set(), // 지금까지 보여준 모든 곡 key
     completedPlaylist: null,  // 완성 후 12곡 전체
     savedPlaylistId: null,
+    prefetchPromise: null,  // 미리 호출한 start API 결과
 };
 
 function getPbSection() {
     return document.getElementById('playlistBuilderSection');
 }
 
-function renderPlaylistBuilderIdle() {
+function renderPlaylistBuilderLoading() {
     const section = getPbSection();
     section.innerHTML = '';
-
     const card = document.createElement('div');
     card.className = 'home-feed-card playlist-builder-card';
-
-    const header = document.createElement('div');
-    header.className = 'playlist-builder-header';
-
-    const titleWrap = document.createElement('div');
-    const title = document.createElement('h3');
-    title.className = 'playlist-builder-title';
     const name = currentUser?.display_name || currentUser?.email?.split('@')[0] || '';
-    title.textContent = `${name}님을 위한 여름 플레이리스트 만들기`;
-    const sub = document.createElement('p');
-    sub.className = 'playlist-builder-subtitle';
-    sub.textContent = '현재 시간대에 맞는 여름 감성 플레이리스트를 만들어드려요.';
-    titleWrap.appendChild(title);
-    titleWrap.appendChild(sub);
-
-    const startBtn = document.createElement('button');
-    startBtn.className = 'playlist-builder-start-btn';
-    startBtn.textContent = '시작하기';
-    startBtn.onclick = startPlaylistBuilder;
-
-    header.appendChild(titleWrap);
-    header.appendChild(startBtn);
-    card.appendChild(header);
+    card.innerHTML = `
+        <div class="playlist-builder-header">
+            <h3 class="playlist-builder-title">${name}님의 여름 플레이리스트 만들기</h3>
+        </div>
+        <div class="favorites-empty" style="padding:16px 0">후보 곡을 찾고 있어요...</div>
+    `;
     section.appendChild(card);
 }
 
-async function startPlaylistBuilder() {
-    const section = getPbSection();
+function prefetchPlaylistBuilder() {
+    if (!currentUser || !authToken) return;
+    if (pb.state !== 'idle') return;
 
-    // 로딩 표시
-    section.innerHTML = '';
-    const card = document.createElement('div');
-    card.className = 'home-feed-card playlist-builder-card';
-    card.innerHTML = `<div class="favorites-empty" style="padding:20px 0">후보 곡을 찾고 있어요...</div>`;
-    section.appendChild(card);
+    pb.prefetchPromise = fetch(`${API_BASE_URL}/playlist-builder/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    }).then(res => {
+        if (!res.ok) throw new Error('start failed');
+        return res.json();
+    }).catch(e => {
+        console.error('Playlist builder prefetch error:', e);
+        pb.prefetchPromise = null;
+        return null;
+    });
+}
+
+async function startPlaylistBuilder() {
+    pb.state = 'loading';
+    renderPlaylistBuilderLoading();
 
     try {
-        const res = await fetch(`${API_BASE_URL}/playlist-builder/start`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        });
-        if (!res.ok) throw new Error('start failed');
-        const data = await res.json();
+        // 미리 호출한 결과가 있으면 재사용, 없으면 새로 호출
+        const data = pb.prefetchPromise
+            ? await pb.prefetchPromise
+            : await fetch(`${API_BASE_URL}/playlist-builder/start`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            }).then(r => { if (!r.ok) throw new Error('start failed'); return r.json(); });
+
+        pb.prefetchPromise = null;
+
+        if (!data) throw new Error('no data');
 
         pb.state = 'selecting';
         pb.keyword = data.keyword;
         pb.userName = data.user_name;
         pb.timeOfDay = data.time_of_day;
+        pb.season = data.season || '여름';
         pb.keywordPoolKeys = data.keyword_pool_keys || [];
         pb.selectedTracks = [];
         pb.currentCandidates = data.candidates || [];
@@ -710,8 +712,9 @@ async function startPlaylistBuilder() {
         renderPlaylistBuilderSelecting();
     } catch (e) {
         console.error('Playlist builder start error:', e);
-        section.innerHTML = '';
-        renderPlaylistBuilderIdle();
+        pb.state = 'idle';
+        pb.prefetchPromise = null;
+        renderPlaylistBuilderLoading();
     }
 }
 
@@ -728,7 +731,7 @@ function renderPlaylistBuilderSelecting() {
 
     const titleEl = document.createElement('h3');
     titleEl.className = 'playlist-builder-title';
-    titleEl.textContent = `${pb.userName}님의 여름 ${pb.timeOfDay} 플레이리스트 만들기`;
+    titleEl.textContent = `${pb.userName}님의 ${pb.season || '여름'} ${pb.timeOfDay} 플레이리스트 만들기`;
 
     const resetBtn = document.createElement('button');
     resetBtn.className = 'playlist-builder-start-btn';
@@ -737,7 +740,8 @@ function renderPlaylistBuilderSelecting() {
     resetBtn.textContent = '처음부터';
     resetBtn.onclick = () => {
         pb.state = 'idle';
-        renderPlaylistBuilderIdle();
+        pb.prefetchPromise = null;
+        startPlaylistBuilder();
     };
 
     headerDiv.appendChild(titleEl);
@@ -901,7 +905,7 @@ function renderPlaylistBuilderResult(chosenKeys) {
 
     const titleEl = document.createElement('h3');
     titleEl.className = 'playlist-builder-title';
-    titleEl.textContent = `${pb.userName}님의 여름 ${pb.timeOfDay} 플레이리스트`;
+    titleEl.textContent = `${pb.userName}님의 ${pb.season || '여름'} ${pb.timeOfDay} 플레이리스트`;
 
     const restartBtn = document.createElement('button');
     restartBtn.className = 'playlist-builder-start-btn';
@@ -910,7 +914,8 @@ function renderPlaylistBuilderResult(chosenKeys) {
     restartBtn.textContent = '다시 만들기';
     restartBtn.onclick = () => {
         pb.state = 'idle';
-        renderPlaylistBuilderIdle();
+        pb.prefetchPromise = null;
+        startPlaylistBuilder();
     };
 
     headerDiv.appendChild(titleEl);
@@ -971,7 +976,7 @@ function renderPlaylistBuilderResult(chosenKeys) {
 function savePlaylist(btn) {
     if (pb.savedPlaylistId) return;
 
-    const name = `${pb.userName}님의 여름 ${pb.timeOfDay} 플레이리스트`;
+    const name = `${pb.userName}님의 ${pb.season || '여름'} ${pb.timeOfDay} 플레이리스트`;
     const userId = currentUser?.user_id || currentUser?.id || 'unknown';
     const key = `dynplayer_playlists_${userId}`;
 
@@ -1005,8 +1010,11 @@ function renderPlaylistBuilder() {
         renderPlaylistBuilderResult(chosenKeys);
     } else if (pb.state === 'selecting') {
         renderPlaylistBuilderSelecting();
+    } else if (pb.state === 'loading') {
+        renderPlaylistBuilderLoading();
     } else {
-        renderPlaylistBuilderIdle();
+        // idle → 바로 시작
+        startPlaylistBuilder();
     }
 }
 
@@ -1024,6 +1032,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('sideTab').classList.remove('hidden');
         document.getElementById('layoutToggle').classList.remove('hidden');
         loadHomeFeed(); // 백그라운드에서 홈 피드 미리 로드
+        prefetchPlaylistBuilder(); // 플레이리스트 빌더 미리 호출
     } else {
         // 비로그인 → 로그인 선택 화면 표시
         document.getElementById('loginScreen').classList.remove('hidden');

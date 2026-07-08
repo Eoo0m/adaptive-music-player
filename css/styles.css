@@ -312,20 +312,20 @@ body {
 }
 
 .playlist-builder-guide {
-    font-size: 12px;
-    color: rgba(255, 255, 255, .6);
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, .8);
     text-align: center;
     animation: blink 2s ease-in-out infinite;
 }
 
 /* 선택된 곡 행 */
 .playlist-builder-selected-row {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-    min-height: 30px;
-    padding-bottom: 6px;
+    display: grid;
+    grid-template-columns: repeat(6, auto);
+    justify-content: start;
+    gap: 12px 18px;
+    padding-bottom: 10px;
     border-bottom: 1px solid rgba(255, 255, 255, .08);
 }
 
@@ -337,7 +337,7 @@ body {
     gap: 12px 18px;
 }
 
-/* 선택된 곡 미니 카드 */
+/* 선택된 곡 카드 (후보와 동일 크기) */
 .pb-selected-item {
     display: flex;
     flex-direction: column;
@@ -347,16 +347,16 @@ body {
 }
 
 .pb-selected-item img {
-    width: 52px;
-    height: 52px;
-    border-radius: 6px;
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
     object-fit: cover;
     border: 2px solid #1db954;
-    box-shadow: 0 0 10px rgba(29, 185, 84, 0.5);
+    box-shadow: 0 0 14px rgba(29, 185, 84, 0.55);
 }
 
 .pb-selected-item-num {
-    font-size: 9px;
+    font-size: 10px;
     color: #1db954;
     font-weight: 700;
 }
