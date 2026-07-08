@@ -785,13 +785,23 @@ function renderPlaylistBuilderSelecting() {
             const img = document.createElement('img');
             img.src = track.cover_image_url || '';
             img.alt = track.track_name || track.title || '';
+            img.style.animationDelay = `${idx * 0.2}s`;
 
-            const num = document.createElement('div');
-            num.className = 'pb-selected-item-num';
-            num.textContent = `${idx + 1}`;
+            const info = document.createElement('div');
+            info.className = 'pb-selected-item-info';
 
+            const titleEl = document.createElement('div');
+            titleEl.className = 'pb-selected-item-title';
+            titleEl.textContent = track.track_name || track.title || '';
+
+            const artistEl = document.createElement('div');
+            artistEl.className = 'pb-selected-item-artist';
+            artistEl.textContent = track.artist || '';
+
+            info.appendChild(titleEl);
+            info.appendChild(artistEl);
             item.appendChild(img);
-            item.appendChild(num);
+            item.appendChild(info);
             selectedRow.appendChild(item);
         });
 

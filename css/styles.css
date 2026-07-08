@@ -360,7 +360,6 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
     cursor: default;
 }
 
@@ -370,13 +369,33 @@ body {
     border-radius: 8px;
     object-fit: cover;
     border: 2px solid #1db954;
-    box-shadow: 0 0 14px rgba(29, 185, 84, 0.55);
+    box-shadow: 0 8px 20px rgba(0,0,0,.6), 0 0 14px rgba(29, 185, 84, 0.55);
+    animation: subtleFloat 3s ease-in-out infinite;
 }
 
-.pb-selected-item-num {
-    font-size: 10px;
+.pb-selected-item-info {
+    margin-top: 8px;
+    text-align: center;
+    width: 100px;
+}
+
+.pb-selected-item-title {
+    font-size: 11px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: #1db954;
-    font-weight: 700;
+}
+
+.pb-selected-item-artist {
+    font-size: 10px;
+    opacity: 0.7;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 4px;
+    color: rgba(255,255,255,.7);
 }
 
 /* 후보 트랙 카드 (그리드 내) */
