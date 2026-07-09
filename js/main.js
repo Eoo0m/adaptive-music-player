@@ -1306,7 +1306,7 @@ async function showMusicMap() {
 }
 
 function renderMusicMap(canvas, tracks) {
-    const COVER = 140, GAP = 22, LABEL_H = 34, STEP = COVER + GAP;
+    const COVER = 140, GAP = 22, LABEL_H = 42, STEP = COVER + GAP;
     const VSTEP = COVER + LABEL_H + GAP;
 
     const dpr = window.devicePixelRatio || 1;
@@ -1465,7 +1465,7 @@ function renderMusicMap(canvas, tracks) {
             ctx.restore();
 
             // 텍스트
-            const lblSz = Math.max(9, size * 0.11);
+            const lblSz = Math.max(11, size * 0.14);
             const lblY = sy + half + 5;
             ctx.save();
             ctx.textAlign='center'; ctx.textBaseline='top';
@@ -1474,7 +1474,7 @@ function renderMusicMap(canvas, tracks) {
             ctx.fillText(truncCached(ctx, track.title, size*1.1, track.track_key+'t'), sx, lblY);
             ctx.font=`${lblSz*.85}px -apple-system,sans-serif`;
             ctx.fillStyle=isHov?'rgba(255,255,255,.8)':'rgba(255,255,255,.45)';
-            ctx.fillText(truncCached(ctx, track.artist, size*1.1, track.track_key+'a'), sx, lblY+lblSz+2);
+            ctx.fillText(truncCached(ctx, track.artist, size*1.1, track.track_key+'a'), sx, lblY+lblSz+4);
             ctx.restore();
 
             // 테두리
