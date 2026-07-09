@@ -1190,6 +1190,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ===== Music Map =====
 
+// sessionStorage 캐시 키: 찜 목록 track_key 배열을 join한 문자열 해시
+function mapCacheKey(trackKeys) {
+    return 'mapCache_' + trackKeys.slice().sort().join(',');
+}
+
+function loadMapCache(trackKeys) {
+    try {
+        const key = mapCacheKey(trackKeys);
+        const raw = sessionStorage.getItem(key);
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch(e) { return null; }
+}
+
+function saveMapCache(trackKeys, data) {
+    try {
+        const key = mapCacheKey(trackKeys);
+        sessionStorage.setItem(key, JSON.stringify(data));
+    } catch(e) {}
+}
+
 async function fetchMusicMapData() {
     // 찜 목록 가져오기
     let trackKeys = [];
@@ -1198,7 +1219,6 @@ async function fetchMusicMapData() {
         if (res.ok) {
             const data = await res.json();
             const favs = data.favorites || [];
-            // 최근 20개
             trackKeys = favs.slice(0, 20).map(f => f.track_key);
         }
     } catch(e) {}
@@ -1216,13 +1236,21 @@ async function fetchMusicMapData() {
 
     if (trackKeys.length === 0) return null;
 
+    // sessionStorage 캐시 확인 — 같은 찜 목록이면 UMAP 재계산 없이 바로 반환
+    const cached = loadMapCache(trackKeys);
+    if (cached) { console.log('🗺️ Map cache hit'); return cached; }
+
     const res = await fetch(`${API_BASE_URL}/music-map`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ track_keys: trackKeys, fill_per_seed: 30 })
     });
     if (!res.ok) throw new Error(await res.text());
-    return await res.json();
+    const data = await res.json();
+
+    // 결과를 sessionStorage에 저장
+    saveMapCache(trackKeys, data);
+    return data;
 }
 
 function prefetchMusicMap() {
@@ -1329,9 +1357,26 @@ function renderMusicMap(canvas, tracks) {
         return t+'…';
     }
 
+    // 마우스 엣지 이동
+    let mousePos = { x: -1, y: -1 };
+    newWrap && newWrap.addEventListener
+        ? null : null; // newWrap은 아래에서 교체되므로 loop에서 직접 처리
+
     function loop() {
         // 지도 탭이 닫히면 중단
         if (document.getElementById('mapView').classList.contains('hidden')) return;
+
+        // 엣지 패닝 (마우스가 화면 가장자리 10% 이내일 때)
+        if (!isDragging && mousePos.x >= 0) {
+            const EDGE = 0.1;
+            const SPEED = 8;
+            const w = canvas.width, h = canvas.height;
+            const nx = mousePos.x / w, ny = mousePos.y / h;
+            if (nx < EDGE)       cam.tx += SPEED * (EDGE - nx) / EDGE;
+            else if (nx > 1-EDGE) cam.tx -= SPEED * (nx - (1-EDGE)) / EDGE;
+            if (ny < EDGE)       cam.ty += SPEED * (EDGE - ny) / EDGE;
+            else if (ny > 1-EDGE) cam.ty -= SPEED * (ny - (1-EDGE)) / EDGE;
+        }
 
         cam.x += (cam.tx - cam.x) * 0.1;
         cam.y += (cam.ty - cam.y) * 0.1;
@@ -1432,6 +1477,7 @@ function renderMusicMap(canvas, tracks) {
     });
     window.addEventListener('mousemove', e => {
         if (!document.getElementById('mapView') || document.getElementById('mapView').classList.contains('hidden')) return;
+        mousePos = { x: e.clientX, y: e.clientY };
         if (isDragging) {
             cam.tx=camStart.x+(e.clientX-dragStart.x);
             cam.ty=camStart.y+(e.clientY-dragStart.y);
@@ -1441,6 +1487,7 @@ function renderMusicMap(canvas, tracks) {
         hoveredItem=item;
         newWrap.style.cursor=item?'pointer':'grab';
     });
+    window.addEventListener('mouseleave', () => { mousePos = { x: -1, y: -1 }; });
     window.addEventListener('mouseup', e => {
         const moved=Math.abs(e.clientX-dragStart.x)>4||Math.abs(e.clientY-dragStart.y)>4;
         isDragging=false; newWrap.style.cursor='grab';
@@ -1451,7 +1498,9 @@ function renderMusicMap(canvas, tracks) {
     });
     newWrap.addEventListener('wheel', e => {
         e.preventDefault();
-        const f=e.deltaY<0?1.1:0.91;
+        // 느린 줌: deltaY를 0~1로 clamp 후 소폭 factor
+        const delta = Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY), 100);
+        const f = 1 - delta * 0.0008;
         cam.tx=e.clientX-(e.clientX-cam.tx)*f; cam.ty=e.clientY-(e.clientY-cam.ty)*f;
         cam.x=e.clientX-(e.clientX-cam.x)*f; cam.y=e.clientY-(e.clientY-cam.y)*f;
         cam.scale*=f;
