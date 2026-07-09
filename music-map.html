@@ -717,25 +717,57 @@ function trackAt(mx, my) {
 
 // ── 마우스 이벤트 ──
 const wrap = document.getElementById('canvas-wrap');
+let isDragging = false, dragStart = { x: 0, y: 0 }, camStart = { x: 0, y: 0 };
+
+wrap.addEventListener('mousedown', e => {
+  isDragging = true;
+  dragStart = { x: e.clientX, y: e.clientY };
+  camStart = { x: cam.tx, y: cam.ty };
+  wrap.classList.add('grabbing');
+});
 
 window.addEventListener('mousemove', e => {
   if (!mapData) return;
+  if (isDragging) {
+    cam.tx = camStart.x + (e.clientX - dragStart.x);
+    cam.ty = camStart.y + (e.clientY - dragStart.y);
+    hoveredTrack = null;
+    hideTooltip();
+    wrap.style.cursor = 'grabbing';
+    return;
+  }
   const track = trackAt(e.clientX, e.clientY);
   hoveredTrack = track;
   if (track) showTooltip(track, e.clientX, e.clientY);
   else hideTooltip();
-  wrap.style.cursor = track ? 'pointer' : 'default';
+  wrap.style.cursor = track ? 'pointer' : 'grab';
 });
 
-wrap.addEventListener('click', e => {
-  const track = trackAt(e.clientX, e.clientY);
-  if (track) centerOn(track);
+window.addEventListener('mouseup', e => {
+  const moved = Math.abs(e.clientX - dragStart.x) > 4 || Math.abs(e.clientY - dragStart.y) > 4;
+  isDragging = false;
+  wrap.classList.remove('grabbing');
+  if (!moved) {
+    const track = trackAt(e.clientX, e.clientY);
+    if (track) centerOn(track);
+  }
 });
+
+// 휠 줌
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.1 : 0.91;
+  const mx = e.clientX, my = e.clientY;
+  cam.tx = mx - (mx - cam.tx) * factor;
+  cam.ty = my - (my - cam.ty) * factor;
+  cam.x  = mx - (mx - cam.x)  * factor;
+  cam.y  = my - (my - cam.y)  * factor;
+  cam.scale *= factor;
+}, { passive: false });
 
 function centerOn(track) {
   const item = gridLayout.find(g => g.track === track);
   if (!item) return;
-  // 해당 커버의 배치 좌표(px,py)가 화면 중앙에 오도록 cam.tx/ty 계산
   cam.tx = canvas.width / 2 - item.px * cam.scale;
   cam.ty = canvas.height / 2 - item.py * cam.scale;
 }
@@ -749,21 +781,52 @@ wrap.addEventListener('dblclick', e => {
   }
 });
 
-// 터치 탭 → 커버 클릭
-let touchStartPos = null;
+// 터치 (드래그 + 핀치줌 + 탭)
+let touchStartPos = null, lastTouchDist = null, touchCamStart = { x: 0, y: 0 };
 wrap.addEventListener('touchstart', e => {
-  if (e.touches.length === 1)
+  if (e.touches.length === 1) {
     touchStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    touchCamStart = { x: cam.tx, y: cam.ty };
+    lastTouchDist = null;
+  } else if (e.touches.length === 2) {
+    lastTouchDist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    touchStartPos = null;
+  }
+}, { passive: true });
+wrap.addEventListener('touchmove', e => {
+  if (e.touches.length === 2 && lastTouchDist) {
+    const d = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    const factor = d / lastTouchDist;
+    const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+    const my = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    cam.tx = mx - (mx - cam.tx) * factor;
+    cam.ty = my - (my - cam.ty) * factor;
+    cam.x  = mx - (mx - cam.x)  * factor;
+    cam.y  = my - (my - cam.y)  * factor;
+    cam.scale *= factor;
+    lastTouchDist = d;
+  } else if (e.touches.length === 1 && touchStartPos) {
+    cam.tx = touchCamStart.x + (e.touches[0].clientX - touchStartPos.x);
+    cam.ty = touchCamStart.y + (e.touches[0].clientY - touchStartPos.y);
+  }
 }, { passive: true });
 wrap.addEventListener('touchend', e => {
-  if (!touchStartPos) return;
-  const t = e.changedTouches[0];
-  const dx = t.clientX - touchStartPos.x, dy = t.clientY - touchStartPos.y;
-  if (Math.sqrt(dx*dx + dy*dy) < 10) {
-    const track = trackAt(t.clientX, t.clientY);
-    if (track) centerOn(track);
+  if (touchStartPos) {
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartPos.x, dy = t.clientY - touchStartPos.y;
+    if (Math.sqrt(dx*dx + dy*dy) < 10) {
+      const track = trackAt(t.clientX, t.clientY);
+      if (track) centerOn(track);
+    }
   }
   touchStartPos = null;
+  lastTouchDist = null;
 }, { passive: true });
 
 // ── 뒤로 가기 ──
