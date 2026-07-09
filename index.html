@@ -57,6 +57,19 @@
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
             </svg>
         </button>
+        <button class="side-tab-btn" id="tabMap" onclick="switchTab('map')">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <circle cx="5" cy="6" r="2"/>
+                <circle cx="19" cy="5" r="2"/>
+                <circle cx="6" cy="19" r="2"/>
+                <circle cx="19" cy="18" r="2"/>
+                <line x1="7" y1="7" x2="10" y2="10"/>
+                <line x1="17" y1="7" x2="14" y2="10"/>
+                <line x1="7" y1="18" x2="10" y2="14"/>
+                <line x1="17" y1="17" x2="14" y2="14"/>
+            </svg>
+        </button>
     </nav>
 
     <div class="layout-toggle" id="layoutToggle" aria-label="보기 방식 선택"></div>
@@ -67,6 +80,20 @@
         <div class="playlist-builder-section" id="playlistBuilderSection"></div>
         <!-- 기존 홈 피드 -->
         <div class="home-feed-list" id="homeFeedList"></div>
+    </div>
+
+    <!-- 취향 지도 화면 -->
+    <div class="map-view hidden" id="mapView">
+        <div class="map-canvas-wrap" id="mapCanvasWrap">
+            <canvas id="mapCanvas"></canvas>
+        </div>
+        <div class="map-loading hidden" id="mapLoading">
+            <div class="map-loading-spinner"></div>
+            <p id="mapLoadingMsg">취향 지도를 그리는 중...</p>
+        </div>
+        <div class="map-empty hidden" id="mapEmpty">
+            <p>취향 지도를 불러올 수 없습니다.</p>
+        </div>
     </div>
 
     <!-- 찜 목록 화면 -->

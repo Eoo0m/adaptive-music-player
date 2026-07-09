@@ -18,7 +18,7 @@ function continueAsGuest() {
 
 // ===== Tab Navigation =====
 function switchTab(tab) {
-    if ((tab === 'favorites' || tab === 'home') && !authToken) {
+    if ((tab === 'favorites' || tab === 'home' || tab === 'map') && !authToken) {
         alert('로그인 후 이용할 수 있습니다.');
         return;
     }
@@ -26,15 +26,18 @@ function switchTab(tab) {
     document.getElementById('tabHome').classList.toggle('active', tab === 'home');
     document.getElementById('tabSearch').classList.toggle('active', tab === 'search');
     document.getElementById('tabFavorites').classList.toggle('active', tab === 'favorites');
+    document.getElementById('tabMap').classList.toggle('active', tab === 'map');
 
     const searchInterface = document.getElementById('initialSongInput');
     const favoritesView = document.getElementById('favoritesView');
     const homeFeedView = document.getElementById('homeFeedView');
+    const mapView = document.getElementById('mapView');
     const trackInfo = document.getElementById('trackInfo');
 
     searchInterface.classList.add('hidden');
     favoritesView.classList.add('hidden');
     homeFeedView.classList.add('hidden');
+    mapView.classList.add('hidden');
     trackInfo.classList.add('hidden');
 
     if (tab === 'search') {
@@ -55,6 +58,9 @@ function switchTab(tab) {
         } else {
             loadHomeFeed();
         }
+    } else if (tab === 'map') {
+        mapView.classList.remove('hidden');
+        showMusicMap();
     }
 }
 
@@ -391,6 +397,9 @@ async function checkAuth() {
         if (res.ok) {
             currentUser = await res.json();
             console.log('✅ Logged in as:', currentUser.email);
+            // 로그인 직후 백그라운드에서 홈피드 + 지도 프리패치
+            loadHomeFeed();
+            prefetchMusicMap();
         } else {
             // 토큰 만료
             authToken = null;
@@ -427,6 +436,8 @@ let lastRecommendationIndex = 0;
 let lastFavorites = [];
 let lastSavedPlaylists = [];
 let lastHomeFeeds = [];
+let lastMapData = null;      // 캐시된 취향 지도 데이터
+let mapPrefetchPromise = null; // 프리패치 중인 Promise
 
 // ===== Click History Tracking =====
 let clickedTracks = [];           // 클릭한 트랙들의 track_key 저장 (최대 16개, Two-Tower 모델용)
@@ -1169,9 +1180,285 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('layoutToggle').classList.remove('hidden');
         loadHomeFeed(); // 백그라운드에서 홈 피드 미리 로드
         prefetchPlaylistBuilder(); // 플레이리스트 빌더 미리 호출
+        prefetchMusicMap(); // 취향 지도 미리 생성
     } else {
         // 비로그인 → 로그인 선택 화면 표시
         document.getElementById('loginScreen').classList.remove('hidden');
         document.getElementById('layoutToggle').classList.add('hidden');
     }
 });
+
+// ===== Music Map =====
+
+async function fetchMusicMapData() {
+    // 찜 목록 가져오기
+    let trackKeys = [];
+    try {
+        const res = await fetch(`${API_BASE_URL}/favorites`, { headers: getAuthHeaders() });
+        if (res.ok) {
+            const data = await res.json();
+            const favs = data.favorites || [];
+            // 최근 20개
+            trackKeys = favs.slice(0, 20).map(f => f.track_key);
+        }
+    } catch(e) {}
+
+    // 찜이 없으면 인기곡 10개로 대체
+    if (trackKeys.length === 0) {
+        try {
+            const res = await fetch(`${API_BASE_URL}/top-tracks?limit=10`);
+            if (res.ok) {
+                const data = await res.json();
+                trackKeys = (data.tracks || []).map(t => t.track_key);
+            }
+        } catch(e) {}
+    }
+
+    if (trackKeys.length === 0) return null;
+
+    const res = await fetch(`${API_BASE_URL}/music-map`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({ track_keys: trackKeys, fill_per_seed: 30 })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return await res.json();
+}
+
+function prefetchMusicMap() {
+    if (!authToken) return;
+    mapPrefetchPromise = fetchMusicMapData().catch(e => {
+        console.warn('Map prefetch failed:', e);
+        return null;
+    });
+}
+
+async function showMusicMap() {
+    const canvas = document.getElementById('mapCanvas');
+    const wrap = document.getElementById('mapCanvasWrap');
+    const loading = document.getElementById('mapLoading');
+    const empty = document.getElementById('mapEmpty');
+
+    // 이미 렌더된 경우 스킵
+    if (lastMapData) {
+        wrap.classList.remove('hidden');
+        loading.classList.add('hidden');
+        empty.classList.add('hidden');
+        return;
+    }
+
+    wrap.classList.add('hidden');
+    loading.classList.remove('hidden');
+    empty.classList.add('hidden');
+
+    try {
+        // 프리패치 결과 대기 (없으면 새로 요청)
+        const data = mapPrefetchPromise ? await mapPrefetchPromise : await fetchMusicMapData();
+        if (!data || !data.tracks || data.tracks.length === 0) {
+            loading.classList.add('hidden');
+            empty.classList.remove('hidden');
+            return;
+        }
+        lastMapData = data;
+        loading.classList.add('hidden');
+        wrap.classList.remove('hidden');
+        renderMusicMap(canvas, data.tracks);
+    } catch(e) {
+        console.error('Map load error:', e);
+        loading.classList.add('hidden');
+        empty.classList.remove('hidden');
+    }
+}
+
+function renderMusicMap(canvas, tracks) {
+    const COVER = 140, GAP = 22, LABEL_H = 34, STEP = COVER + GAP;
+    const VSTEP = COVER + LABEL_H + GAP;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const ctx = canvas.getContext('2d');
+
+    const n = tracks.length;
+    const cols = Math.max(3, Math.round(Math.sqrt(n * (canvas.width / canvas.height))));
+    const rows = Math.ceil(n / cols);
+
+    const sorted = [...tracks].sort((a, b) => a.x - b.x || a.y - b.y);
+    const grid = sorted.map((track, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const px = col * STEP + (row % 2 === 1 ? STEP / 2 : 0) - (cols * STEP) / 2;
+        const py = row * VSTEP - (rows * VSTEP) / 2;
+        return { track, px, py };
+    });
+
+    const images = {};
+    let cam = { x: canvas.width / 2, y: canvas.height / 2, scale: 1, tx: canvas.width / 2, ty: canvas.height / 2 };
+    let hoveredItem = null;
+    const hoverScales = new Map();
+    let isDragging = false, dragStart = {x:0,y:0}, camStart = {x:0,y:0};
+
+    // 이미지 로딩
+    Promise.all(tracks.map(t => {
+        if (!t.cover_image_url) return Promise.resolve();
+        return new Promise(resolve => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = img.onerror = () => { images[t.track_key] = img; resolve(); };
+            img.src = t.cover_image_url;
+        });
+    })).then(() => requestAnimationFrame(loop));
+
+    function toScreen(px, py) {
+        return { sx: px * cam.scale + cam.x, sy: py * cam.scale + cam.y };
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+        ctx.quadraticCurveTo(x+w,y,x+w,y+r); ctx.lineTo(x+w,y+h-r);
+        ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h);
+        ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r);
+        ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+    }
+
+    function truncate(ctx, text, maxW) {
+        if (!text) return '';
+        if (ctx.measureText(text).width <= maxW) return text;
+        let t = text;
+        while (t.length > 1 && ctx.measureText(t+'…').width > maxW) t = t.slice(0,-1);
+        return t+'…';
+    }
+
+    function loop() {
+        // 지도 탭이 닫히면 중단
+        if (document.getElementById('mapView').classList.contains('hidden')) return;
+
+        cam.x += (cam.tx - cam.x) * 0.1;
+        cam.y += (cam.ty - cam.y) * 0.1;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const cx = canvas.width / 2, cy = canvas.height / 2;
+
+        for (const item of grid) {
+            const cur = hoverScales.get(item.track.track_key) || 1;
+            hoverScales.set(item.track.track_key, cur + ((hoveredItem === item ? 1.3 : 1) - cur) * 0.13);
+        }
+
+        const drawOrder = [...grid].sort((a,b) => {
+            const r = t => hoveredItem===t?2:t.track.is_seed?1:0;
+            return r(a)-r(b);
+        });
+
+        for (const item of drawOrder) {
+            const { track, px, py } = item;
+            const { sx, sy } = toScreen(px, py);
+            const hs = hoverScales.get(track.track_key) || 1;
+
+            const ndx = (sx - cx) / (canvas.width * 0.48);
+            const ndy = (sy - cy) / (canvas.height * 0.48);
+            const pf = Math.max(0.3, 1 - Math.sqrt(ndx*ndx+ndy*ndy) * 0.58);
+            const size = COVER * cam.scale * hs * pf;
+            const half = size / 2;
+
+            if (sx+half < 0 || sx-half > canvas.width || sy+half < 0 || sy-half > canvas.height) continue;
+
+            const r = size * 0.12;
+            const img = images[track.track_key];
+            const isHov = hoveredItem === item;
+            const isSeed = track.is_seed;
+            const isFav = track.is_favorite;
+
+            ctx.save();
+            ctx.translate(sx, sy);
+            if (isHov) { ctx.shadowColor='rgba(0,0,0,.8)'; ctx.shadowBlur=size*.4; ctx.shadowOffsetY=size*.06; }
+            ctx.beginPath(); roundRect(ctx,-half,-half,size,size,r); ctx.clip();
+            ctx.shadowBlur=0; ctx.shadowOffsetY=0;
+            if (img) { ctx.drawImage(img,-half,-half,size,size); }
+            else { ctx.fillStyle='#1a1a24'; ctx.fill(); }
+            if (!isSeed && !isFav && !isHov) { ctx.fillStyle='rgba(0,0,0,.28)'; ctx.fillRect(-half,-half,size,size); }
+            ctx.restore();
+
+            // 텍스트
+            const lblSz = Math.max(9, size * 0.11);
+            const lblY = sy + half + 5;
+            ctx.save();
+            ctx.textAlign='center'; ctx.textBaseline='top';
+            ctx.font=`600 ${lblSz}px -apple-system,sans-serif`;
+            ctx.fillStyle=isHov?'#fff':'rgba(255,255,255,.82)';
+            ctx.fillText(truncate(ctx, track.title, size*1.1), sx, lblY);
+            ctx.font=`${lblSz*.85}px -apple-system,sans-serif`;
+            ctx.fillStyle=isHov?'rgba(255,255,255,.8)':'rgba(255,255,255,.45)';
+            ctx.fillText(truncate(ctx, track.artist, size*1.1), sx, lblY+lblSz+2);
+            ctx.restore();
+
+            // 테두리
+            if (isSeed || isFav || isHov) {
+                ctx.save(); ctx.translate(sx,sy);
+                ctx.beginPath(); roundRect(ctx,-half,-half,size,size,r);
+                if (isFav) { ctx.strokeStyle='#1db954'; ctx.lineWidth=Math.max(3,size*.065); ctx.shadowColor='#1db954'; ctx.shadowBlur=isHov?size*.55:size*.3; }
+                else if (isSeed) { ctx.strokeStyle='#1db954'; ctx.lineWidth=Math.max(2,size*.045); ctx.shadowColor='#1db954'; ctx.shadowBlur=isHov?size*.45:size*.2; }
+                else { ctx.strokeStyle='rgba(255,255,255,.8)'; ctx.lineWidth=Math.max(1.5,size*.03); ctx.shadowColor='rgba(255,255,255,.35)'; ctx.shadowBlur=size*.25; }
+                ctx.stroke(); ctx.restore();
+            }
+        }
+
+        requestAnimationFrame(loop);
+    }
+
+    // 이벤트 — 한 번만 등록 (리렌더 방지)
+    const oldWrap = canvas.parentElement;
+    const newWrap = oldWrap.cloneNode(false);
+    newWrap.appendChild(canvas);
+    oldWrap.parentElement.replaceChild(newWrap, oldWrap);
+
+    function hitTest(mx, my) {
+        const cx = canvas.width/2, cy = canvas.height/2;
+        for (let i=grid.length-1; i>=0; i--) {
+            const { track, px, py } = grid[i];
+            const { sx, sy } = toScreen(px, py);
+            const hs = hoverScales.get(track.track_key)||1;
+            const ndx=(sx-cx)/(canvas.width*.48), ndy=(sy-cy)/(canvas.height*.48);
+            const pf=Math.max(0.3,1-Math.sqrt(ndx*ndx+ndy*ndy)*.58);
+            const half=COVER*cam.scale*hs*pf/2;
+            if (mx>=sx-half&&mx<=sx+half&&my>=sy-half&&my<=sy+half) return grid[i];
+        }
+        return null;
+    }
+
+    newWrap.addEventListener('mousedown', e => {
+        isDragging=true; dragStart={x:e.clientX,y:e.clientY}; camStart={x:cam.tx,y:cam.ty};
+        newWrap.style.cursor='grabbing';
+    });
+    window.addEventListener('mousemove', e => {
+        if (!document.getElementById('mapView') || document.getElementById('mapView').classList.contains('hidden')) return;
+        if (isDragging) {
+            cam.tx=camStart.x+(e.clientX-dragStart.x);
+            cam.ty=camStart.y+(e.clientY-dragStart.y);
+            hoveredItem=null; newWrap.style.cursor='grabbing'; return;
+        }
+        const item=hitTest(e.clientX,e.clientY);
+        hoveredItem=item;
+        newWrap.style.cursor=item?'pointer':'grab';
+    });
+    window.addEventListener('mouseup', e => {
+        const moved=Math.abs(e.clientX-dragStart.x)>4||Math.abs(e.clientY-dragStart.y)>4;
+        isDragging=false; newWrap.style.cursor='grab';
+        if (!moved) {
+            const item=hitTest(e.clientX,e.clientY);
+            if (item) { cam.tx=canvas.width/2-item.px*cam.scale; cam.ty=canvas.height/2-item.py*cam.scale; }
+        }
+    });
+    newWrap.addEventListener('wheel', e => {
+        e.preventDefault();
+        const f=e.deltaY<0?1.1:0.91;
+        cam.tx=e.clientX-(e.clientX-cam.tx)*f; cam.ty=e.clientY-(e.clientY-cam.ty)*f;
+        cam.x=e.clientX-(e.clientX-cam.x)*f; cam.y=e.clientY-(e.clientY-cam.y)*f;
+        cam.scale*=f;
+    },{passive:false});
+    newWrap.addEventListener('dblclick', e => {
+        const item=hitTest(e.clientX,e.clientY);
+        if (item) window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(item.track.title+' '+item.track.artist)}`,'_blank');
+    });
+    window.addEventListener('resize', () => { canvas.width=window.innerWidth; canvas.height=window.innerHeight; });
+}
