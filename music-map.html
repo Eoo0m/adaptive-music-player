@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>음악 취향 지도 — Dynplayer</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #07080f;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  user-select: none;
+}
+
+/* ── 입력 패널 ── */
+#panel {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  background: radial-gradient(ellipse at 50% 40%, rgba(29,185,84,.12) 0%, #07080f 70%);
+}
+
+#panel-card {
+  background: rgba(255,255,255,.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 24px;
+  padding: 40px 44px;
+  width: min(560px, 92vw);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+#panel h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -.3px;
+}
+#panel h1 span { color: #1db954; }
+
+#panel p {
+  font-size: 13px;
+  color: rgba(255,255,255,.5);
+  line-height: 1.6;
+}
+
+#track-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.track-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.track-input-row input {
+  flex: 1;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: 10px 14px;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  transition: border-color .2s;
+}
+.track-input-row input:focus { border-color: rgba(29,185,84,.6); }
+.track-input-row input::placeholder { color: rgba(255,255,255,.3); }
+
+.remove-btn {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.4);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background .2s, color .2s;
+}
+.remove-btn:hover { background: rgba(255,60,60,.2); color: #ff6b6b; }
+
+#add-track-btn {
+  background: none;
+  border: 1px dashed rgba(255,255,255,.2);
+  border-radius: 10px;
+  padding: 9px;
+  color: rgba(255,255,255,.4);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color .2s, color .2s;
+}
+#add-track-btn:hover { border-color: rgba(29,185,84,.5); color: #1db954; }
+
+#generate-btn {
+  background: #1db954;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s, transform .1s;
+}
+#generate-btn:hover { background: #1ed760; }
+#generate-btn:active { transform: scale(.98); }
+#generate-btn:disabled { background: rgba(29,185,84,.3); cursor: not-allowed; }
+
+/* ── 로딩 ── */
+#loading {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 90;
+  background: rgba(7,8,15,.8);
+  backdrop-filter: blur(6px);
+}
+#loading.visible { display: flex; }
+
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid rgba(29,185,84,.2);
+  border-top-color: #1db954;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#loading p { font-size: 14px; color: rgba(255,255,255,.6); }
+
+/* ── 캔버스 ── */
+#canvas-wrap {
+  position: fixed;
+  inset: 0;
+  display: none;
+  overflow: hidden;
+  cursor: grab;
+}
+#canvas-wrap.visible { display: block; }
+#canvas-wrap.grabbing { cursor: grabbing; }
+
+canvas { display: block; }
+
+/* ── 툴팁 ── */
+#tooltip {
+  position: fixed;
+  background: rgba(10,10,18,.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px;
+  padding: 10px 14px;
+  pointer-events: none;
+  display: none;
+  z-index: 200;
+  max-width: 220px;
+}
+#tooltip.visible { display: block; }
+#tooltip .tt-title { font-size: 13px; font-weight: 600; }
+#tooltip .tt-artist { font-size: 11px; color: rgba(255,255,255,.5); margin-top: 2px; }
+#tooltip .tt-badge {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+#tooltip .tt-badge.seed { background: rgba(29,185,84,.2); color: #1db954; border: 1px solid rgba(29,185,84,.4); }
+#tooltip .tt-badge.fav  { background: rgba(29,185,84,.3); color: #1ed760; border: 1px solid #1db954; }
+#tooltip .tt-badge.fill { background: rgba(255,255,255,.07); color: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.12); }
+
+/* ── 상단 UI ── */
+#top-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  padding: 16px 20px;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 150;
+  background: linear-gradient(to bottom, rgba(7,8,15,.8) 0%, transparent 100%);
+  pointer-events: none;
+}
+#top-bar.visible { display: flex; }
+
+#top-bar-left { display: flex; align-items: center; gap: 10px; pointer-events: auto; }
+#back-btn {
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: 7px 14px;
+  color: rgba(255,255,255,.7);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .2s;
+}
+#back-btn:hover { background: rgba(255,255,255,.14); }
+
+#map-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255,255,255,.8);
+}
+
+#zoom-controls {
+  display: flex;
+  gap: 6px;
+  pointer-events: auto;
+}
+.zoom-btn {
+  width: 32px; height: 32px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background .2s;
+  line-height: 1;
+}
+.zoom-btn:hover { background: rgba(255,255,255,.16); }
+
+/* ── 범례 ── */
+#legend {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 150;
+  background: rgba(10,10,18,.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+#legend.visible { display: flex; }
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(255,255,255,.6);
+}
+.legend-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<!-- 입력 패널 -->
+<div id="panel">
+  <div id="panel-card">
+    <h1>음악 취향 <span>지도</span></h1>
+    <p>좋아하는 곡 제목을 입력하면 AI 임베딩 기반으로 음악들의 위치를 지도에 그려줍니다.<br>찜한 곡은 초록 테두리로 강조됩니다.</p>
+
+    <div id="track-inputs"></div>
+    <button id="add-track-btn">+ 트랙 추가</button>
+
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <input id="fav-input" placeholder="찜한 곡 제목들 (쉼표 구분, 선택)"
+        style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px 14px;color:#fff;font-size:13px;outline:none;transition:border-color .2s;"
+        onfocus="this.style.borderColor='rgba(29,185,84,.6)'" onblur="this.style.borderColor='rgba(255,255,255,.12)'">
+      <span style="font-size:11px;color:rgba(255,255,255,.3);padding:0 4px;">찜 목록 직접 입력 또는 <a href="#" id="load-fav-link" style="color:#1db954;text-decoration:none;">로그인 후 자동 불러오기</a></span>
+    </div>
+
+    <button id="generate-btn">지도 생성</button>
+  </div>
+</div>
+
+<!-- 로딩 -->
+<div id="loading">
+  <div class="spinner"></div>
+  <p>AI가 음악 지도를 그리는 중...</p>
+</div>
+
+<!-- 캔버스 -->
+<div id="canvas-wrap">
+  <canvas id="map-canvas"></canvas>
+</div>
+
+<!-- 상단 바 -->
+<div id="top-bar">
+  <div id="top-bar-left">
+    <button id="back-btn">← 다시 입력</button>
+    <span id="map-title">음악 취향 지도</span>
+  </div>
+  <div id="zoom-controls">
+    <button class="zoom-btn" id="zoom-in">+</button>
+    <button class="zoom-btn" id="zoom-out">−</button>
+    <button class="zoom-btn" id="zoom-reset" style="font-size:12px;width:auto;padding:0 10px;">맞춤</button>
+  </div>
+</div>
+
+<!-- 툴팁 -->
+<div id="tooltip">
+  <div class="tt-title"></div>
+  <div class="tt-artist"></div>
+  <div class="tt-badge"></div>
+</div>
+
+<!-- 범례 -->
+<div id="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#1db954;box-shadow:0 0 6px #1db954;"></div> 찜한 곡</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#fff;box-shadow:0 0 6px rgba(255,255,255,.4);"></div> 검색한 곡</div>
+  <div class="legend-item"><div class="legend-dot" style="background:rgba(255,255,255,.25);"></div> 주변 곡</div>
+</div>
+
+<script>
+const API = 'https://api.dynplayer.win';
+
+// ── 검색 입력창 관리 ──
+const trackInputsEl = document.getElementById('track-inputs');
+let inputCount = 0;
+
+function addTrackInput(value = '') {
+  const row = document.createElement('div');
+  row.className = 'track-input-row';
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.placeholder = `곡 제목 또는 아티스트명 ${++inputCount}`;
+  inp.value = value;
+  const btn = document.createElement('button');
+  btn.className = 'remove-btn';
+  btn.textContent = '×';
+  btn.onclick = () => { if (trackInputsEl.children.length > 2) row.remove(); };
+  row.appendChild(inp);
+  row.appendChild(btn);
+  trackInputsEl.appendChild(row);
+  inp.focus();
+}
+
+// 초기 5개
+['텅 빈 거리에서', '추억 만들기', '너의 의미', '동네', '슬픈 바다'].forEach(v => addTrackInput(v));
+
+document.getElementById('add-track-btn').onclick = () => addTrackInput();
+
+// ── 지도 상태 ──
+let mapData = null;      // tracks[]
+let images = {};         // track_key → HTMLImageElement
+let loadedCount = 0;
+let totalImages = 0;
+
+// 카메라 (pan + zoom)
+let cam = { x: 0, y: 0, scale: 1 };
+let isDragging = false, dragStart = { x: 0, y: 0 }, camStart = { x: 0, y: 0 };
+let hoveredTrack = null;
+
+const canvas = document.getElementById('map-canvas');
+const ctx = canvas.getContext('2d');
+
+// ── 지도 생성 ──
+document.getElementById('generate-btn').onclick = generateMap;
+
+async function generateMap() {
+  // 1. 입력값 수집
+  const inputs = [...trackInputsEl.querySelectorAll('input')].map(i => i.value.trim()).filter(Boolean);
+  if (inputs.length < 2) { alert('곡을 2개 이상 입력해주세요.'); return; }
+
+  // 2. 제목으로 track_key 검색
+  showLoading('곡 정보를 검색하는 중...');
+  const seedKeys = [];
+  const notFound = [];
+  for (const q of inputs) {
+    try {
+      const res = await fetch(`${API}/search-songs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q })
+      });
+      const data = await res.json();
+      if (data.results && data.results.length > 0) {
+        seedKeys.push(data.results[0].track_key);
+      } else {
+        notFound.push(q);
+      }
+    } catch(e) { notFound.push(q); }
+  }
+
+  if (seedKeys.length < 2) {
+    hideLoading();
+    alert(`검색된 곡이 부족합니다.\n찾지 못한 곡: ${notFound.join(', ')}`);
+    return;
+  }
+
+  // 3. 찜 목록 처리 (텍스트 입력 → track_key 검색)
+  const favInput = document.getElementById('fav-input').value;
+  const favKeys = [];
+  if (favInput.trim()) {
+    const favTitles = favInput.split(',').map(s => s.trim()).filter(Boolean);
+    for (const t of favTitles) {
+      try {
+        const res = await fetch(`${API}/search-songs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: t })
+        });
+        const data = await res.json();
+        if (data.results?.[0]) favKeys.push(data.results[0].track_key);
+      } catch(e) {}
+    }
+  }
+
+  // 로그인된 경우 찜 목록 자동 포함
+  const token = localStorage.getItem('auth_token');
+  if (token && favKeys.length === 0) {
+    try {
+      const res = await fetch(`${API}/favorites`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      if (data.favorites) data.favorites.forEach(f => favKeys.push(f.track_key));
+    } catch(e) {}
+  }
+
+  // 4. music-map API 호출
+  showLoading('AI가 음악 지도를 그리는 중...');
+  let result;
+  try {
+    const res = await fetch(`${API}/music-map`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        track_keys: seedKeys,
+        favorite_keys: favKeys,
+        n_neighbors: 15,
+        min_dist: 0.1,
+        fill_count: 150,
+      })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    result = await res.json();
+  } catch(e) {
+    hideLoading();
+    alert('지도 생성 실패: ' + e.message);
+    return;
+  }
+
+  mapData = result.tracks;
+
+  // 5. 앨범 커버 이미지 프리로드
+  showLoading('앨범 커버를 불러오는 중...');
+  images = {};
+  loadedCount = 0;
+  totalImages = mapData.filter(t => t.cover_image_url).length;
+
+  await Promise.all(mapData.map(track => {
+    if (!track.cover_image_url) return Promise.resolve();
+    return new Promise(resolve => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => { images[track.track_key] = img; loadedCount++; resolve(); };
+      img.onerror = () => { loadedCount++; resolve(); };
+      img.src = track.cover_image_url;
+    });
+  }));
+
+  // 6. 지도 표시
+  hideLoading();
+  showMap();
+}
+
+function showLoading(msg) {
+  document.querySelector('#loading p').textContent = msg;
+  document.getElementById('loading').classList.add('visible');
+}
+function hideLoading() {
+  document.getElementById('loading').classList.remove('visible');
+}
+
+function showMap() {
+  document.getElementById('panel').style.display = 'none';
+  document.getElementById('canvas-wrap').classList.add('visible');
+  document.getElementById('top-bar').classList.add('visible');
+  document.getElementById('legend').classList.add('visible');
+
+  resizeCanvas();
+  fitMap();
+  requestAnimationFrame(render);
+}
+
+// ── 캔버스 크기 ──
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', () => { resizeCanvas(); render(); });
+
+// ── 데이터 좌표 범위 ──
+function getDataBounds() {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const t of mapData) {
+    if (t.x < minX) minX = t.x; if (t.x > maxX) maxX = t.x;
+    if (t.y < minY) minY = t.y; if (t.y > maxY) maxY = t.y;
+  }
+  return { minX, maxX, minY, maxY };
+}
+
+function fitMap() {
+  const bounds = getDataBounds();
+  const W = canvas.width, H = canvas.height;
+  const pad = 120;
+  const dataW = bounds.maxX - bounds.minX || 1;
+  const dataH = bounds.maxY - bounds.minY || 1;
+  const scale = Math.min((W - pad * 2) / dataW, (H - pad * 2) / dataH) * 0.85;
+  cam.scale = scale;
+  cam.x = W / 2 - ((bounds.minX + bounds.maxX) / 2) * scale;
+  cam.y = H / 2 - ((bounds.minY + bounds.maxY) / 2) * scale;
+}
+
+// 데이터 좌표 → 화면 좌표
+function toScreen(dx, dy) {
+  return { sx: dx * cam.scale + cam.x, sy: dy * cam.scale + cam.y };
+}
+
+// ── 원근감 계수 (화면 중심 기준) ──
+function perspFactor(sx, sy) {
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const dx = (sx - cx) / (canvas.width * 0.5);
+  const dy = (sy - cy) / (canvas.height * 0.5);
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  // 중심=1.0, 가장자리=0.38 (지구본 느낌)
+  return Math.max(0.38, 1.0 - dist * 0.45);
+}
+
+// ── 렌더링 ──
+function render() {
+  if (!mapData) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // 배경 그라디언트
+  const grd = ctx.createRadialGradient(
+    canvas.width/2, canvas.height/2, 0,
+    canvas.width/2, canvas.height/2, Math.max(canvas.width, canvas.height) * 0.6
+  );
+  grd.addColorStop(0, 'rgba(29,185,84,.04)');
+  grd.addColorStop(1, 'rgba(7,8,15,0)');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 연결선 (seed 간)
+  const seeds = mapData.filter(t => t.is_seed);
+  if (seeds.length >= 2) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(29,185,84,.12)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 6]);
+    for (let i = 0; i < seeds.length; i++) {
+      for (let j = i + 1; j < seeds.length; j++) {
+        const a = toScreen(seeds[i].x, seeds[i].y);
+        const b = toScreen(seeds[j].x, seeds[j].y);
+        ctx.beginPath();
+        ctx.moveTo(a.sx, a.sy);
+        ctx.lineTo(b.sx, b.sy);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  // z-order: fill → seed/fav 순으로 그려서 seed가 위에 오도록
+  const sorted = [...mapData].sort((a, b) => {
+    const rank = t => t.is_favorite ? 2 : t.is_seed ? 1 : 0;
+    return rank(a) - rank(b);
+  });
+
+  for (const track of sorted) {
+    const { sx, sy } = toScreen(track.x, track.y);
+    const pf = perspFactor(sx, sy);
+
+    // 타입별 기본 크기
+    let baseSize;
+    if (track.is_favorite) baseSize = 68;
+    else if (track.is_seed)    baseSize = 54;
+    else                       baseSize = 28;
+
+    const size = baseSize * pf;
+    const half = size / 2;
+
+    // 화면 밖 컬링
+    if (sx + half < 0 || sx - half > canvas.width || sy + half < 0 || sy - half > canvas.height) continue;
+
+    const img = images[track.track_key];
+    const isHovered = hoveredTrack === track;
+
+    ctx.save();
+    ctx.translate(sx, sy);
+    if (isHovered) ctx.scale(1.12, 1.12);
+
+    const r = size * 0.14; // corner radius
+
+    // 그림자
+    if (track.is_seed || track.is_favorite) {
+      ctx.shadowColor = track.is_favorite ? 'rgba(29,185,84,.6)' : 'rgba(255,255,255,.25)';
+      ctx.shadowBlur = size * 0.5;
+    } else {
+      ctx.shadowColor = 'rgba(0,0,0,.5)';
+      ctx.shadowBlur = size * 0.3;
+    }
+
+    // 클리핑 (둥근 사각형)
+    ctx.beginPath();
+    roundRect(ctx, -half, -half, size, size, r);
+    ctx.clip();
+    ctx.shadowBlur = 0;
+
+    if (img) {
+      ctx.drawImage(img, -half, -half, size, size);
+    } else {
+      // 플레이스홀더
+      ctx.fillStyle = 'rgba(255,255,255,.08)';
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.3)';
+      ctx.font = `${size * 0.35}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('♪', 0, 0);
+    }
+
+    // 오버레이 (fill 트랙 어둡게)
+    if (!track.is_seed && !track.is_favorite) {
+      ctx.fillStyle = 'rgba(0,0,0,.35)';
+      ctx.fillRect(-half, -half, size, size);
+    }
+
+    ctx.restore();
+    ctx.save();
+    ctx.translate(sx, sy);
+    if (isHovered) ctx.scale(1.12, 1.12);
+
+    // 테두리
+    ctx.beginPath();
+    roundRect(ctx, -half, -half, size, size, r);
+    if (track.is_favorite) {
+      ctx.strokeStyle = '#1db954';
+      ctx.lineWidth = Math.max(2, size * 0.06);
+      ctx.shadowColor = '#1db954';
+      ctx.shadowBlur = size * 0.4;
+    } else if (track.is_seed) {
+      ctx.strokeStyle = 'rgba(255,255,255,.7)';
+      ctx.lineWidth = Math.max(1.5, size * 0.04);
+      ctx.shadowColor = 'rgba(255,255,255,.4)';
+      ctx.shadowBlur = size * 0.3;
+    } else {
+      ctx.strokeStyle = 'rgba(255,255,255,.12)';
+      ctx.lineWidth = 0.8;
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  requestAnimationFrame(render);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ── 툴팁 히트 테스트 ──
+function trackAt(mx, my) {
+  if (!mapData) return null;
+  // 위에 그려진 트랙부터 탐색
+  const sorted = [...mapData].sort((a, b) => {
+    const rank = t => t.is_favorite ? 2 : t.is_seed ? 1 : 0;
+    return rank(b) - rank(a);
+  });
+  for (const track of sorted) {
+    const { sx, sy } = toScreen(track.x, track.y);
+    const pf = perspFactor(sx, sy);
+    let baseSize = track.is_favorite ? 68 : track.is_seed ? 54 : 28;
+    const half = (baseSize * pf) / 2;
+    if (mx >= sx - half && mx <= sx + half && my >= sy - half && my <= sy + half) return track;
+  }
+  return null;
+}
+
+// ── 마우스 이벤트 ──
+const wrap = document.getElementById('canvas-wrap');
+
+wrap.addEventListener('mousedown', e => {
+  isDragging = true;
+  dragStart = { x: e.clientX, y: e.clientY };
+  camStart = { x: cam.x, y: cam.y };
+  wrap.classList.add('grabbing');
+});
+
+window.addEventListener('mousemove', e => {
+  if (!mapData) return;
+  if (isDragging) {
+    cam.x = camStart.x + (e.clientX - dragStart.x);
+    cam.y = camStart.y + (e.clientY - dragStart.y);
+    hoveredTrack = null;
+    hideTooltip();
+    return;
+  }
+  const track = trackAt(e.clientX, e.clientY);
+  hoveredTrack = track;
+  if (track) showTooltip(track, e.clientX, e.clientY);
+  else hideTooltip();
+  wrap.style.cursor = track ? 'pointer' : 'grab';
+});
+
+window.addEventListener('mouseup', () => {
+  isDragging = false;
+  wrap.classList.remove('grabbing');
+});
+
+// 더블클릭 → YouTube
+wrap.addEventListener('dblclick', e => {
+  const track = trackAt(e.clientX, e.clientY);
+  if (track) {
+    const q = encodeURIComponent(`${track.title} ${track.artist}`);
+    window.open(`https://www.youtube.com/results?search_query=${q}`, '_blank');
+  }
+});
+
+// 휠 줌
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.1 : 0.91;
+  const mx = e.clientX, my = e.clientY;
+  cam.x = mx - (mx - cam.x) * factor;
+  cam.y = my - (my - cam.y) * factor;
+  cam.scale *= factor;
+}, { passive: false });
+
+// 핀치 줌 (터치)
+let lastTouchDist = null;
+wrap.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) lastTouchDist = touchDist(e.touches);
+  else if (e.touches.length === 1) {
+    isDragging = true;
+    dragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    camStart = { x: cam.x, y: cam.y };
+  }
+}, { passive: true });
+wrap.addEventListener('touchmove', e => {
+  if (e.touches.length === 2 && lastTouchDist) {
+    const d = touchDist(e.touches);
+    const factor = d / lastTouchDist;
+    const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+    const my = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    cam.x = mx - (mx - cam.x) * factor;
+    cam.y = my - (my - cam.y) * factor;
+    cam.scale *= factor;
+    lastTouchDist = d;
+  } else if (e.touches.length === 1 && isDragging) {
+    cam.x = camStart.x + (e.touches[0].clientX - dragStart.x);
+    cam.y = camStart.y + (e.touches[0].clientY - dragStart.y);
+  }
+}, { passive: true });
+wrap.addEventListener('touchend', () => { isDragging = false; lastTouchDist = null; }, { passive: true });
+function touchDist(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.sqrt(dx*dx + dy*dy);
+}
+
+// ── 줌 버튼 ──
+document.getElementById('zoom-in').onclick  = () => zoomAt(canvas.width/2, canvas.height/2, 1.25);
+document.getElementById('zoom-out').onclick = () => zoomAt(canvas.width/2, canvas.height/2, 0.8);
+document.getElementById('zoom-reset').onclick = fitMap;
+function zoomAt(mx, my, factor) {
+  cam.x = mx - (mx - cam.x) * factor;
+  cam.y = my - (my - cam.y) * factor;
+  cam.scale *= factor;
+}
+
+// ── 뒤로 가기 ──
+document.getElementById('back-btn').onclick = () => {
+  document.getElementById('panel').style.display = 'flex';
+  document.getElementById('canvas-wrap').classList.remove('visible');
+  document.getElementById('top-bar').classList.remove('visible');
+  document.getElementById('legend').classList.remove('visible');
+  mapData = null;
+  hoveredTrack = null;
+};
+
+// ── 툴팁 ──
+const tooltip = document.getElementById('tooltip');
+function showTooltip(track, mx, my) {
+  tooltip.querySelector('.tt-title').textContent = track.title;
+  tooltip.querySelector('.tt-artist').textContent = track.artist;
+  const badge = tooltip.querySelector('.tt-badge');
+  if (track.is_favorite) {
+    badge.textContent = '찜한 곡';
+    badge.className = 'tt-badge fav';
+  } else if (track.is_seed) {
+    badge.textContent = '검색한 곡';
+    badge.className = 'tt-badge seed';
+  } else {
+    badge.textContent = '주변 곡';
+    badge.className = 'tt-badge fill';
+  }
+  tooltip.classList.add('visible');
+  const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
+  let tx = mx + 14, ty = my - th / 2;
+  if (tx + tw > window.innerWidth - 8) tx = mx - tw - 14;
+  if (ty < 8) ty = 8;
+  if (ty + th > window.innerHeight - 8) ty = window.innerHeight - th - 8;
+  tooltip.style.left = tx + 'px';
+  tooltip.style.top  = ty + 'px';
+}
+function hideTooltip() {
+  tooltip.classList.remove('visible');
+}
+
+// ── 로그인 찜 자동 불러오기 링크 ──
+document.getElementById('load-fav-link').onclick = async (e) => {
+  e.preventDefault();
+  const token = localStorage.getItem('auth_token');
+  if (!token) { alert('dynplayer.win에서 로그인 후 다시 시도해주세요.'); return; }
+  try {
+    const res = await fetch(`${API}/favorites`, { headers: { Authorization: `Bearer ${token}` } });
+    const data = await res.json();
+    if (data.favorites?.length) {
+      document.getElementById('fav-input').value = data.favorites.map(f => f.title).join(', ');
+      alert(`${data.favorites.length}개의 찜한 곡을 불러왔습니다.`);
+    } else {
+      alert('찜한 곡이 없습니다.');
+    }
+  } catch(e) { alert('불러오기 실패: ' + e.message); }
+};
+</script>
+</body>
+</html>
