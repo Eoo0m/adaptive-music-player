@@ -1498,12 +1498,8 @@ function renderMusicMap(canvas, tracks) {
         return null;
     }
 
-    newWrap.addEventListener('mousedown', e => {
-        isDragging=true; dragStart={x:e.clientX,y:e.clientY}; camStart={x:cam.tx,y:cam.ty};
-        newWrap.style.cursor='grabbing';
-    });
-    window.addEventListener('mousemove', e => {
-        if (!document.getElementById('mapView') || document.getElementById('mapView').classList.contains('hidden')) return;
+    const onMouseMove = e => {
+        if (document.getElementById('mapView').classList.contains('hidden')) return;
         mousePos = { x: e.clientX, y: e.clientY };
         if (isDragging) {
             cam.tx=camStart.x+(e.clientX-dragStart.x);
@@ -1513,19 +1509,40 @@ function renderMusicMap(canvas, tracks) {
         const item=hitTest(e.clientX,e.clientY);
         hoveredItem=item;
         newWrap.style.cursor=item?'pointer':'grab';
-    });
-    window.addEventListener('mouseleave', () => { mousePos = { x: -1, y: -1 }; });
-    window.addEventListener('mouseup', e => {
+    };
+    const onMouseUp = e => {
+        if (document.getElementById('mapView').classList.contains('hidden')) return;
         const moved=Math.abs(e.clientX-dragStart.x)>4||Math.abs(e.clientY-dragStart.y)>4;
         isDragging=false; newWrap.style.cursor='grab';
         if (!moved) {
             const item=hitTest(e.clientX,e.clientY);
             if (item) { cam.tx=canvas.width/2-item.px*cam.scale; cam.ty=canvas.height/2-item.py*cam.scale; }
         }
+    };
+    const onMouseLeave = () => { mousePos = { x: -1, y: -1 }; };
+    const onResize = () => { canvas.width=window.innerWidth; canvas.height=window.innerHeight; };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('mouseleave', onMouseLeave);
+    window.addEventListener('resize', onResize);
+
+    // newWrap 제거 시 window 리스너도 정리
+    new MutationObserver(() => {
+        if (!document.contains(newWrap)) {
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+            window.removeEventListener('mouseleave', onMouseLeave);
+            window.removeEventListener('resize', onResize);
+        }
+    }).observe(document.getElementById('mapView'), { childList: true });
+
+    newWrap.addEventListener('mousedown', e => {
+        isDragging=true; dragStart={x:e.clientX,y:e.clientY}; camStart={x:cam.tx,y:cam.ty};
+        newWrap.style.cursor='grabbing';
     });
     newWrap.addEventListener('wheel', e => {
         e.preventDefault();
-        // 느린 줌: deltaY를 0~1로 clamp 후 소폭 factor
         const delta = Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY), 100);
         const f = 1 - delta * 0.0008;
         cam.tx=e.clientX-(e.clientX-cam.tx)*f; cam.ty=e.clientY-(e.clientY-cam.ty)*f;
@@ -1536,5 +1553,4 @@ function renderMusicMap(canvas, tracks) {
         const item=hitTest(e.clientX,e.clientY);
         if (item) window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(item.track.title+' '+item.track.artist)}`,'_blank');
     });
-    window.addEventListener('resize', () => { canvas.width=window.innerWidth; canvas.height=window.innerHeight; });
 }
