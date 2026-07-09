@@ -1304,12 +1304,20 @@ function renderMusicMap(canvas, tracks) {
     const COVER = 140, GAP = 22, LABEL_H = 34, STEP = COVER + GAP;
     const VSTEP = COVER + LABEL_H + GAP;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
     const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    // 논리 픽셀 크기 (dpr 무관하게 레이아웃/좌표 계산에 사용)
+    const lw = () => window.innerWidth;
+    const lh = () => window.innerHeight;
 
     const n = tracks.length;
-    const cols = Math.max(3, Math.round(Math.sqrt(n * (canvas.width / canvas.height))));
+    const cols = Math.max(3, Math.round(Math.sqrt(n * (lw() / lh()))));
     const rows = Math.ceil(n / cols);
 
     const sorted = [...tracks].sort((a, b) => a.x - b.x || a.y - b.y);
@@ -1322,7 +1330,7 @@ function renderMusicMap(canvas, tracks) {
     });
 
     const images = {};
-    let cam = { x: canvas.width / 2, y: canvas.height / 2, scale: 1, tx: canvas.width / 2, ty: canvas.height / 2 };
+    let cam = { x: lw()/2, y: lh()/2, scale: 1, tx: lw()/2, ty: lh()/2 };
     let hoveredItem = null;
     const hoverScales = new Map();
     let isDragging = false, dragStart = {x:0,y:0}, camStart = {x:0,y:0};
@@ -1386,7 +1394,7 @@ function renderMusicMap(canvas, tracks) {
         if (!isDragging && mousePos.x >= 0) {
             const EDGE = 0.1;
             const SPEED = 8;
-            const w = canvas.width, h = canvas.height;
+            const w = lw(), h = lh();
             const nx = mousePos.x / w, ny = mousePos.y / h;
             if (nx < EDGE)       cam.tx += SPEED * (EDGE - nx) / EDGE;
             else if (nx > 1-EDGE) cam.tx -= SPEED * (nx - (1-EDGE)) / EDGE;
@@ -1397,9 +1405,9 @@ function renderMusicMap(canvas, tracks) {
         cam.x += (cam.tx - cam.x) * 0.1;
         cam.y += (cam.ty - cam.y) * 0.1;
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, lw(), lh());
 
-        const cx = canvas.width / 2, cy = canvas.height / 2;
+        const cx = lw() / 2, cy = lh() / 2;
 
         // hover 변경 시에만 drawOrder 재계산
         if (hoveredItem !== lastHoveredItem) {
@@ -1427,13 +1435,13 @@ function renderMusicMap(canvas, tracks) {
             const { sx, sy } = toScreen(px, py);
             const hs = hoverScales.get(track.track_key) || 1;
 
-            const ndx = (sx - cx) / (canvas.width * 0.48);
-            const ndy = (sy - cy) / (canvas.height * 0.48);
+            const ndx = (sx - cx) / (lw() * 0.48);
+            const ndy = (sy - cy) / (lh() * 0.48);
             const pf = Math.max(0.3, 1 - Math.sqrt(ndx*ndx+ndy*ndy) * 0.58);
             const size = COVER * cam.scale * hs * pf;
             const half = size / 2;
 
-            if (sx+half < 0 || sx-half > canvas.width || sy+half < 0 || sy-half > canvas.height) continue;
+            if (sx+half < 0 || sx-half > lw() || sy+half < 0 || sy-half > lh()) continue;
 
             const r = size * 0.12;
             const img = images[track.track_key];
@@ -1485,12 +1493,12 @@ function renderMusicMap(canvas, tracks) {
     oldWrap.parentElement.replaceChild(newWrap, oldWrap);
 
     function hitTest(mx, my) {
-        const cx = canvas.width/2, cy = canvas.height/2;
+        const cx = lw()/2, cy = lh()/2;
         for (let i=grid.length-1; i>=0; i--) {
             const { track, px, py } = grid[i];
             const { sx, sy } = toScreen(px, py);
             const hs = hoverScales.get(track.track_key)||1;
-            const ndx=(sx-cx)/(canvas.width*.48), ndy=(sy-cy)/(canvas.height*.48);
+            const ndx=(sx-cx)/(lw()*.48), ndy=(sy-cy)/(lh()*.48);
             const pf=Math.max(0.3,1-Math.sqrt(ndx*ndx+ndy*ndy)*.58);
             const half=COVER*cam.scale*hs*pf/2;
             if (mx>=sx-half&&mx<=sx+half&&my>=sy-half&&my<=sy+half) return grid[i];
@@ -1516,11 +1524,18 @@ function renderMusicMap(canvas, tracks) {
         isDragging=false; newWrap.style.cursor='grab';
         if (!moved) {
             const item=hitTest(e.clientX,e.clientY);
-            if (item) { cam.tx=canvas.width/2-item.px*cam.scale; cam.ty=canvas.height/2-item.py*cam.scale; }
+            if (item) { cam.tx=lw()/2-item.px*cam.scale; cam.ty=lh()/2-item.py*cam.scale; }
         }
     };
     const onMouseLeave = () => { mousePos = { x: -1, y: -1 }; };
-    const onResize = () => { canvas.width=window.innerWidth; canvas.height=window.innerHeight; };
+    const onResize = () => {
+        const d = window.devicePixelRatio || 1;
+        canvas.width = window.innerWidth * d;
+        canvas.height = window.innerHeight * d;
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+        ctx.scale(d, d);
+    };
 
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
