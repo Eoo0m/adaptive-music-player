@@ -1325,6 +1325,22 @@ function renderMusicMap(canvas, tracks) {
     const hoverScales = new Map();
     let isDragging = false, dragStart = {x:0,y:0}, camStart = {x:0,y:0};
 
+    // 텍스트 truncation 캐시 (scale 변할 때만 무효화)
+    const truncCache = new Map();
+    let lastTruncScale = -1;
+    function truncCached(ctx, text, maxW, key) {
+        if (lastTruncScale !== cam.scale) { truncCache.clear(); lastTruncScale = cam.scale; }
+        const ckey = key + '|' + maxW.toFixed(1);
+        if (truncCache.has(ckey)) return truncCache.get(ckey);
+        const result = truncate(ctx, text, maxW);
+        truncCache.set(ckey, result);
+        return result;
+    }
+
+    // drawOrder는 hover 변경 시에만 재계산
+    let drawOrder = [...grid];
+    let lastHoveredItem = null;
+
     // 이미지 로딩
     Promise.all(tracks.map(t => {
         if (!t.cover_image_url) return Promise.resolve();
@@ -1385,15 +1401,26 @@ function renderMusicMap(canvas, tracks) {
 
         const cx = canvas.width / 2, cy = canvas.height / 2;
 
-        for (const item of grid) {
-            const cur = hoverScales.get(item.track.track_key) || 1;
-            hoverScales.set(item.track.track_key, cur + ((hoveredItem === item ? 1.3 : 1) - cur) * 0.13);
+        // hover 변경 시에만 drawOrder 재계산
+        if (hoveredItem !== lastHoveredItem) {
+            lastHoveredItem = hoveredItem;
+            drawOrder = [...grid].sort((a,b) => {
+                const r = t => hoveredItem===t?2:t.track.is_seed?1:0;
+                return r(a)-r(b);
+            });
         }
 
-        const drawOrder = [...grid].sort((a,b) => {
-            const r = t => hoveredItem===t?2:t.track.is_seed?1:0;
-            return r(a)-r(b);
-        });
+        // hoverScales: hover된 것과 1.0이 아닌 것만 업데이트
+        if (hoveredItem) {
+            const k = hoveredItem.track.track_key;
+            const cur = hoverScales.get(k) || 1;
+            hoverScales.set(k, cur + (1.3 - cur) * 0.13);
+        }
+        for (const [k, v] of hoverScales) {
+            if (hoveredItem && k === hoveredItem.track.track_key) continue;
+            if (Math.abs(v - 1) < 0.001) { hoverScales.set(k, 1); continue; }
+            hoverScales.set(k, v + (1 - v) * 0.13);
+        }
 
         for (const item of drawOrder) {
             const { track, px, py } = item;
@@ -1431,10 +1458,10 @@ function renderMusicMap(canvas, tracks) {
             ctx.textAlign='center'; ctx.textBaseline='top';
             ctx.font=`600 ${lblSz}px -apple-system,sans-serif`;
             ctx.fillStyle=isHov?'#fff':'rgba(255,255,255,.82)';
-            ctx.fillText(truncate(ctx, track.title, size*1.1), sx, lblY);
+            ctx.fillText(truncCached(ctx, track.title, size*1.1, track.track_key+'t'), sx, lblY);
             ctx.font=`${lblSz*.85}px -apple-system,sans-serif`;
             ctx.fillStyle=isHov?'rgba(255,255,255,.8)':'rgba(255,255,255,.45)';
-            ctx.fillText(truncate(ctx, track.artist, size*1.1), sx, lblY+lblSz+2);
+            ctx.fillText(truncCached(ctx, track.artist, size*1.1, track.track_key+'a'), sx, lblY+lblSz+2);
             ctx.restore();
 
             // 테두리
