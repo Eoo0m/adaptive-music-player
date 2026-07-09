@@ -511,30 +511,35 @@ function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 }
-window.addEventListener('resize', () => { resizeCanvas(); if (mapData) buildGrid(); });
+window.addEventListener('resize', () => { resizeCanvas(); if (mapData) fitMap(); });
 
-// ── 격자 배치 계산 ──
-// UMAP x,y 좌표로 정렬 후 균일 격자에 배치 (빈칸 없음)
-let gridLayout = []; // [{track, gx, gy}] — 격자 셀 좌표
+// ── 벽돌 배치 ──
+// UMAP 순서로 정렬 후 벽돌 패턴(홀수 행 반 칸 오프셋)으로 배치
+let gridLayout = []; // [{track, px, py}] — 픽셀 좌표 (cam 적용 전)
 
-const CELL_SIZE = 90;   // 기본 셀 크기 (px, zoom 전)
-const OVERLAP   = 0.88; // 셀 간격 비율 (1.0 = 붙이기, <1 = 겹침)
+const COVER_SIZE = 110;  // 커버 한 변 (px)
+const GAP        = 10;   // 커버 사이 간격 (px)
+const STEP       = COVER_SIZE + GAP; // 셀 피치
 
 function buildGrid() {
-  if (!mapData || mapData.length === 0) return;
+  if (!mapData || !mapData.length) return;
   const n = mapData.length;
-  // 가로 열 수: 화면 비율에 맞게
-  const cols = Math.ceil(Math.sqrt(n * (canvas.width / canvas.height)));
-  const rows = Math.ceil(n / cols);
 
-  // UMAP 좌표로 정렬 (x → y 순)
+  // 가로 열 수: 화면 비율에 맞게
+  const cols = Math.round(Math.sqrt(n * (canvas.width / canvas.height)));
+  const rows  = Math.ceil(n / cols);
+
+  // UMAP x 기준 정렬 (비슷한 곡끼리 행 단위로 모임)
   const sorted = [...mapData].sort((a, b) => a.x - b.x || a.y - b.y);
 
-  gridLayout = sorted.map((track, i) => ({
-    track,
-    gx: (i % cols) - cols / 2 + 0.5,   // 중심 기준 격자 좌표
-    gy: Math.floor(i / cols) - rows / 2 + 0.5,
-  }));
+  gridLayout = sorted.map((track, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    // 홀수 행은 반 칸(STEP/2) 오른쪽으로 밀기 — 벽돌 패턴
+    const px = col * STEP + (row % 2 === 1 ? STEP / 2 : 0) - (cols * STEP) / 2;
+    const py = row * STEP - (rows * STEP) / 2;
+    return { track, px, py };
+  });
 }
 
 function fitMap() {
@@ -542,15 +547,23 @@ function fitMap() {
   cam.scale = 1;
   cam.x = canvas.width / 2;
   cam.y = canvas.height / 2;
+
+  // 전체가 화면에 들어오도록 scale 조정
+  if (!gridLayout.length) return;
+  let minPx = Infinity, maxPx = -Infinity, minPy = Infinity, maxPy = -Infinity;
+  for (const { px, py } of gridLayout) {
+    if (px < minPx) minPx = px; if (px > maxPx) maxPx = px;
+    if (py < minPy) minPy = py; if (py > maxPy) maxPy = py;
+  }
+  const pad = 40;
+  const scaleX = (canvas.width  - pad * 2) / (maxPx - minPx + COVER_SIZE);
+  const scaleY = (canvas.height - pad * 2) / (maxPy - minPy + COVER_SIZE);
+  cam.scale = Math.min(scaleX, scaleY, 1.0); // 1.0 이상은 너무 크니까 제한
 }
 
-// 격자 좌표 → 화면 좌표
-function toScreen(gx, gy) {
-  const step = CELL_SIZE * OVERLAP * cam.scale;
-  return {
-    sx: gx * step + cam.x,
-    sy: gy * step + cam.y,
-  };
+// 배치 좌표 → 화면 좌표
+function toScreen(px, py) {
+  return { sx: px * cam.scale + cam.x, sy: py * cam.scale + cam.y };
 }
 
 // ── 렌더링 ──
@@ -560,79 +573,96 @@ function render() {
 
   // hover 보간 업데이트
   for (const track of mapData) {
-    const key = track.track_key;
-    const cur = hoverScales.get(key) || 1.0;
-    const target = hoveredTrack === track ? 1.55 : 1.0;
-    const next = cur + (target - cur) * 0.12;
-    hoverScales.set(key, next);
+    const cur = hoverScales.get(track.track_key) || 1.0;
+    const target = hoveredTrack === track ? 1.6 : 1.0;
+    hoverScales.set(track.track_key, cur + (target - cur) * 0.13);
   }
 
-  // z-order: 호버된 것이 맨 위
+  // z-order: 찜 → seed → 호버 순으로 위에
   const drawOrder = [...gridLayout].sort((a, b) => {
-    return (hoveredTrack === a.track ? 1 : 0) - (hoveredTrack === b.track ? 1 : 0);
+    const rank = t => hoveredTrack === t ? 3 : t.is_seed ? 2 : t.is_favorite ? 1 : 0;
+    return rank(a.track) - rank(b.track);
   });
 
-  const baseSize = CELL_SIZE * cam.scale;
-
-  for (const { track, gx, gy } of drawOrder) {
-    const { sx, sy } = toScreen(gx, gy);
+  for (const { track, px, py } of drawOrder) {
+    const { sx, sy } = toScreen(px, py);
+    const hs = hoverScales.get(track.track_key) || 1.0;
+    const size = COVER_SIZE * cam.scale * hs;
+    const half = size / 2;
 
     // 화면 밖 컬링
-    if (sx + baseSize < 0 || sx - baseSize > canvas.width ||
-        sy + baseSize < 0 || sy - baseSize > canvas.height) continue;
+    if (sx + half < -10 || sx - half > canvas.width + 10 ||
+        sy + half < -10 || sy - half > canvas.height + 10) continue;
 
-    const hs = hoverScales.get(track.track_key) || 1.0;
-    const size = baseSize * hs;
-    const half = size / 2;
     const isHovered = hoveredTrack === track;
-    const r = size * 0.10;
+    const isSeed = track.is_seed;
+    const isFav = track.is_favorite;
+    const r = size * 0.12;
     const img = images[track.track_key];
 
     ctx.save();
     ctx.translate(sx, sy);
 
-    // 호버 그림자/glow
+    // 그림자 — 호버/seed/찜만
     if (isHovered) {
-      ctx.shadowColor = track.is_favorite ? 'rgba(29,185,84,.95)' : 'rgba(255,255,255,.6)';
-      ctx.shadowBlur = size * 0.5;
+      ctx.shadowOffsetY = size * 0.06;
+      ctx.shadowColor = isFav ? 'rgba(29,185,84,.7)' : isSeed ? 'rgba(29,185,84,.5)' : 'rgba(0,0,0,.8)';
+      ctx.shadowBlur = size * 0.4;
+    } else if (isSeed || isFav) {
+      ctx.shadowOffsetY = size * 0.03;
+      ctx.shadowColor = 'rgba(0,0,0,.6)';
+      ctx.shadowBlur = size * 0.25;
     }
 
-    // 클리핑
+    // 클리핑 & 이미지
     ctx.beginPath();
     roundRect(ctx, -half, -half, size, size, r);
     ctx.clip();
-    ctx.shadowBlur = 0;
+    ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
     if (img) {
       ctx.drawImage(img, -half, -half, size, size);
     } else {
-      ctx.fillStyle = 'rgba(40,40,50,1)';
+      ctx.fillStyle = '#1a1a24';
       ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,.25)';
-      ctx.font = `${size * 0.3}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(255,255,255,.2)';
+      ctx.font = `${size * 0.28}px sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('♪', 0, 0);
+    }
+
+    // fill 트랙 살짝 어둡게 (호버 제외)
+    if (!isSeed && !isFav && !isHovered) {
+      ctx.fillStyle = 'rgba(0,0,0,.28)';
+      ctx.fillRect(-half, -half, size, size);
     }
 
     ctx.restore();
 
-    // 테두리 (찜곡 초록, 호버 흰색 강조, 나머지 없음)
-    if (track.is_favorite || isHovered) {
+    // 테두리: seed=초록, 찜=초록 강조, 호버=흰색, 나머지=없음
+    const needBorder = isSeed || isFav || isHovered;
+    if (needBorder) {
       ctx.save();
       ctx.translate(sx, sy);
       ctx.beginPath();
       roundRect(ctx, -half, -half, size, size, r);
-      if (track.is_favorite) {
+
+      if (isFav) {
         ctx.strokeStyle = '#1db954';
-        ctx.lineWidth = Math.max(2.5, size * 0.055);
+        ctx.lineWidth = Math.max(3, size * 0.065);
         ctx.shadowColor = '#1db954';
-        ctx.shadowBlur = isHovered ? size * 0.5 : size * 0.25;
+        ctx.shadowBlur = isHovered ? size * 0.55 : size * 0.3;
+      } else if (isSeed) {
+        ctx.strokeStyle = '#1db954';
+        ctx.lineWidth = Math.max(2, size * 0.045);
+        ctx.shadowColor = '#1db954';
+        ctx.shadowBlur = isHovered ? size * 0.45 : size * 0.2;
       } else {
-        ctx.strokeStyle = 'rgba(255,255,255,.75)';
+        // 호버(일반 트랙)
+        ctx.strokeStyle = 'rgba(255,255,255,.8)';
         ctx.lineWidth = Math.max(1.5, size * 0.03);
-        ctx.shadowColor = 'rgba(255,255,255,.4)';
-        ctx.shadowBlur = size * 0.3;
+        ctx.shadowColor = 'rgba(255,255,255,.35)';
+        ctx.shadowBlur = size * 0.25;
       }
       ctx.stroke();
       ctx.restore();
@@ -659,12 +689,14 @@ function roundRect(ctx, x, y, w, h, r) {
 // ── 툴팁 히트 테스트 ──
 function trackAt(mx, my) {
   if (!gridLayout.length) return null;
-  // 호버된 것 우선 (맨 위에 그려짐)
-  for (let i = gridLayout.length - 1; i >= 0; i--) {
-    const { track, gx, gy } = gridLayout[i];
-    const { sx, sy } = toScreen(gx, gy);
+  const sorted = [...gridLayout].sort((a, b) => {
+    const rank = t => hoveredTrack === t ? 3 : t.is_seed ? 2 : t.is_favorite ? 1 : 0;
+    return rank(b.track) - rank(a.track);
+  });
+  for (const { track, px, py } of sorted) {
+    const { sx, sy } = toScreen(px, py);
     const hs = hoverScales.get(track.track_key) || 1.0;
-    const half = (CELL_SIZE * cam.scale * hs) / 2;
+    const half = (COVER_SIZE * cam.scale * hs) / 2;
     if (mx >= sx - half && mx <= sx + half && my >= sy - half && my <= sy + half) return track;
   }
   return null;
