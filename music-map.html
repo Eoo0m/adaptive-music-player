@@ -369,6 +369,7 @@ let totalImages = 0;
 let cam = { x: 0, y: 0, scale: 1 };
 let isDragging = false, dragStart = { x: 0, y: 0 }, camStart = { x: 0, y: 0 };
 let hoveredTrack = null;
+let hoverScales = new Map(); // track_key → 현재 scale 보간값 (1.0 ~ 1.18)
 
 const canvas = document.getElementById('map-canvas');
 const ctx = canvas.getContext('2d');
@@ -401,10 +402,13 @@ async function generateMap() {
     } catch(e) { notFound.push(q); }
   }
 
-  if (seedKeys.length < 2) {
+  if (seedKeys.length < 1) {
     hideLoading();
-    alert(`검색된 곡이 부족합니다.\n찾지 못한 곡: ${notFound.join(', ')}`);
+    alert(`곡을 하나도 찾지 못했습니다.\n다른 제목으로 다시 시도해보세요.\n찾지 못한 곡: ${notFound.join(', ')}`);
     return;
+  }
+  if (notFound.length > 0) {
+    console.warn('찾지 못한 곡:', notFound.join(', '));
   }
 
   // 3. 찜 목록 처리 (텍스트 입력 → track_key 검색)
@@ -447,7 +451,7 @@ async function generateMap() {
         favorite_keys: favKeys,
         n_neighbors: 15,
         min_dist: 0.1,
-        fill_count: 150,
+        fill_count: 400,
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -473,7 +477,8 @@ async function generateMap() {
       img.crossOrigin = 'anonymous';
       img.onload = () => { images[track.track_key] = img; loadedCount++; resolve(); };
       img.onerror = () => { loadedCount++; resolve(); };
-      img.src = track.cover_image_url;
+      // Spotify 이미지 URL: /300/ → /640/ 고화질로 교체
+      img.src = track.cover_image_url.replace('/300/', '/640/').replace('_300x300.', '_640x640.');
     });
   }));
 
@@ -521,10 +526,11 @@ function getDataBounds() {
 function fitMap() {
   const bounds = getDataBounds();
   const W = canvas.width, H = canvas.height;
-  const pad = 120;
+  const pad = 60;
   const dataW = bounds.maxX - bounds.minX || 1;
   const dataH = bounds.maxY - bounds.minY || 1;
-  const scale = Math.min((W - pad * 2) / dataW, (H - pad * 2) / dataH) * 0.85;
+  // 화면을 꽉 채우도록 더 크게
+  const scale = Math.min((W - pad * 2) / dataW, (H - pad * 2) / dataH) * 1.1;
   cam.scale = scale;
   cam.x = W / 2 - ((bounds.minX + bounds.maxX) / 2) * scale;
   cam.y = H / 2 - ((bounds.minY + bounds.maxY) / 2) * scale;
@@ -580,9 +586,20 @@ function render() {
     ctx.restore();
   }
 
-  // z-order: fill → seed/fav 순으로 그려서 seed가 위에 오도록
+  // hover 보간 업데이트 (모든 트랙)
+  let needsRedraw = false;
+  for (const track of mapData) {
+    const key = track.track_key;
+    const cur = hoverScales.get(key) || 1.0;
+    const target = hoveredTrack === track ? 1.18 : 1.0;
+    const next = cur + (target - cur) * 0.14;
+    hoverScales.set(key, next);
+    if (Math.abs(next - target) > 0.001) needsRedraw = true;
+  }
+
+  // z-order: fill → seed/fav → hovered 순으로 그려서 위에 오도록
   const sorted = [...mapData].sort((a, b) => {
-    const rank = t => t.is_favorite ? 2 : t.is_seed ? 1 : 0;
+    const rank = t => (hoveredTrack === t) ? 3 : t.is_favorite ? 2 : t.is_seed ? 1 : 0;
     return rank(a) - rank(b);
   });
 
@@ -590,13 +607,14 @@ function render() {
     const { sx, sy } = toScreen(track.x, track.y);
     const pf = perspFactor(sx, sy);
 
-    // 타입별 기본 크기
+    // 타입별 기본 크기 — fill도 크게해서 화면 꽉 채우기
     let baseSize;
-    if (track.is_favorite) baseSize = 68;
-    else if (track.is_seed)    baseSize = 54;
-    else                       baseSize = 28;
+    if (track.is_favorite) baseSize = 80;
+    else if (track.is_seed) baseSize = 66;
+    else                    baseSize = 46;
 
-    const size = baseSize * pf;
+    const hs = hoverScales.get(track.track_key) || 1.0;
+    const size = baseSize * pf * hs;
     const half = size / 2;
 
     // 화면 밖 컬링
@@ -604,20 +622,21 @@ function render() {
 
     const img = images[track.track_key];
     const isHovered = hoveredTrack === track;
+    const r = size * 0.13;
 
     ctx.save();
     ctx.translate(sx, sy);
-    if (isHovered) ctx.scale(1.12, 1.12);
-
-    const r = size * 0.14; // corner radius
 
     // 그림자
-    if (track.is_seed || track.is_favorite) {
-      ctx.shadowColor = track.is_favorite ? 'rgba(29,185,84,.6)' : 'rgba(255,255,255,.25)';
-      ctx.shadowBlur = size * 0.5;
+    if (isHovered) {
+      ctx.shadowColor = track.is_favorite ? 'rgba(29,185,84,.9)' : 'rgba(255,255,255,.5)';
+      ctx.shadowBlur = size * 0.7;
+    } else if (track.is_seed || track.is_favorite) {
+      ctx.shadowColor = track.is_favorite ? 'rgba(29,185,84,.5)' : 'rgba(255,255,255,.2)';
+      ctx.shadowBlur = size * 0.4;
     } else {
-      ctx.shadowColor = 'rgba(0,0,0,.5)';
-      ctx.shadowBlur = size * 0.3;
+      ctx.shadowColor = 'rgba(0,0,0,.6)';
+      ctx.shadowBlur = size * 0.2;
     }
 
     // 클리핑 (둥근 사각형)
@@ -629,7 +648,6 @@ function render() {
     if (img) {
       ctx.drawImage(img, -half, -half, size, size);
     } else {
-      // 플레이스홀더
       ctx.fillStyle = 'rgba(255,255,255,.08)';
       ctx.fill();
       ctx.fillStyle = 'rgba(255,255,255,.3)';
@@ -639,33 +657,33 @@ function render() {
       ctx.fillText('♪', 0, 0);
     }
 
-    // 오버레이 (fill 트랙 어둡게)
-    if (!track.is_seed && !track.is_favorite) {
-      ctx.fillStyle = 'rgba(0,0,0,.35)';
+    // 오버레이 (fill 트랙 살짝 어둡게, 호버 시 제거)
+    if (!track.is_seed && !track.is_favorite && !isHovered) {
+      ctx.fillStyle = 'rgba(0,0,0,.25)';
       ctx.fillRect(-half, -half, size, size);
     }
 
     ctx.restore();
+
+    // 테두리 (클리핑 밖에서 별도 패스)
     ctx.save();
     ctx.translate(sx, sy);
-    if (isHovered) ctx.scale(1.12, 1.12);
-
-    // 테두리
     ctx.beginPath();
     roundRect(ctx, -half, -half, size, size, r);
     if (track.is_favorite) {
       ctx.strokeStyle = '#1db954';
-      ctx.lineWidth = Math.max(2, size * 0.06);
+      ctx.lineWidth = Math.max(2.5, size * 0.07);
       ctx.shadowColor = '#1db954';
-      ctx.shadowBlur = size * 0.4;
+      ctx.shadowBlur = size * (isHovered ? 0.6 : 0.35);
     } else if (track.is_seed) {
-      ctx.strokeStyle = 'rgba(255,255,255,.7)';
+      ctx.strokeStyle = isHovered ? 'rgba(255,255,255,.95)' : 'rgba(255,255,255,.65)';
       ctx.lineWidth = Math.max(1.5, size * 0.04);
-      ctx.shadowColor = 'rgba(255,255,255,.4)';
-      ctx.shadowBlur = size * 0.3;
+      ctx.shadowColor = 'rgba(255,255,255,.5)';
+      ctx.shadowBlur = size * (isHovered ? 0.5 : 0.25);
     } else {
-      ctx.strokeStyle = 'rgba(255,255,255,.12)';
-      ctx.lineWidth = 0.8;
+      ctx.strokeStyle = isHovered ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.1)';
+      ctx.lineWidth = isHovered ? 1.5 : 0.6;
+      if (isHovered) { ctx.shadowColor = 'rgba(255,255,255,.3)'; ctx.shadowBlur = size * 0.3; }
     }
     ctx.stroke();
     ctx.restore();
@@ -699,8 +717,9 @@ function trackAt(mx, my) {
   for (const track of sorted) {
     const { sx, sy } = toScreen(track.x, track.y);
     const pf = perspFactor(sx, sy);
-    let baseSize = track.is_favorite ? 68 : track.is_seed ? 54 : 28;
-    const half = (baseSize * pf) / 2;
+    const baseSize = track.is_favorite ? 80 : track.is_seed ? 66 : 46;
+    const hs = hoverScales.get(track.track_key) || 1.0;
+    const half = (baseSize * pf * hs) / 2;
     if (mx >= sx - half && mx <= sx + half && my >= sy - half && my <= sy + half) return track;
   }
   return null;
