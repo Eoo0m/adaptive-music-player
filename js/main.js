@@ -1377,8 +1377,6 @@ function renderMusicMap(canvas, tracks) {
 
     // 마우스 엣지 이동
     let mousePos = { x: -1, y: -1 };
-    newWrap && newWrap.addEventListener
-        ? null : null; // newWrap은 아래에서 교체되므로 loop에서 직접 처리
 
     function loop() {
         // 지도 탭이 닫히면 중단
