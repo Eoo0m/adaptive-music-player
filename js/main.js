@@ -397,9 +397,6 @@ async function checkAuth() {
         if (res.ok) {
             currentUser = await res.json();
             console.log('✅ Logged in as:', currentUser.email);
-            // 로그인 직후 백그라운드에서 홈피드 + 지도 프리패치
-            loadHomeFeed();
-            prefetchMusicMap();
         } else {
             // 토큰 만료
             authToken = null;
@@ -751,7 +748,8 @@ function prefetchPlaylistBuilder() {
 
 async function startPlaylistBuilder() {
     pb.state = 'loading';
-    renderPlaylistBuilderLoading();
+    // 프리패치 결과가 이미 있으면 로딩 화면 생략
+    if (!pb.prefetchPromise) renderPlaylistBuilderLoading();
 
     try {
         // 미리 호출한 결과가 있으면 재사용, 없으면 새로 호출
@@ -1159,8 +1157,11 @@ function renderPlaylistBuilder() {
         renderPlaylistBuilderSelecting();
     } else if (pb.state === 'loading') {
         renderPlaylistBuilderLoading();
+    } else if (pb.prefetchPromise) {
+        // 프리패치 결과가 있으면 바로 이어서 시작 (로딩 최소화)
+        startPlaylistBuilder();
     } else {
-        // idle → 바로 시작
+        // prefetch도 없고 idle → 시작
         startPlaylistBuilder();
     }
 }
@@ -1179,6 +1180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('sideTab').classList.remove('hidden');
         document.getElementById('layoutToggle').classList.remove('hidden');
         loadHomeFeed(); // 백그라운드에서 홈 피드 미리 로드
+        loadFavorites(); // 백그라운드에서 찜 목록 미리 로드
         prefetchPlaylistBuilder(); // 플레이리스트 빌더 미리 호출
         prefetchMusicMap(); // 취향 지도 미리 생성
     } else {
