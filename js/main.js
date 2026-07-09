@@ -748,8 +748,7 @@ function prefetchPlaylistBuilder() {
 
 async function startPlaylistBuilder() {
     pb.state = 'loading';
-    // 프리패치 결과가 이미 있으면 로딩 화면 생략
-    if (!pb.prefetchPromise) renderPlaylistBuilderLoading();
+    renderPlaylistBuilderLoading();
 
     try {
         // 미리 호출한 결과가 있으면 재사용, 없으면 새로 호출
@@ -782,7 +781,13 @@ async function startPlaylistBuilder() {
         console.error('Playlist builder start error:', e);
         pb.state = 'idle';
         pb.prefetchPromise = null;
-        renderPlaylistBuilderLoading();
+        // 실패 시 재시도 버튼 표시
+        const section = getPbSection();
+        section.innerHTML = '';
+        const card = document.createElement('div');
+        card.className = 'home-feed-card playlist-builder-card';
+        card.innerHTML = `<div class="favorites-empty" style="padding:16px 0">플레이리스트 준비 중 오류가 발생했어요. <button onclick="prefetchPlaylistBuilder();renderPlaylistBuilder()" style="color:#1db954;background:none;border:none;cursor:pointer;font-size:13px;">다시 시도</button></div>`;
+        section.appendChild(card);
     }
 }
 
