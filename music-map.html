@@ -344,7 +344,7 @@ let totalImages = 0;
 
 // 카메라 (pan + zoom)
 let cam = { x: 0, y: 0, scale: 1, tx: 0, ty: 0 }; // tx/ty = 이동 목표
-let isDragging = false, dragStart = { x: 0, y: 0 }, camStart = { x: 0, y: 0 };
+let dragStart = { x: 0, y: 0 };
 let hoveredTrack = null;
 let hoverScales = new Map();
 
@@ -494,9 +494,9 @@ window.addEventListener('resize', () => { resizeCanvas(); if (mapData) fitMap();
 // UMAP 순서로 정렬 후 벽돌 패턴(홀수 행 반 칸 오프셋)으로 배치
 let gridLayout = []; // [{track, px, py}] — 픽셀 좌표 (cam 적용 전)
 
-const COVER_SIZE = 160;  // 커버 한 변 (px)
-const GAP        = 40;   // 커버 사이 간격 (px)
-const LABEL_H    = 36;   // 커버 아래 텍스트 영역 높이 (px)
+const COVER_SIZE = 200;  // 커버 한 변 (px)
+const GAP        = 32;   // 커버 사이 간격 (px)
+const LABEL_H    = 42;   // 커버 아래 텍스트 영역 높이 (px)
 const STEP       = COVER_SIZE + GAP; // 셀 피치
 
 function buildGrid() {
@@ -523,24 +523,12 @@ function buildGrid() {
 
 function fitMap() {
   buildGrid();
+  // scale=1 기준으로 시작 (커버가 실제 COVER_SIZE px로 보임)
   cam.scale = 1;
   cam.x = canvas.width / 2;
   cam.y = canvas.height / 2;
   cam.tx = cam.x;
   cam.ty = cam.y;
-
-  // 전체가 화면에 들어오도록 scale 조정
-  if (!gridLayout.length) return;
-  let minPx = Infinity, maxPx = -Infinity, minPy = Infinity, maxPy = -Infinity;
-  for (const { px, py } of gridLayout) {
-    if (px < minPx) minPx = px; if (px > maxPx) maxPx = px;
-    if (py < minPy) minPy = py; if (py > maxPy) maxPy = py;
-  }
-  const pad = 60;
-  const VSTEP = COVER_SIZE + LABEL_H + GAP;
-  const scaleX = (canvas.width  - pad * 2) / (maxPx - minPx + COVER_SIZE);
-  const scaleY = (canvas.height - pad * 2) / (maxPy - minPy + VSTEP);
-  cam.scale = Math.min(scaleX, scaleY, 1.0);
 }
 
 // 배치 좌표 → 화면 좌표
@@ -574,11 +562,12 @@ function render() {
     const { sx, sy } = toScreen(px, py);
     const hs = hoverScales.get(track.track_key) || 1.0;
 
-    // 원근감: 화면 중심에서 멀수록 작아짐 (최소 0.42배)
+    // 원근감: 화면 중심에서 멀수록 작아짐 (지구본 느낌, 최소 0.3배)
     const cx = canvas.width / 2, cy = canvas.height / 2;
-    const ndx = (sx - cx) / (canvas.width * 0.55);
-    const ndy = (sy - cy) / (canvas.height * 0.55);
-    const pf = Math.max(0.42, 1.0 - Math.sqrt(ndx * ndx + ndy * ndy) * 0.42);
+    const ndx = (sx - cx) / (canvas.width * 0.48);
+    const ndy = (sy - cy) / (canvas.height * 0.48);
+    const dist2center = Math.sqrt(ndx * ndx + ndy * ndy);
+    const pf = Math.max(0.3, 1.0 - dist2center * 0.58);
 
     const size = COVER_SIZE * cam.scale * hs * pf;
     const half = size / 2;
@@ -633,7 +622,7 @@ function render() {
     ctx.restore();
 
     // 커버 아래 텍스트 (노래명 + 가수)
-    const labelSize = size * 0.12;
+    const labelSize = Math.max(9, size * 0.11);
     const labelY = sy + half + 6 * cam.scale;
     ctx.save();
     ctx.textAlign = 'center';
@@ -713,10 +702,14 @@ function trackAt(mx, my) {
     const rank = t => hoveredTrack === t ? 3 : t.is_seed ? 2 : t.is_favorite ? 1 : 0;
     return rank(b.track) - rank(a.track);
   });
+  const cx = canvas.width / 2, cy = canvas.height / 2;
   for (const { track, px, py } of sorted) {
     const { sx, sy } = toScreen(px, py);
     const hs = hoverScales.get(track.track_key) || 1.0;
-    const half = (COVER_SIZE * cam.scale * hs) / 2;
+    const ndx = (sx - cx) / (canvas.width * 0.48);
+    const ndy = (sy - cy) / (canvas.height * 0.48);
+    const pf = Math.max(0.3, 1.0 - Math.sqrt(ndx * ndx + ndy * ndy) * 0.58);
+    const half = (COVER_SIZE * cam.scale * hs * pf) / 2;
     if (mx >= sx - half && mx <= sx + half && my >= sy - half && my <= sy + half) return track;
   }
   return null;
@@ -725,41 +718,18 @@ function trackAt(mx, my) {
 // ── 마우스 이벤트 ──
 const wrap = document.getElementById('canvas-wrap');
 
-wrap.addEventListener('mousedown', e => {
-  isDragging = true;
-  dragStart = { x: e.clientX, y: e.clientY };
-  camStart = { x: cam.x, y: cam.y };
-  wrap.classList.add('grabbing');
-});
-
 window.addEventListener('mousemove', e => {
   if (!mapData) return;
-  if (isDragging) {
-    cam.x = camStart.x + (e.clientX - dragStart.x);
-    cam.y = camStart.y + (e.clientY - dragStart.y);
-    hoveredTrack = null;
-    hideTooltip();
-    return;
-  }
   const track = trackAt(e.clientX, e.clientY);
   hoveredTrack = track;
   if (track) showTooltip(track, e.clientX, e.clientY);
   else hideTooltip();
-  wrap.style.cursor = track ? 'pointer' : 'grab';
+  wrap.style.cursor = track ? 'pointer' : 'default';
 });
 
-window.addEventListener('mouseup', e => {
-  const wasDragging = isDragging && (
-    Math.abs(e.clientX - dragStart.x) > 4 || Math.abs(e.clientY - dragStart.y) > 4
-  );
-  isDragging = false;
-  wrap.classList.remove('grabbing');
-
-  // 드래그가 아닌 클릭이면 해당 커버를 화면 중앙으로
-  if (!wasDragging) {
-    const track = trackAt(e.clientX, e.clientY);
-    if (track) centerOn(track);
-  }
+wrap.addEventListener('click', e => {
+  const track = trackAt(e.clientX, e.clientY);
+  if (track) centerOn(track);
 });
 
 function centerOn(track) {
@@ -779,21 +749,22 @@ wrap.addEventListener('dblclick', e => {
   }
 });
 
-// 터치 패닝
+// 터치 탭 → 커버 클릭
+let touchStartPos = null;
 wrap.addEventListener('touchstart', e => {
-  if (e.touches.length === 1) {
-    isDragging = true;
-    dragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    camStart = { x: cam.x, y: cam.y };
-  }
+  if (e.touches.length === 1)
+    touchStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
 }, { passive: true });
-wrap.addEventListener('touchmove', e => {
-  if (e.touches.length === 1 && isDragging) {
-    cam.tx = camStart.x + (e.touches[0].clientX - dragStart.x);
-    cam.ty = camStart.y + (e.touches[0].clientY - dragStart.y);
+wrap.addEventListener('touchend', e => {
+  if (!touchStartPos) return;
+  const t = e.changedTouches[0];
+  const dx = t.clientX - touchStartPos.x, dy = t.clientY - touchStartPos.y;
+  if (Math.sqrt(dx*dx + dy*dy) < 10) {
+    const track = trackAt(t.clientX, t.clientY);
+    if (track) centerOn(track);
   }
+  touchStartPos = null;
 }, { passive: true });
-wrap.addEventListener('touchend', () => { isDragging = false; }, { passive: true });
 
 // ── 뒤로 가기 ──
 document.getElementById('back-btn').onclick = () => {
