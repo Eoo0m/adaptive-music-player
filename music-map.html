@@ -451,7 +451,7 @@ async function generateMap() {
         favorite_keys: favKeys,
         n_neighbors: 15,
         min_dist: 0.1,
-        fill_per_seed: 80,
+        fill_per_seed: 40,
       })
     });
     if (!res.ok) throw new Error(await res.text());
