@@ -517,8 +517,9 @@ window.addEventListener('resize', () => { resizeCanvas(); if (mapData) fitMap();
 // UMAP 순서로 정렬 후 벽돌 패턴(홀수 행 반 칸 오프셋)으로 배치
 let gridLayout = []; // [{track, px, py}] — 픽셀 좌표 (cam 적용 전)
 
-const COVER_SIZE = 110;  // 커버 한 변 (px)
-const GAP        = 10;   // 커버 사이 간격 (px)
+const COVER_SIZE = 160;  // 커버 한 변 (px)
+const GAP        = 40;   // 커버 사이 간격 (px)
+const LABEL_H    = 36;   // 커버 아래 텍스트 영역 높이 (px)
 const STEP       = COVER_SIZE + GAP; // 셀 피치
 
 function buildGrid() {
@@ -536,8 +537,9 @@ function buildGrid() {
     const col = i % cols;
     const row = Math.floor(i / cols);
     // 홀수 행은 반 칸(STEP/2) 오른쪽으로 밀기 — 벽돌 패턴
+    const VSTEP = COVER_SIZE + LABEL_H + GAP; // 세로 피치 (텍스트 공간 포함)
     const px = col * STEP + (row % 2 === 1 ? STEP / 2 : 0) - (cols * STEP) / 2;
-    const py = row * STEP - (rows * STEP) / 2;
+    const py = row * VSTEP - (rows * VSTEP) / 2;
     return { track, px, py };
   });
 }
@@ -555,10 +557,11 @@ function fitMap() {
     if (px < minPx) minPx = px; if (px > maxPx) maxPx = px;
     if (py < minPy) minPy = py; if (py > maxPy) maxPy = py;
   }
-  const pad = 40;
+  const pad = 60;
+  const VSTEP = COVER_SIZE + LABEL_H + GAP;
   const scaleX = (canvas.width  - pad * 2) / (maxPx - minPx + COVER_SIZE);
-  const scaleY = (canvas.height - pad * 2) / (maxPy - minPy + COVER_SIZE);
-  cam.scale = Math.min(scaleX, scaleY, 1.0); // 1.0 이상은 너무 크니까 제한
+  const scaleY = (canvas.height - pad * 2) / (maxPy - minPy + VSTEP);
+  cam.scale = Math.min(scaleX, scaleY, 1.0);
 }
 
 // 배치 좌표 → 화면 좌표
@@ -639,6 +642,25 @@ function render() {
 
     ctx.restore();
 
+    // 커버 아래 텍스트 (노래명 + 가수)
+    const labelSize = size * 0.12;
+    const labelY = sy + half + 6 * cam.scale;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+
+    // 노래명
+    ctx.font = `600 ${labelSize}px -apple-system, sans-serif`;
+    ctx.fillStyle = isHovered ? '#fff' : 'rgba(255,255,255,.82)';
+    const maxW = size * 1.1;
+    ctx.fillText(truncate(ctx, track.title, maxW), sx, labelY);
+
+    // 가수명
+    ctx.font = `${labelSize * 0.85}px -apple-system, sans-serif`;
+    ctx.fillStyle = isHovered ? 'rgba(255,255,255,.8)' : 'rgba(255,255,255,.45)';
+    ctx.fillText(truncate(ctx, track.artist, maxW), sx, labelY + labelSize + 2);
+    ctx.restore();
+
     // 테두리: seed=초록, 찜=초록 강조, 호버=흰색, 나머지=없음
     const needBorder = isSeed || isFav || isHovered;
     if (needBorder) {
@@ -670,6 +692,14 @@ function render() {
   }
 
   requestAnimationFrame(render);
+}
+
+function truncate(ctx, text, maxW) {
+  if (!text) return '';
+  if (ctx.measureText(text).width <= maxW) return text;
+  let t = text;
+  while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+  return t + '…';
 }
 
 function roundRect(ctx, x, y, w, h, r) {
