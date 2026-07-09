@@ -451,7 +451,7 @@ async function generateMap() {
         favorite_keys: favKeys,
         n_neighbors: 15,
         min_dist: 0.1,
-        fill_count: 400,
+        fill_per_seed: 80,
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -511,44 +511,46 @@ function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 }
-window.addEventListener('resize', () => { resizeCanvas(); render(); });
+window.addEventListener('resize', () => { resizeCanvas(); if (mapData) buildGrid(); });
 
-// ── 데이터 좌표 범위 ──
-function getDataBounds() {
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (const t of mapData) {
-    if (t.x < minX) minX = t.x; if (t.x > maxX) maxX = t.x;
-    if (t.y < minY) minY = t.y; if (t.y > maxY) maxY = t.y;
-  }
-  return { minX, maxX, minY, maxY };
+// ── 격자 배치 계산 ──
+// UMAP x,y 좌표로 정렬 후 균일 격자에 배치 (빈칸 없음)
+let gridLayout = []; // [{track, gx, gy}] — 격자 셀 좌표
+
+const CELL_SIZE = 90;   // 기본 셀 크기 (px, zoom 전)
+const OVERLAP   = 0.88; // 셀 간격 비율 (1.0 = 붙이기, <1 = 겹침)
+
+function buildGrid() {
+  if (!mapData || mapData.length === 0) return;
+  const n = mapData.length;
+  // 가로 열 수: 화면 비율에 맞게
+  const cols = Math.ceil(Math.sqrt(n * (canvas.width / canvas.height)));
+  const rows = Math.ceil(n / cols);
+
+  // UMAP 좌표로 정렬 (x → y 순)
+  const sorted = [...mapData].sort((a, b) => a.x - b.x || a.y - b.y);
+
+  gridLayout = sorted.map((track, i) => ({
+    track,
+    gx: (i % cols) - cols / 2 + 0.5,   // 중심 기준 격자 좌표
+    gy: Math.floor(i / cols) - rows / 2 + 0.5,
+  }));
 }
 
 function fitMap() {
-  const bounds = getDataBounds();
-  const W = canvas.width, H = canvas.height;
-  const pad = 60;
-  const dataW = bounds.maxX - bounds.minX || 1;
-  const dataH = bounds.maxY - bounds.minY || 1;
-  // 화면을 꽉 채우도록 더 크게
-  const scale = Math.min((W - pad * 2) / dataW, (H - pad * 2) / dataH) * 1.1;
-  cam.scale = scale;
-  cam.x = W / 2 - ((bounds.minX + bounds.maxX) / 2) * scale;
-  cam.y = H / 2 - ((bounds.minY + bounds.maxY) / 2) * scale;
+  buildGrid();
+  cam.scale = 1;
+  cam.x = canvas.width / 2;
+  cam.y = canvas.height / 2;
 }
 
-// 데이터 좌표 → 화면 좌표
-function toScreen(dx, dy) {
-  return { sx: dx * cam.scale + cam.x, sy: dy * cam.scale + cam.y };
-}
-
-// ── 원근감 계수 (화면 중심 기준) ──
-function perspFactor(sx, sy) {
-  const cx = canvas.width / 2, cy = canvas.height / 2;
-  const dx = (sx - cx) / (canvas.width * 0.5);
-  const dy = (sy - cy) / (canvas.height * 0.5);
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  // 중심=1.0, 가장자리=0.38 (지구본 느낌)
-  return Math.max(0.38, 1.0 - dist * 0.45);
+// 격자 좌표 → 화면 좌표
+function toScreen(gx, gy) {
+  const step = CELL_SIZE * OVERLAP * cam.scale;
+  return {
+    sx: gx * step + cam.x,
+    sy: gy * step + cam.y,
+  };
 }
 
 // ── 렌더링 ──
@@ -556,90 +558,46 @@ function render() {
   if (!mapData) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // 배경 그라디언트
-  const grd = ctx.createRadialGradient(
-    canvas.width/2, canvas.height/2, 0,
-    canvas.width/2, canvas.height/2, Math.max(canvas.width, canvas.height) * 0.6
-  );
-  grd.addColorStop(0, 'rgba(29,185,84,.04)');
-  grd.addColorStop(1, 'rgba(7,8,15,0)');
-  ctx.fillStyle = grd;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // 연결선 (seed 간)
-  const seeds = mapData.filter(t => t.is_seed);
-  if (seeds.length >= 2) {
-    ctx.save();
-    ctx.strokeStyle = 'rgba(29,185,84,.12)';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([4, 6]);
-    for (let i = 0; i < seeds.length; i++) {
-      for (let j = i + 1; j < seeds.length; j++) {
-        const a = toScreen(seeds[i].x, seeds[i].y);
-        const b = toScreen(seeds[j].x, seeds[j].y);
-        ctx.beginPath();
-        ctx.moveTo(a.sx, a.sy);
-        ctx.lineTo(b.sx, b.sy);
-        ctx.stroke();
-      }
-    }
-    ctx.restore();
-  }
-
-  // hover 보간 업데이트 (모든 트랙)
-  let needsRedraw = false;
+  // hover 보간 업데이트
   for (const track of mapData) {
     const key = track.track_key;
     const cur = hoverScales.get(key) || 1.0;
-    const target = hoveredTrack === track ? 1.18 : 1.0;
-    const next = cur + (target - cur) * 0.14;
+    const target = hoveredTrack === track ? 1.55 : 1.0;
+    const next = cur + (target - cur) * 0.12;
     hoverScales.set(key, next);
-    if (Math.abs(next - target) > 0.001) needsRedraw = true;
   }
 
-  // z-order: fill → seed/fav → hovered 순으로 그려서 위에 오도록
-  const sorted = [...mapData].sort((a, b) => {
-    const rank = t => (hoveredTrack === t) ? 3 : t.is_favorite ? 2 : t.is_seed ? 1 : 0;
-    return rank(a) - rank(b);
+  // z-order: 호버된 것이 맨 위
+  const drawOrder = [...gridLayout].sort((a, b) => {
+    return (hoveredTrack === a.track ? 1 : 0) - (hoveredTrack === b.track ? 1 : 0);
   });
 
-  for (const track of sorted) {
-    const { sx, sy } = toScreen(track.x, track.y);
-    const pf = perspFactor(sx, sy);
+  const baseSize = CELL_SIZE * cam.scale;
 
-    // 타입별 기본 크기 — fill도 크게해서 화면 꽉 채우기
-    let baseSize;
-    if (track.is_favorite) baseSize = 80;
-    else if (track.is_seed) baseSize = 66;
-    else                    baseSize = 46;
-
-    const hs = hoverScales.get(track.track_key) || 1.0;
-    const size = baseSize * pf * hs;
-    const half = size / 2;
+  for (const { track, gx, gy } of drawOrder) {
+    const { sx, sy } = toScreen(gx, gy);
 
     // 화면 밖 컬링
-    if (sx + half < 0 || sx - half > canvas.width || sy + half < 0 || sy - half > canvas.height) continue;
+    if (sx + baseSize < 0 || sx - baseSize > canvas.width ||
+        sy + baseSize < 0 || sy - baseSize > canvas.height) continue;
 
-    const img = images[track.track_key];
+    const hs = hoverScales.get(track.track_key) || 1.0;
+    const size = baseSize * hs;
+    const half = size / 2;
     const isHovered = hoveredTrack === track;
-    const r = size * 0.13;
+    const r = size * 0.10;
+    const img = images[track.track_key];
 
     ctx.save();
     ctx.translate(sx, sy);
 
-    // 그림자
+    // 호버 그림자/glow
     if (isHovered) {
-      ctx.shadowColor = track.is_favorite ? 'rgba(29,185,84,.9)' : 'rgba(255,255,255,.5)';
-      ctx.shadowBlur = size * 0.7;
-    } else if (track.is_seed || track.is_favorite) {
-      ctx.shadowColor = track.is_favorite ? 'rgba(29,185,84,.5)' : 'rgba(255,255,255,.2)';
-      ctx.shadowBlur = size * 0.4;
-    } else {
-      ctx.shadowColor = 'rgba(0,0,0,.6)';
-      ctx.shadowBlur = size * 0.2;
+      ctx.shadowColor = track.is_favorite ? 'rgba(29,185,84,.95)' : 'rgba(255,255,255,.6)';
+      ctx.shadowBlur = size * 0.5;
     }
 
-    // 클리핑 (둥근 사각형)
+    // 클리핑
     ctx.beginPath();
     roundRect(ctx, -half, -half, size, size, r);
     ctx.clip();
@@ -648,45 +606,37 @@ function render() {
     if (img) {
       ctx.drawImage(img, -half, -half, size, size);
     } else {
-      ctx.fillStyle = 'rgba(255,255,255,.08)';
+      ctx.fillStyle = 'rgba(40,40,50,1)';
       ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,.3)';
-      ctx.font = `${size * 0.35}px sans-serif`;
+      ctx.fillStyle = 'rgba(255,255,255,.25)';
+      ctx.font = `${size * 0.3}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('♪', 0, 0);
     }
 
-    // 오버레이 (fill 트랙 살짝 어둡게, 호버 시 제거)
-    if (!track.is_seed && !track.is_favorite && !isHovered) {
-      ctx.fillStyle = 'rgba(0,0,0,.25)';
-      ctx.fillRect(-half, -half, size, size);
-    }
-
     ctx.restore();
 
-    // 테두리 (클리핑 밖에서 별도 패스)
-    ctx.save();
-    ctx.translate(sx, sy);
-    ctx.beginPath();
-    roundRect(ctx, -half, -half, size, size, r);
-    if (track.is_favorite) {
-      ctx.strokeStyle = '#1db954';
-      ctx.lineWidth = Math.max(2.5, size * 0.07);
-      ctx.shadowColor = '#1db954';
-      ctx.shadowBlur = size * (isHovered ? 0.6 : 0.35);
-    } else if (track.is_seed) {
-      ctx.strokeStyle = isHovered ? 'rgba(255,255,255,.95)' : 'rgba(255,255,255,.65)';
-      ctx.lineWidth = Math.max(1.5, size * 0.04);
-      ctx.shadowColor = 'rgba(255,255,255,.5)';
-      ctx.shadowBlur = size * (isHovered ? 0.5 : 0.25);
-    } else {
-      ctx.strokeStyle = isHovered ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.1)';
-      ctx.lineWidth = isHovered ? 1.5 : 0.6;
-      if (isHovered) { ctx.shadowColor = 'rgba(255,255,255,.3)'; ctx.shadowBlur = size * 0.3; }
+    // 테두리 (찜곡 초록, 호버 흰색 강조, 나머지 없음)
+    if (track.is_favorite || isHovered) {
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.beginPath();
+      roundRect(ctx, -half, -half, size, size, r);
+      if (track.is_favorite) {
+        ctx.strokeStyle = '#1db954';
+        ctx.lineWidth = Math.max(2.5, size * 0.055);
+        ctx.shadowColor = '#1db954';
+        ctx.shadowBlur = isHovered ? size * 0.5 : size * 0.25;
+      } else {
+        ctx.strokeStyle = 'rgba(255,255,255,.75)';
+        ctx.lineWidth = Math.max(1.5, size * 0.03);
+        ctx.shadowColor = 'rgba(255,255,255,.4)';
+        ctx.shadowBlur = size * 0.3;
+      }
+      ctx.stroke();
+      ctx.restore();
     }
-    ctx.stroke();
-    ctx.restore();
   }
 
   requestAnimationFrame(render);
@@ -708,18 +658,13 @@ function roundRect(ctx, x, y, w, h, r) {
 
 // ── 툴팁 히트 테스트 ──
 function trackAt(mx, my) {
-  if (!mapData) return null;
-  // 위에 그려진 트랙부터 탐색
-  const sorted = [...mapData].sort((a, b) => {
-    const rank = t => t.is_favorite ? 2 : t.is_seed ? 1 : 0;
-    return rank(b) - rank(a);
-  });
-  for (const track of sorted) {
-    const { sx, sy } = toScreen(track.x, track.y);
-    const pf = perspFactor(sx, sy);
-    const baseSize = track.is_favorite ? 80 : track.is_seed ? 66 : 46;
+  if (!gridLayout.length) return null;
+  // 호버된 것 우선 (맨 위에 그려짐)
+  for (let i = gridLayout.length - 1; i >= 0; i--) {
+    const { track, gx, gy } = gridLayout[i];
+    const { sx, sy } = toScreen(gx, gy);
     const hs = hoverScales.get(track.track_key) || 1.0;
-    const half = (baseSize * pf * hs) / 2;
+    const half = (CELL_SIZE * cam.scale * hs) / 2;
     if (mx >= sx - half && mx <= sx + half && my >= sy - half && my <= sy + half) return track;
   }
   return null;
