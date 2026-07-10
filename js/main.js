@@ -1274,11 +1274,14 @@ async function showMusicMap() {
     const loading = document.getElementById('mapLoading');
     const empty = document.getElementById('mapEmpty');
 
-    // 이미 렌더된 경우 스킵
+    // 이미 데이터가 있으면 재요청 없이 바로 렌더 (애니메이션 재시작)
     if (lastMapData) {
+        const favKeys = new Set((lastFavorites || []).map(f => f.track_key));
+        lastMapData.tracks.forEach(t => { t.is_favorite = favKeys.has(t.track_key); });
         wrap.classList.remove('hidden');
         loading.classList.add('hidden');
         empty.classList.add('hidden');
+        renderMusicMap(canvas, lastMapData.tracks);
         return;
     }
 
