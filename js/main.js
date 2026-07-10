@@ -486,8 +486,7 @@ function getTrackArtist(track) {
 
 function openTrackOnYouTube(track, candidateKeys = currentCandidateKeys) {
     logAction('play', { selected_track_key: track.track_key, candidate_track_keys: candidateKeys });
-    const query = encodeURIComponent(`${getTrackTitle(track)} ${getTrackArtist(track)}`);
-    window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
+    window.open(`https://open.spotify.com/track/${track.track_key}`, '_blank');
 }
 
 function isVisible(id) {
@@ -1602,6 +1601,6 @@ function renderMusicMap(canvas, tracks) {
     },{passive:false});
     newWrap.addEventListener('dblclick', e => {
         const item=hitTest(e.clientX,e.clientY);
-        if (item) window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(item.track.title+' '+item.track.artist)}`,'_blank');
+        if (item) window.open(`https://open.spotify.com/track/${item.track.track_key}`,'_blank');
     });
 }
