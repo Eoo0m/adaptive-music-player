@@ -1383,7 +1383,8 @@ function renderMusicMap(canvas, tracks) {
         return new Promise(resolve => {
             const img = new Image();
             img.crossOrigin = 'anonymous';
-            img.onload = img.onerror = () => { images[t.track_key] = img; resolve(); };
+            img.onload = () => { images[t.track_key] = img; resolve(); };
+            img.onerror = () => { images[t.track_key] = null; resolve(); };
             img.src = t.cover_image_url;
         });
     })).then(() => requestAnimationFrame(loop));
