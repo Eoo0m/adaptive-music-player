@@ -1591,9 +1591,8 @@ function renderMusicMap(canvas, tracks) {
         if (mapTooltip) {
             if (item && !item.track.is_seed) {
                 const t = item.track;
-                const wrap = newWrap.getBoundingClientRect();
-                let tx = e.clientX - wrap.left + 14;
-                let ty = e.clientY - wrap.top - 14;
+                let tx = e.clientX + 14;
+                let ty = e.clientY - 10;
                 let html = '';
                 if (t.is_bridge && t.bridge_seed_a && t.bridge_seed_b) {
                     const a = t.bridge_seed_a, b = t.bridge_seed_b;
