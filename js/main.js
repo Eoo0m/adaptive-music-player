@@ -1376,7 +1376,11 @@ function renderMusicMap(canvas, tracks) {
             img.onerror = () => { images[t.track_key] = null; resolve(); };
             img.src = t.cover_image_url;
         });
-    })).then(() => requestAnimationFrame(loop));
+    })).then(() => {
+        // 이미지 로드 완료 후 애니메이션 시작 (버퍼링 방지)
+        for (const item of grid) item.animT = 0;
+        requestAnimationFrame(loop);
+    });
 
     function toScreen(px, py) {
         return { sx: px * cam.scale + cam.x, sy: py * cam.scale + cam.y };
@@ -1487,17 +1491,22 @@ function renderMusicMap(canvas, tracks) {
             ctx.restore();
 
             // 텍스트
-            const lblSz = Math.max(11, size * 0.14);
-            const lblY = sy + half + 5;
-            ctx.save();
-            ctx.textAlign='center'; ctx.textBaseline='top';
-            ctx.font=`600 ${lblSz}px -apple-system,sans-serif`;
-            ctx.fillStyle=isHov?'#fff':'rgba(255,255,255,.82)';
-            ctx.fillText(truncCached(ctx, track.title, size*1.1, track.track_key+'t'), sx, lblY);
-            ctx.font=`${lblSz*.85}px -apple-system,sans-serif`;
-            ctx.fillStyle=isHov?'rgba(255,255,255,.8)':'rgba(255,255,255,.45)';
-            ctx.fillText(truncCached(ctx, track.artist, size*1.1, track.track_key+'a'), sx, lblY+lblSz+4);
-            ctx.restore();
+            // 텍스트: animT 0.7 이후 fade in
+            const txtAlpha = Math.min(1, Math.max(0, (animT - 0.7) / 0.3));
+            if (txtAlpha > 0) {
+                const lblSz = Math.max(11, size * 0.14);
+                const lblY = sy + half + 5;
+                ctx.save();
+                ctx.globalAlpha = txtAlpha;
+                ctx.textAlign='center'; ctx.textBaseline='top';
+                ctx.font=`600 ${lblSz}px -apple-system,sans-serif`;
+                ctx.fillStyle=isHov?'#fff':'rgba(255,255,255,.82)';
+                ctx.fillText(truncCached(ctx, track.title, size*1.1, track.track_key+'t'), sx, lblY);
+                ctx.font=`${lblSz*.85}px -apple-system,sans-serif`;
+                ctx.fillStyle=isHov?'rgba(255,255,255,.8)':'rgba(255,255,255,.45)';
+                ctx.fillText(truncCached(ctx, track.artist, size*1.1, track.track_key+'a'), sx, lblY+lblSz+4);
+                ctx.restore();
+            }
 
             // 테두리
             if (isSeed || isFav || isHov) {
