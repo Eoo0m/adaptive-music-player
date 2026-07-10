@@ -417,6 +417,16 @@
   }
 </style>
 </head>
+<script>
+// OAuth 콜백으로 token이 붙어서 랜딩에 도착한 경우 → app.html로 전달
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  if (token) {
+    window.location.replace('app.html?token=' + encodeURIComponent(token));
+  }
+})();
+</script>
 <body>
 
 <!-- ===== HERO ===== -->
