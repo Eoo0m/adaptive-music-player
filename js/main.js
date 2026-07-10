@@ -1295,6 +1295,9 @@ async function showMusicMap() {
             return;
         }
         lastMapData = data;
+        // 찜 목록 기반으로 is_favorite 세팅
+        const favKeys = new Set((lastFavorites || []).map(f => f.track_key));
+        data.tracks.forEach(t => { t.is_favorite = favKeys.has(t.track_key); });
         loading.classList.add('hidden');
         wrap.classList.remove('hidden');
         renderMusicMap(canvas, data.tracks);
@@ -1335,7 +1338,9 @@ function renderMusicMap(canvas, tracks) {
     });
 
     const images = {};
-    let cam = { x: lw()/2, y: lh()/2, scale: 0.6, tx: lw()/2, ty: lh()/2 };
+    const TARGET_SCALE = 0.6;
+    let cam = { x: lw()/2, y: lh()/2, scale: 0.12, tx: lw()/2, ty: lh()/2 };
+    let destroyed = false;
     let hoveredItem = null;
     const hoverScales = new Map();
     let isDragging = false, dragStart = {x:0,y:0}, camStart = {x:0,y:0};
@@ -1392,7 +1397,9 @@ function renderMusicMap(canvas, tracks) {
     let mousePos = { x: -1, y: -1 };
 
     function loop() {
-        // 지도 탭이 닫히면 중단
+        if (destroyed) return;
+        requestAnimationFrame(loop);
+        // 지도 탭이 닫히면 렌더 스킵 (loop는 유지)
         if (document.getElementById('mapView').classList.contains('hidden')) return;
 
         // 엣지 패닝 (마우스가 화면 가장자리 10% 이내일 때)
@@ -1409,6 +1416,7 @@ function renderMusicMap(canvas, tracks) {
 
         cam.x += (cam.tx - cam.x) * 0.1;
         cam.y += (cam.ty - cam.y) * 0.1;
+        if (cam.scale < TARGET_SCALE) cam.scale += (TARGET_SCALE - cam.scale) * 0.06;
 
         ctx.clearRect(0, 0, lw(), lh());
 
@@ -1488,7 +1496,6 @@ function renderMusicMap(canvas, tracks) {
             }
         }
 
-        requestAnimationFrame(loop);
     }
 
     // 이벤트 — 한 번만 등록 (리렌더 방지)
@@ -1547,15 +1554,16 @@ function renderMusicMap(canvas, tracks) {
     window.addEventListener('mouseleave', onMouseLeave);
     window.addEventListener('resize', onResize);
 
-    // newWrap 제거 시 window 리스너도 정리
+    // newWrap 제거 시 window 리스너도 정리 + loop 중단
     new MutationObserver(() => {
         if (!document.contains(newWrap)) {
+            destroyed = true;
             window.removeEventListener('mousemove', onMouseMove);
             window.removeEventListener('mouseup', onMouseUp);
             window.removeEventListener('mouseleave', onMouseLeave);
             window.removeEventListener('resize', onResize);
         }
-    }).observe(document.getElementById('mapView'), { childList: true });
+    }).observe(document.getElementById('mapView'), { childList: true, subtree: true });
 
     newWrap.addEventListener('mousedown', e => {
         isDragging=true; dragStart={x:e.clientX,y:e.clientY}; camStart={x:cam.tx,y:cam.ty};
