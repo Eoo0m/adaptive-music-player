@@ -1339,102 +1339,16 @@ function renderMusicMap(canvas, tracks) {
     const lw = () => window.innerWidth;
     const lh = () => window.innerHeight;
 
-    // 시드를 격자에 배치하고 fill을 시드 주변 칸에 채움
-    const seeds = tracks.filter(t => t.is_seed);
-    const fills = tracks.filter(t => !t.is_seed && !t.is_bridge);
-    const bridges = tracks.filter(t => t.is_bridge);
-
-    // 시드 간격: fill이 들어갈 공간 확보 (반경 2칸 = 5칸 간격)
-    const S = 5; // 시드 간 격자 간격
-
-    // 백엔드 x,y → 픽셀 (UMAP 구조 그대로 유지, S 간격 단위로 스케일)
-    const sxVals = seeds.map(t => t.x), syVals = seeds.map(t => t.y);
-    const sxMin = Math.min(...sxVals), sxMax = Math.max(...sxVals);
-    const syMin = Math.min(...syVals), syMax = Math.max(...syVals);
-    const sxRange = (sxMax - sxMin) || 1, syRange = (syMax - syMin) || 1;
-    // 시드를 S 간격 단위 격자로 스케일 (겹치지 않게 최소 1칸 보장)
-    const targetSpan = Math.ceil(Math.sqrt(seeds.length)) * S;
-
-    const seedCell = {}; // track_key → {c, r}
-    seeds.forEach(t => {
-        const gc = Math.round((t.x - sxMin) / sxRange * targetSpan);
-        const gr = Math.round((t.y - syMin) / syRange * targetSpan);
-        seedCell[t.track_key] = { c: gc, r: gr };
-    });
-
-    // 시드 위치 충돌 해결 (같은 칸에 여러 시드가 겹치면 밀어내기)
-    const seedPositions = new Map();
-    Object.entries(seedCell).forEach(([tk, pos]) => {
-        let { c, r } = pos;
-        let offset = 0;
-        while (seedPositions.has(`${c},${r}`)) {
-            offset++;
-            c = pos.c + (offset % 2 === 0 ? Math.ceil(offset/2) : -Math.ceil(offset/2));
-        }
-        seedPositions.set(`${c},${r}`, true);
-        seedCell[tk] = { c, r };
-    });
-
-    // 나선형 인접 칸 (거리 순)
-    function spiral(cc, rc, maxR) {
-        const out = [];
-        for (let r = 1; r <= maxR; r++)
-            for (let dc = -r; dc <= r; dc++)
-                for (let dr = -r; dr <= r; dr++)
-                    if (Math.abs(dc) === r || Math.abs(dr) === r)
-                        out.push([cc + dc, rc + dr]);
-        return out;
-    }
-
-    const occupied = new Set();
-    const cellOf = {}; // track_key → {c, r}
-
-    seeds.forEach(t => {
-        const { c, r } = seedCell[t.track_key];
-        occupied.add(`${c},${r}`);
-        cellOf[t.track_key] = { c, r };
-    });
-
-    // fill → 소속 시드 주변 빈 칸
-    seeds.forEach(seed => {
-        const { c, r } = seedCell[seed.track_key];
-        const seedFills = fills.filter(f => f.source_seed_key === seed.track_key);
-        const nearby = spiral(c, r, 2);
-        let si = 0;
-        for (const f of seedFills) {
-            while (si < nearby.length && occupied.has(`${nearby[si][0]},${nearby[si][1]}`)) si++;
-            if (si >= nearby.length) break;
-            const [fc, fr] = nearby[si++];
-            occupied.add(`${fc},${fr}`);
-            cellOf[f.track_key] = { c: fc, r: fr };
-        }
-    });
-
-    // bridge → 두 시드 중간
-    bridges.forEach(t => {
-        const ba = t.bridge_seed_a, bb = t.bridge_seed_b;
-        const pa = ba && seedCell[ba.key], pb = bb && seedCell[bb.key];
-        const mc = pa && pb ? Math.round((pa.c + pb.c) / 2) : 0;
-        const mr = pa && pb ? Math.round((pa.r + pb.r) / 2) : 0;
-        const nearby = [[mc, mr], ...spiral(mc, mr, 3)];
-        let si = 0;
-        while (si < nearby.length && occupied.has(`${nearby[si][0]},${nearby[si][1]}`)) si++;
-        const [fc, fr] = nearby[si] || [mc, mr];
-        occupied.add(`${fc},${fr}`);
-        cellOf[t.track_key] = { c: fc, r: fr };
-    });
-
-    // 셀 → 픽셀
-    const allC = Object.values(cellOf).map(p => p.c);
-    const allR = Object.values(cellOf).map(p => p.r);
-    const cMin = Math.min(...allC), rMin = Math.min(...allR);
-    const cMax = Math.max(...allC), rMax = Math.max(...allR);
+    // 백엔드 x,y → 픽셀 (UMAP 구조 그대로)
+    const xVals = tracks.map(t => t.x), yVals = tracks.map(t => t.y);
+    const xMin = Math.min(...xVals), xMax = Math.max(...xVals);
+    const yMin = Math.min(...yVals), yMax = Math.max(...yVals);
+    const xRange = (xMax - xMin) || 1, yRange = (yMax - yMin) || 1;
+    const mapSpan = Math.sqrt(tracks.length) * STEP * 1.2;
 
     const grid = tracks.map(track => {
-        const cp = cellOf[track.track_key] || { c: 0, r: 0 };
-        const col = cp.c - cMin, row = cp.r - rMin;
-        const px = col * STEP + (row % 2 === 1 ? STEP / 2 : 0) - (cMax - cMin) * STEP / 2;
-        const py = row * VSTEP - (rMax - rMin) * VSTEP / 2;
+        const px = ((track.x - xMin) / xRange - 0.5) * mapSpan;
+        const py = ((track.y - yMin) / yRange - 0.5) * mapSpan * (yRange / xRange);
         const spread = 2.5;
         return { track, px, py, apx: px * spread, apy: py * spread, animT: 0 };
     });
