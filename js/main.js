@@ -1347,19 +1347,32 @@ function renderMusicMap(canvas, tracks) {
     // 시드 간격: fill이 들어갈 공간 확보 (반경 2칸 = 5칸 간격)
     const S = 5; // 시드 간 격자 간격
 
-    // 백엔드 x,y → 격자 col,row (2D 구조 유지)
+    // 백엔드 x,y → 픽셀 (UMAP 구조 그대로 유지, S 간격 단위로 스케일)
     const sxVals = seeds.map(t => t.x), syVals = seeds.map(t => t.y);
     const sxMin = Math.min(...sxVals), sxMax = Math.max(...sxVals);
     const syMin = Math.min(...syVals), syMax = Math.max(...syVals);
     const sxRange = (sxMax - sxMin) || 1, syRange = (syMax - syMin) || 1;
-    const seedGridW = Math.max(1, Math.round(Math.sqrt(seeds.length * (lw() / lh()))));
-    const seedGridH = Math.max(1, Math.ceil(seeds.length / seedGridW));
+    // 시드를 S 간격 단위 격자로 스케일 (겹치지 않게 최소 1칸 보장)
+    const targetSpan = Math.ceil(Math.sqrt(seeds.length)) * S;
 
     const seedCell = {}; // track_key → {c, r}
     seeds.forEach(t => {
-        const gc = Math.round((t.x - sxMin) / sxRange * (seedGridW - 1));
-        const gr = Math.round((t.y - syMin) / syRange * (seedGridH - 1));
-        seedCell[t.track_key] = { c: gc * S, r: gr * S };
+        const gc = Math.round((t.x - sxMin) / sxRange * targetSpan);
+        const gr = Math.round((t.y - syMin) / syRange * targetSpan);
+        seedCell[t.track_key] = { c: gc, r: gr };
+    });
+
+    // 시드 위치 충돌 해결 (같은 칸에 여러 시드가 겹치면 밀어내기)
+    const seedPositions = new Map();
+    Object.entries(seedCell).forEach(([tk, pos]) => {
+        let { c, r } = pos;
+        let offset = 0;
+        while (seedPositions.has(`${c},${r}`)) {
+            offset++;
+            c = pos.c + (offset % 2 === 0 ? Math.ceil(offset/2) : -Math.ceil(offset/2));
+        }
+        seedPositions.set(`${c},${r}`, true);
+        seedCell[tk] = { c, r };
     });
 
     // 나선형 인접 칸 (거리 순)
