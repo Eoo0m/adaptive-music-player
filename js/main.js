@@ -1429,12 +1429,13 @@ function renderMusicMap(canvas, tracks) {
         cam.x += (cam.tx - cam.x) * 0.1;
         cam.y += (cam.ty - cam.y) * 0.1;
 
-        // 1.5초 동안 0.04 → TARGET_SCALE로 줌인
+        // 1.5초 동안 0.04 → TARGET_SCALE로 줌인 (완료 후엔 유저 조작 우선)
         const elapsed = (performance.now() - animStartTime) / 1500;
         const t = Math.min(1, elapsed);
-        const eased = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // ease in-out quad
-        const animScale = 0.04 + (TARGET_SCALE - 0.04) * eased;
-        if (cam.scale < TARGET_SCALE) cam.scale = animScale;
+        if (t < 1) {
+            const eased = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+            cam.scale = 0.04 + (TARGET_SCALE - 0.04) * eased;
+        }
 
         ctx.clearRect(0, 0, lw(), lh());
 
