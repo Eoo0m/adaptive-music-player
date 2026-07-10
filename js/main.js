@@ -1274,7 +1274,7 @@ async function showMusicMap() {
     const loading = document.getElementById('mapLoading');
     const empty = document.getElementById('mapEmpty');
 
-    // 이미 데이터가 있으면 재요청 없이 바로 렌더 (애니메이션 재시작)
+    // 이미 데이터 있으면 재요청 없이 바로 렌더 (애니메이션 재시작)
     if (lastMapData) {
         const favKeys = new Set((lastFavorites || []).map(f => f.track_key));
         lastMapData.tracks.forEach(t => { t.is_favorite = favKeys.has(t.track_key); });
@@ -1337,12 +1337,14 @@ function renderMusicMap(canvas, tracks) {
         const row = Math.floor(i / cols);
         const px = col * STEP + (row % 2 === 1 ? STEP / 2 : 0) - (cols * STEP) / 2;
         const py = row * VSTEP - (rows * VSTEP) / 2;
-        return { track, px, py };
+        // 애니메이션 시작 위치: 최종 위치에서 바깥 방향으로 흩어진 상태
+        const spread = 2.5;
+        return { track, px, py, apx: px * spread, apy: py * spread, animT: 0 };
     });
 
     const images = {};
     const TARGET_SCALE = 0.6;
-    let cam = { x: lw()/2, y: lh()/2, scale: 0.05, tx: lw()/2, ty: lh()/2 };
+    let cam = { x: lw()/2, y: lh()/2, scale: TARGET_SCALE, tx: lw()/2, ty: lh()/2 };
     let destroyed = false;
     let hoveredItem = null;
     const hoverScales = new Map();
@@ -1420,12 +1422,10 @@ function renderMusicMap(canvas, tracks) {
 
         cam.x += (cam.tx - cam.x) * 0.1;
         cam.y += (cam.ty - cam.y) * 0.1;
-        const isZooming = cam.scale < TARGET_SCALE - 0.001;
-        if (isZooming) {
-            // 처음엔 빠르게, 가까워질수록 느리게 (easeOut 느낌)
-            const gap = TARGET_SCALE - cam.scale;
-            const speed = gap > 0.3 ? 0.06 : gap > 0.1 ? 0.04 : 0.025;
-            cam.scale += gap * speed;
+
+        // 앨범 모이는 애니메이션 (각 animT: 0→1)
+        for (const item of grid) {
+            if (item.animT < 1) item.animT = Math.min(1, item.animT + 0.022);
         }
 
         ctx.clearRect(0, 0, lw(), lh());
@@ -1454,8 +1454,12 @@ function renderMusicMap(canvas, tracks) {
         }
 
         for (const item of drawOrder) {
-            const { track, px, py } = item;
-            const { sx, sy } = toScreen(px, py);
+            const { track, px, py, apx, apy, animT } = item;
+            // easeOut: 바깥에서 최종 위치로 모이기
+            const e = 1 - Math.pow(1 - animT, 3);
+            const curPx = apx + (px - apx) * e;
+            const curPy = apy + (py - apy) * e;
+            const { sx, sy } = toScreen(curPx, curPy);
             const hs = hoverScales.get(track.track_key) || 1;
 
             const ndx = (sx - cx) / (lw() * 0.48);
@@ -1482,20 +1486,18 @@ function renderMusicMap(canvas, tracks) {
             if (!isSeed && !isFav && !isHov) { ctx.fillStyle='rgba(0,0,0,.28)'; ctx.fillRect(-half,-half,size,size); }
             ctx.restore();
 
-            // 텍스트 (줌인 중엔 숨김)
-            if (!isZooming) {
-                const lblSz = Math.max(11, size * 0.14);
-                const lblY = sy + half + 5;
-                ctx.save();
-                ctx.textAlign='center'; ctx.textBaseline='top';
-                ctx.font=`600 ${lblSz}px -apple-system,sans-serif`;
-                ctx.fillStyle=isHov?'#fff':'rgba(255,255,255,.82)';
-                ctx.fillText(truncCached(ctx, track.title, size*1.1, track.track_key+'t'), sx, lblY);
-                ctx.font=`${lblSz*.85}px -apple-system,sans-serif`;
-                ctx.fillStyle=isHov?'rgba(255,255,255,.8)':'rgba(255,255,255,.45)';
-                ctx.fillText(truncCached(ctx, track.artist, size*1.1, track.track_key+'a'), sx, lblY+lblSz+4);
-                ctx.restore();
-            }
+            // 텍스트
+            const lblSz = Math.max(11, size * 0.14);
+            const lblY = sy + half + 5;
+            ctx.save();
+            ctx.textAlign='center'; ctx.textBaseline='top';
+            ctx.font=`600 ${lblSz}px -apple-system,sans-serif`;
+            ctx.fillStyle=isHov?'#fff':'rgba(255,255,255,.82)';
+            ctx.fillText(truncCached(ctx, track.title, size*1.1, track.track_key+'t'), sx, lblY);
+            ctx.font=`${lblSz*.85}px -apple-system,sans-serif`;
+            ctx.fillStyle=isHov?'rgba(255,255,255,.8)':'rgba(255,255,255,.45)';
+            ctx.fillText(truncCached(ctx, track.artist, size*1.1, track.track_key+'a'), sx, lblY+lblSz+4);
+            ctx.restore();
 
             // 테두리
             if (isSeed || isFav || isHov) {
