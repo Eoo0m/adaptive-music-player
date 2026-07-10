@@ -1339,17 +1339,18 @@ function renderMusicMap(canvas, tracks) {
     const lw = () => window.innerWidth;
     const lh = () => window.innerHeight;
 
-    const n = tracks.length;
-    const cols = Math.max(3, Math.round(Math.sqrt(n * (lw() / lh()))));
-    const rows = Math.ceil(n / cols);
+    // 백엔드 x,y를 캔버스 픽셀 좌표로 변환
+    // 백엔드 좌표계를 화면 크기에 맞게 스케일
+    const xVals = tracks.map(t => t.x);
+    const yVals = tracks.map(t => t.y);
+    const xMin = Math.min(...xVals), xMax = Math.max(...xVals);
+    const yMin = Math.min(...yVals), yMax = Math.max(...yVals);
+    const xRange = (xMax - xMin) || 1, yRange = (yMax - yMin) || 1;
+    const mapScale = Math.min(lw(), lh()) * 0.42;
 
-    const sorted = [...tracks].sort((a, b) => a.x - b.x || a.y - b.y);
-    const grid = sorted.map((track, i) => {
-        const col = i % cols;
-        const row = Math.floor(i / cols);
-        const px = col * STEP + (row % 2 === 1 ? STEP / 2 : 0) - (cols * STEP) / 2;
-        const py = row * VSTEP - (rows * VSTEP) / 2;
-        // 애니메이션 시작 위치: 최종 위치에서 바깥 방향으로 흩어진 상태
+    const grid = tracks.map(track => {
+        const px = ((track.x - xMin) / xRange - 0.5) * mapScale * 2;
+        const py = ((track.y - yMin) / yRange - 0.5) * mapScale * 2;
         const spread = 2.5;
         return { track, px, py, apx: px * spread, apy: py * spread, animT: 0 };
     });
