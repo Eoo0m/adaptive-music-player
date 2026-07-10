@@ -1420,7 +1420,13 @@ function renderMusicMap(canvas, tracks) {
 
         cam.x += (cam.tx - cam.x) * 0.1;
         cam.y += (cam.ty - cam.y) * 0.1;
-        if (cam.scale < TARGET_SCALE) cam.scale += (TARGET_SCALE - cam.scale) * 0.025;
+        const isZooming = cam.scale < TARGET_SCALE - 0.001;
+        if (isZooming) {
+            // 처음엔 빠르게, 가까워질수록 느리게 (easeOut 느낌)
+            const gap = TARGET_SCALE - cam.scale;
+            const speed = gap > 0.3 ? 0.06 : gap > 0.1 ? 0.04 : 0.025;
+            cam.scale += gap * speed;
+        }
 
         ctx.clearRect(0, 0, lw(), lh());
 
@@ -1476,18 +1482,20 @@ function renderMusicMap(canvas, tracks) {
             if (!isSeed && !isFav && !isHov) { ctx.fillStyle='rgba(0,0,0,.28)'; ctx.fillRect(-half,-half,size,size); }
             ctx.restore();
 
-            // 텍스트
-            const lblSz = Math.max(11, size * 0.14);
-            const lblY = sy + half + 5;
-            ctx.save();
-            ctx.textAlign='center'; ctx.textBaseline='top';
-            ctx.font=`600 ${lblSz}px -apple-system,sans-serif`;
-            ctx.fillStyle=isHov?'#fff':'rgba(255,255,255,.82)';
-            ctx.fillText(truncCached(ctx, track.title, size*1.1, track.track_key+'t'), sx, lblY);
-            ctx.font=`${lblSz*.85}px -apple-system,sans-serif`;
-            ctx.fillStyle=isHov?'rgba(255,255,255,.8)':'rgba(255,255,255,.45)';
-            ctx.fillText(truncCached(ctx, track.artist, size*1.1, track.track_key+'a'), sx, lblY+lblSz+4);
-            ctx.restore();
+            // 텍스트 (줌인 중엔 숨김)
+            if (!isZooming) {
+                const lblSz = Math.max(11, size * 0.14);
+                const lblY = sy + half + 5;
+                ctx.save();
+                ctx.textAlign='center'; ctx.textBaseline='top';
+                ctx.font=`600 ${lblSz}px -apple-system,sans-serif`;
+                ctx.fillStyle=isHov?'#fff':'rgba(255,255,255,.82)';
+                ctx.fillText(truncCached(ctx, track.title, size*1.1, track.track_key+'t'), sx, lblY);
+                ctx.font=`${lblSz*.85}px -apple-system,sans-serif`;
+                ctx.fillStyle=isHov?'rgba(255,255,255,.8)':'rgba(255,255,255,.45)';
+                ctx.fillText(truncCached(ctx, track.artist, size*1.1, track.track_key+'a'), sx, lblY+lblSz+4);
+                ctx.restore();
+            }
 
             // 테두리
             if (isSeed || isFav || isHov) {
