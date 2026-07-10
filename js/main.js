@@ -1339,24 +1339,82 @@ function renderMusicMap(canvas, tracks) {
     const lw = () => window.innerWidth;
     const lh = () => window.innerHeight;
 
-    const n = tracks.length;
-    const cols = Math.max(3, Math.round(Math.sqrt(n * (lw() / lh()))));
-    const rows = Math.ceil(n / cols);
+    // 시드를 격자에 배치하고 fill을 시드 주변 칸에 채움
+    const seeds = tracks.filter(t => t.is_seed);
+    const fills = tracks.filter(t => !t.is_seed && !t.is_bridge);
+    const bridges = tracks.filter(t => t.is_bridge);
 
-    const sorted = [...tracks].sort((a, b) => {
-        const order = t => t.is_seed ? 0 : t.is_bridge ? 2 : 1;
-        if (order(a) !== order(b)) return order(a) - order(b);
-        const sk_a = a.source_seed_key || a.track_key;
-        const sk_b = b.source_seed_key || b.track_key;
-        if (sk_a !== sk_b) return sk_a < sk_b ? -1 : 1;
-        return a.x - b.x || a.y - b.y;
+    // 시드 간격: fill이 들어갈 공간 확보 (반경 2칸 = 5칸 간격)
+    const S = 5; // 시드 간 격자 간격
+    const seedCols = Math.max(1, Math.round(Math.sqrt(seeds.length * (lw() / lh()))));
+
+    // 시드 격자 위치 배정 (백엔드 x,y 기준 정렬)
+    const seedsSorted = [...seeds].sort((a, b) => a.x - b.x || a.y - b.y);
+    const seedCell = {}; // track_key → {c, r}
+    seedsSorted.forEach((t, i) => {
+        seedCell[t.track_key] = { c: (i % seedCols) * S, r: Math.floor(i / seedCols) * S };
     });
 
-    const grid = sorted.map((track, i) => {
-        const col = i % cols;
-        const row = Math.floor(i / cols);
-        const px = col * STEP + (row % 2 === 1 ? STEP / 2 : 0) - (cols * STEP) / 2;
-        const py = row * VSTEP - (rows * VSTEP) / 2;
+    // 나선형 인접 칸 (거리 순)
+    function spiral(cc, rc, maxR) {
+        const out = [];
+        for (let r = 1; r <= maxR; r++)
+            for (let dc = -r; dc <= r; dc++)
+                for (let dr = -r; dr <= r; dr++)
+                    if (Math.abs(dc) === r || Math.abs(dr) === r)
+                        out.push([cc + dc, rc + dr]);
+        return out;
+    }
+
+    const occupied = new Set();
+    const cellOf = {}; // track_key → {c, r}
+
+    seeds.forEach(t => {
+        const { c, r } = seedCell[t.track_key];
+        occupied.add(`${c},${r}`);
+        cellOf[t.track_key] = { c, r };
+    });
+
+    // fill → 소속 시드 주변 빈 칸
+    seeds.forEach(seed => {
+        const { c, r } = seedCell[seed.track_key];
+        const seedFills = fills.filter(f => f.source_seed_key === seed.track_key);
+        const nearby = spiral(c, r, 2);
+        let si = 0;
+        for (const f of seedFills) {
+            while (si < nearby.length && occupied.has(`${nearby[si][0]},${nearby[si][1]}`)) si++;
+            if (si >= nearby.length) break;
+            const [fc, fr] = nearby[si++];
+            occupied.add(`${fc},${fr}`);
+            cellOf[f.track_key] = { c: fc, r: fr };
+        }
+    });
+
+    // bridge → 두 시드 중간
+    bridges.forEach(t => {
+        const ba = t.bridge_seed_a, bb = t.bridge_seed_b;
+        const pa = ba && seedCell[ba.key], pb = bb && seedCell[bb.key];
+        const mc = pa && pb ? Math.round((pa.c + pb.c) / 2) : 0;
+        const mr = pa && pb ? Math.round((pa.r + pb.r) / 2) : 0;
+        const nearby = [[mc, mr], ...spiral(mc, mr, 3)];
+        let si = 0;
+        while (si < nearby.length && occupied.has(`${nearby[si][0]},${nearby[si][1]}`)) si++;
+        const [fc, fr] = nearby[si] || [mc, mr];
+        occupied.add(`${fc},${fr}`);
+        cellOf[t.track_key] = { c: fc, r: fr };
+    });
+
+    // 셀 → 픽셀
+    const allC = Object.values(cellOf).map(p => p.c);
+    const allR = Object.values(cellOf).map(p => p.r);
+    const cMin = Math.min(...allC), rMin = Math.min(...allR);
+    const cMax = Math.max(...allC), rMax = Math.max(...allR);
+
+    const grid = tracks.map(track => {
+        const cp = cellOf[track.track_key] || { c: 0, r: 0 };
+        const col = cp.c - cMin, row = cp.r - rMin;
+        const px = col * STEP + (row % 2 === 1 ? STEP / 2 : 0) - (cMax - cMin) * STEP / 2;
+        const py = row * VSTEP - (rMax - rMin) * VSTEP / 2;
         const spread = 2.5;
         return { track, px, py, apx: px * spread, apy: py * spread, animT: 0 };
     });
