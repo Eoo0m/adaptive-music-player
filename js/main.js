@@ -435,6 +435,7 @@ let lastSavedPlaylists = [];
 let lastHomeFeeds = [];
 let lastMapData = null;      // 캐시된 취향 지도 데이터
 let mapPrefetchPromise = null; // 프리패치 중인 Promise
+let mapLoopToken = null;     // 현재 활성 loop 식별 토큰
 
 // ===== Click History Tracking =====
 let clickedTracks = [];           // 클릭한 트랙들의 track_key 저장 (최대 16개, Two-Tower 모델용)
@@ -1343,14 +1344,17 @@ function renderMusicMap(canvas, tracks) {
     const images = {};
     const TARGET_SCALE = 0.6;
     let cam = { x: lw()/2, y: lh()/2, scale: 0.04, tx: lw()/2, ty: lh()/2 };
-    let destroyed = false;
 
-    // 우주 별 생성
-    const stars = Array.from({length: 200}, () => ({
+    // 이전 loop 종료
+    const myToken = {};
+    mapLoopToken = myToken;
+
+    // 우주 별 생성 (카메라 중심에서 퍼져나오는 느낌을 위해 중앙 기준 좌표 저장)
+    const stars = Array.from({length: 220}, () => ({
         x: Math.random() * lw(),
         y: Math.random() * lh(),
-        r: Math.random() * 1.5 + 0.3,
-        a: Math.random(),
+        r: Math.random() * 1.8 + 0.3,
+        a: Math.random() * 0.8 + 0.2,
     }));
     let animStartTime = performance.now();
     let hoveredItem = null;
@@ -1409,9 +1413,8 @@ function renderMusicMap(canvas, tracks) {
     let mousePos = { x: -1, y: -1 };
 
     function loop() {
-        if (destroyed) return;
+        if (mapLoopToken !== myToken) return; // 새 renderMusicMap 호출되면 이 loop 종료
         requestAnimationFrame(loop);
-        // 지도 탭이 닫히면 렌더 스킵 (loop는 유지)
         if (document.getElementById('mapView').classList.contains('hidden')) return;
 
         // 엣지 패닝 (마우스가 화면 가장자리 10% 이내일 때)
@@ -1429,22 +1432,28 @@ function renderMusicMap(canvas, tracks) {
         cam.x += (cam.tx - cam.x) * 0.1;
         cam.y += (cam.ty - cam.y) * 0.1;
 
-        // 1.5초 동안 0.04 → TARGET_SCALE로 줌인 (완료 후엔 유저 조작 우선)
-        const elapsed = (performance.now() - animStartTime) / 1500;
+        // 3초 동안 0.04 → TARGET_SCALE 줌인
+        const elapsed = (performance.now() - animStartTime) / 3000;
         const t = Math.min(1, elapsed);
         if (t < 1) {
-            const eased = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+            // ease-in: 처음엔 천천히, 나중엔 빠르게
+            const eased = t * t * t;
             cam.scale = 0.04 + (TARGET_SCALE - 0.04) * eased;
         }
 
         ctx.clearRect(0, 0, lw(), lh());
 
-        // 별 그리기 (줌인 완료 전까지 fade out)
-        const starAlpha = Math.max(0, 1 - t * 1.5);
+        // 별 그리기: t=0.7 이후 fade out, 별이 중앙으로 빨려드는 효과
+        const starAlpha = Math.max(0, 1 - Math.max(0, t - 0.5) * 3.5);
         if (starAlpha > 0) {
+            const cx = lw()/2, cy = lh()/2;
+            const pull = t * t * 0.18; // 별이 중앙으로 당겨지는 정도
             for (const s of stars) {
+                const sx = s.x + (cx - s.x) * pull;
+                const sy = s.y + (cy - s.y) * pull;
+                const sr = s.r * (1 + t * 1.5); // 가까워질수록 커짐
                 ctx.beginPath();
-                ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+                ctx.arc(sx, sy, sr, 0, Math.PI*2);
                 ctx.fillStyle = `rgba(255,255,255,${s.a * starAlpha})`;
                 ctx.fill();
             }
@@ -1584,10 +1593,9 @@ function renderMusicMap(canvas, tracks) {
     window.addEventListener('mouseleave', onMouseLeave);
     window.addEventListener('resize', onResize);
 
-    // newWrap 제거 시 window 리스너도 정리 + loop 중단
+    // newWrap 제거 시 window 리스너 정리 (loop는 token으로 자동 종료됨)
     new MutationObserver(() => {
         if (!document.contains(newWrap)) {
-            destroyed = true;
             window.removeEventListener('mousemove', onMouseMove);
             window.removeEventListener('mouseup', onMouseUp);
             window.removeEventListener('mouseleave', onMouseLeave);
