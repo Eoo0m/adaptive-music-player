@@ -9,6 +9,10 @@ function loginWithGoogle() {
     window.location.href = `${API_BASE_URL}/auth/google/login`;
 }
 
+function loginWithSpotify() {
+    window.location.href = `${API_BASE_URL}/auth/spotify/login`;
+}
+
 function continueAsGuest() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('initialSongInput').classList.remove('hidden');
@@ -368,6 +372,7 @@ function logout() {
     authToken = null;
     currentUser = null;
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('login_type');
     window.location.reload();
 }
 
@@ -396,11 +401,13 @@ async function checkAuth() {
         });
         if (res.ok) {
             currentUser = await res.json();
+            localStorage.setItem('login_type', currentUser.login_type || 'google');
             console.log('✅ Logged in as:', currentUser.email);
         } else {
             // 토큰 만료
             authToken = null;
             localStorage.removeItem('auth_token');
+            localStorage.removeItem('login_type');
         }
     } catch (e) {
         console.error('Auth check failed:', e);
@@ -486,7 +493,12 @@ function getTrackArtist(track) {
 
 function openTrackOnYouTube(track, candidateKeys = currentCandidateKeys) {
     logAction('play', { selected_track_key: track.track_key, candidate_track_keys: candidateKeys });
-    window.open(`https://open.spotify.com/track/${track.track_key}`, '_blank');
+    const loginType = localStorage.getItem('login_type');
+    if (loginType === 'spotify') {
+        window.open(`https://open.spotify.com/track/${track.track_key}`, '_blank');
+    } else {
+        window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(track.title + ' ' + track.artist)}`, '_blank');
+    }
 }
 
 function isVisible(id) {
@@ -1623,6 +1635,14 @@ function renderMusicMap(canvas, tracks) {
     },{passive:false});
     newWrap.addEventListener('dblclick', e => {
         const item=hitTest(e.clientX,e.clientY);
-        if (item) window.open(`https://open.spotify.com/track/${item.track.track_key}`,'_blank');
+        if (item) {
+            const loginType = localStorage.getItem('login_type');
+            if (loginType === 'spotify') {
+                window.open(`https://open.spotify.com/track/${item.track.track_key}`, '_blank');
+            } else {
+                const t = item.track;
+                window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(t.title + ' ' + t.artist)}`, '_blank');
+            }
+        }
     });
 }

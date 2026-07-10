@@ -58,6 +58,23 @@ body {
     background: #1ed760
 }
 
+.login-button-spotify {
+    background: #1db954
+}
+
+.login-button-spotify:hover {
+    background: #1ed760
+}
+
+.login-button-guest {
+    background: rgba(255, 255, 255, .15);
+    border: 1px solid rgba(255, 255, 255, .25)
+}
+
+.login-button-guest:hover {
+    background: rgba(255, 255, 255, .25)
+}
+
 /* ===== Side Tab ===== */
 .side-tab {
     position: fixed;
