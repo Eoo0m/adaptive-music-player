@@ -1339,7 +1339,7 @@ function renderMusicMap(canvas, tracks) {
 
     const images = {};
     const TARGET_SCALE = 0.6;
-    let cam = { x: lw()/2, y: lh()/2, scale: 0.12, tx: lw()/2, ty: lh()/2 };
+    let cam = { x: lw()/2, y: lh()/2, scale: 0.35, tx: lw()/2, ty: lh()/2 };
     let destroyed = false;
     let hoveredItem = null;
     const hoverScales = new Map();
