@@ -1343,8 +1343,26 @@ function renderMusicMap(canvas, tracks) {
 
     const images = {};
     const TARGET_SCALE = 0.6;
+    const MIN_SCALE = 0.15, MAX_SCALE = 2.0;
     let cam = { x: lw()/2, y: lh()/2, scale: TARGET_SCALE, tx: lw()/2, ty: lh()/2 };
     let destroyed = false;
+
+    // 그리드 범위 (패딩 포함)
+    const PAD = COVER * 2;
+    const gxMin = Math.min(...grid.map(g=>g.px)) - PAD;
+    const gxMax = Math.max(...grid.map(g=>g.px)) + PAD;
+    const gyMin = Math.min(...grid.map(g=>g.py)) - PAD;
+    const gyMax = Math.max(...grid.map(g=>g.py)) + PAD;
+
+    // 카메라 tx/ty가 그리드 밖으로 못 나가게 clamp
+    // 그리드 world 좌표 → screen: sx = px * scale + tx
+    // 그리드 우끝이 화면 왼쪽 밖으로: gxMax*s+tx < 0 → tx < -gxMax*s → 금지
+    // 그리드 좌끝이 화면 오른쪽 밖으로: gxMin*s+tx > lw() → tx > lw()-gxMin*s → 금지
+    function clampCam() {
+        const s = cam.scale, w = lw(), h = lh();
+        cam.tx = Math.max(-gxMax * s, Math.min(w - gxMin * s, cam.tx));
+        cam.ty = Math.max(-gyMax * s, Math.min(h - gyMin * s, cam.ty));
+    }
     let hoveredItem = null;
     const hoverScales = new Map();
     let isDragging = false, dragStart = {x:0,y:0}, camStart = {x:0,y:0};
@@ -1423,6 +1441,7 @@ function renderMusicMap(canvas, tracks) {
             else if (ny > 1-EDGE) cam.ty -= SPEED * (ny - (1-EDGE)) / EDGE;
         }
 
+        clampCam();
         cam.x += (cam.tx - cam.x) * 0.1;
         cam.y += (cam.ty - cam.y) * 0.1;
 
@@ -1595,9 +1614,12 @@ function renderMusicMap(canvas, tracks) {
         e.preventDefault();
         const delta = Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY), 100);
         const f = 1 - delta * 0.0008;
-        cam.tx=e.clientX-(e.clientX-cam.tx)*f; cam.ty=e.clientY-(e.clientY-cam.ty)*f;
-        cam.x=e.clientX-(e.clientX-cam.x)*f; cam.y=e.clientY-(e.clientY-cam.y)*f;
-        cam.scale*=f;
+        const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, cam.scale * f));
+        const sf = newScale / cam.scale;
+        cam.tx=e.clientX-(e.clientX-cam.tx)*sf; cam.ty=e.clientY-(e.clientY-cam.ty)*sf;
+        cam.x=e.clientX-(e.clientX-cam.x)*sf; cam.y=e.clientY-(e.clientY-cam.y)*sf;
+        cam.scale=newScale;
+        clampCam();
     },{passive:false});
     newWrap.addEventListener('dblclick', e => {
         const item=hitTest(e.clientX,e.clientY);
