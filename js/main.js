@@ -1335,7 +1335,7 @@ function renderMusicMap(canvas, tracks) {
     });
 
     const images = {};
-    let cam = { x: lw()/2, y: lh()/2, scale: 1, tx: lw()/2, ty: lh()/2 };
+    let cam = { x: lw()/2, y: lh()/2, scale: 0.6, tx: lw()/2, ty: lh()/2 };
     let hoveredItem = null;
     const hoverScales = new Map();
     let isDragging = false, dragStart = {x:0,y:0}, camStart = {x:0,y:0};
