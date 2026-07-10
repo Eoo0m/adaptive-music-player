@@ -1261,7 +1261,7 @@ async function fetchMusicMapData() {
     const res = await fetch(`${API_BASE_URL}/music-map`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({ track_keys: trackKeys, fill_per_seed: 30 })
+        body: JSON.stringify({ track_keys: trackKeys, fill_per_seed: 15, n_neighbors: 15, bridge_per_pair: 10 })
     });
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
