@@ -1339,99 +1339,24 @@ function renderMusicMap(canvas, tracks) {
     const lw = () => window.innerWidth;
     const lh = () => window.innerHeight;
 
-    // 시드를 백엔드 x,y 기반 격자에 배치하고, fill은 시드 주변 칸에 채움
-    // 1. 시드만 먼저 격자 위치 결정 (백엔드 x,y → 격자 col,row)
-    const seeds = tracks.filter(t => t.is_seed);
-    const fills = tracks.filter(t => !t.is_seed && !t.is_bridge);
-    const bridges = tracks.filter(t => t.is_bridge);
+    const n = tracks.length;
+    const cols = Math.max(3, Math.round(Math.sqrt(n * (lw() / lh()))));
+    const rows = Math.ceil(n / cols);
 
-    const xVals = seeds.map(t => t.x), yVals = seeds.map(t => t.y);
-    const xMin = Math.min(...xVals), xMax = Math.max(...xVals);
-    const yMin = Math.min(...yVals), yMax = Math.max(...yVals);
-    const xRange = (xMax - xMin) || 1, yRange = (yMax - yMin) || 1;
-
-    // 시드를 격자 크기 N×M에 맞게 배치 (시드 간격 = fill이 들어갈 공간 * 반지름)
-    const CLUSTER_R = 2; // 시드 주변 몇 칸까지 fill 배치
-    const SEED_SPACING = (CLUSTER_R * 2 + 2); // 시드 간 격자 간격
-    const seedGridPos = {}; // track_key → {col, row}
-    seeds.forEach(t => {
-        const col = Math.round((t.x - xMin) / xRange * (seeds.length - 1)) * SEED_SPACING;
-        const row = Math.round((t.y - yMin) / yRange * (seeds.length - 1)) * SEED_SPACING;
-        seedGridPos[t.track_key] = { col, row };
+    const sorted = [...tracks].sort((a, b) => {
+        const order = t => t.is_seed ? 0 : t.is_bridge ? 2 : 1;
+        if (order(a) !== order(b)) return order(a) - order(b);
+        const sk_a = a.source_seed_key || a.track_key;
+        const sk_b = b.source_seed_key || b.track_key;
+        if (sk_a !== sk_b) return sk_a < sk_b ? -1 : 1;
+        return a.x - b.x || a.y - b.y;
     });
 
-    // 2. fill을 소속 시드 주변 빈 칸에 배치 (나선형으로 확장)
-    const occupied = new Map(); // "col,row" → true
-    const cellPos = {}; // track_key → {col, row}
-
-    seeds.forEach(t => {
-        const { col, row } = seedGridPos[t.track_key];
-        occupied.set(`${col},${row}`, true);
-        cellPos[t.track_key] = { col, row };
-    });
-
-    // 나선형으로 주변 칸 순서 생성
-    function spiralCells(cx, cy, maxR) {
-        const cells = [];
-        for (let r = 1; r <= maxR; r++) {
-            for (let dc = -r; dc <= r; dc++) for (let dr = -r; dr <= r; dr++) {
-                if (Math.abs(dc) === r || Math.abs(dr) === r)
-                    cells.push([cx + dc, cy + dr]);
-            }
-        }
-        return cells;
-    }
-
-    // 시드별 fill 그룹화
-    const fillsBySeed = {};
-    fills.forEach(t => {
-        const sk = t.source_seed_key;
-        if (!fillsBySeed[sk]) fillsBySeed[sk] = [];
-        fillsBySeed[sk].push(t);
-    });
-
-    seeds.forEach(seed => {
-        const { col, row } = seedGridPos[seed.track_key];
-        const seedFills = fillsBySeed[seed.track_key] || [];
-        const spiral = spiralCells(col, row, CLUSTER_R + 2);
-        let si = 0;
-        for (const f of seedFills) {
-            while (si < spiral.length && occupied.has(`${spiral[si][0]},${spiral[si][1]}`)) si++;
-            if (si >= spiral.length) break;
-            const [fc, fr] = spiral[si++];
-            occupied.set(`${fc},${fr}`, true);
-            cellPos[f.track_key] = { col: fc, row: fr };
-        }
-    });
-
-    // bridge는 두 시드 중간 칸에
-    bridges.forEach(t => {
-        const ba = t.bridge_seed_a, bb = t.bridge_seed_b;
-        if (ba && bb && seedGridPos[ba.key] && seedGridPos[bb.key]) {
-            const pa = seedGridPos[ba.key], pb = seedGridPos[bb.key];
-            let bc = Math.round((pa.col + pb.col) / 2);
-            let br = Math.round((pa.row + pb.row) / 2);
-            // 빈 칸 찾기
-            const spiral = spiralCells(bc, br, 3);
-            let si = 0;
-            while (si < spiral.length && occupied.has(`${spiral[si][0]},${spiral[si][1]}`)) si++;
-            if (si < spiral.length) { bc = spiral[si][0]; br = spiral[si][1]; }
-            occupied.set(`${bc},${br}`, true);
-            cellPos[t.track_key] = { col: bc, row: br };
-        }
-    });
-
-    // 3. col,row → 픽셀 좌표 변환
-    const allCols = Object.values(cellPos).map(p => p.col);
-    const allRows = Object.values(cellPos).map(p => p.row);
-    const colMin = Math.min(...allCols), rowMin = Math.min(...allRows);
-
-    const grid = tracks.map(track => {
-        const cp = cellPos[track.track_key];
-        if (!cp) return { track, px: 0, py: 0, apx: 0, apy: 0, animT: 0 };
-        const col = cp.col - colMin, row = cp.row - rowMin;
-        const px = col * STEP + (row % 2 === 1 ? STEP / 2 : 0) - (Math.max(...allCols) - colMin) * STEP / 2;
-        const py = row * VSTEP - (Math.max(...allRows) - rowMin) * VSTEP / 2;
+    const grid = sorted.map((track, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const px = col * STEP + (row % 2 === 1 ? STEP / 2 : 0) - (cols * STEP) / 2;
+        const py = row * VSTEP - (rows * VSTEP) / 2;
         const spread = 2.5;
         return { track, px, py, apx: px * spread, apy: py * spread, animT: 0 };
     });
