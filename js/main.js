@@ -1537,6 +1537,12 @@ function renderMusicMap(canvas, tracks) {
                 ctx.font=`${lblSz*.85}px -apple-system,sans-serif`;
                 ctx.fillStyle=isHov?'rgba(255,255,255,.8)':'rgba(255,255,255,.45)';
                 ctx.fillText(truncCached(ctx, track.artist, size*1.1, track.track_key+'a'), sx, lblY+lblSz+4);
+                if (isHov && !isSeed && track.nearest_seed_title) {
+                    ctx.font=`${lblSz*.8}px -apple-system,sans-serif`;
+                    ctx.fillStyle='rgba(29,185,84,.85)';
+                    const seedLabel = `← ${track.nearest_seed_title}`;
+                    ctx.fillText(truncCached(ctx, seedLabel, size*1.3, track.track_key+'ns'), sx, lblY+lblSz*2+8);
+                }
                 ctx.restore();
             }
 
