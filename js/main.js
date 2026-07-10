@@ -1537,12 +1537,6 @@ function renderMusicMap(canvas, tracks) {
                 ctx.font=`${lblSz*.85}px -apple-system,sans-serif`;
                 ctx.fillStyle=isHov?'rgba(255,255,255,.8)':'rgba(255,255,255,.45)';
                 ctx.fillText(truncCached(ctx, track.artist, size*1.1, track.track_key+'a'), sx, lblY+lblSz+4);
-                if (isHov && !isSeed && track.nearest_seed_title) {
-                    ctx.font=`${lblSz*.8}px -apple-system,sans-serif`;
-                    ctx.fillStyle='rgba(29,185,84,.85)';
-                    const seedLabel = `← ${track.nearest_seed_title}`;
-                    ctx.fillText(truncCached(ctx, seedLabel, size*1.3, track.track_key+'ns'), sx, lblY+lblSz*2+8);
-                }
                 ctx.restore();
             }
 
@@ -1580,17 +1574,47 @@ function renderMusicMap(canvas, tracks) {
         return null;
     }
 
+    const mapTooltip = document.getElementById('mapTooltip');
     const onMouseMove = e => {
         if (document.getElementById('mapView').classList.contains('hidden')) return;
         mousePos = { x: e.clientX, y: e.clientY };
         if (isDragging) {
             cam.tx=camStart.x+(e.clientX-dragStart.x);
             cam.ty=camStart.y+(e.clientY-dragStart.y);
-            hoveredItem=null; newWrap.style.cursor='grabbing'; return;
+            hoveredItem=null; newWrap.style.cursor='grabbing';
+            if (mapTooltip) mapTooltip.style.display='none';
+            return;
         }
         const item=hitTest(e.clientX,e.clientY);
         hoveredItem=item;
         newWrap.style.cursor=item?'pointer':'grab';
+        if (mapTooltip) {
+            if (item && !item.track.is_seed) {
+                const t = item.track;
+                const wrap = newWrap.getBoundingClientRect();
+                let tx = e.clientX - wrap.left + 14;
+                let ty = e.clientY - wrap.top - 14;
+                let html = '';
+                if (t.is_bridge && t.bridge_seed_a && t.bridge_seed_b) {
+                    const a = t.bridge_seed_a, b = t.bridge_seed_b;
+                    html = `<span style="color:#4a9eff;font-size:10px;letter-spacing:.05em">◆ 브릿지</span><br>`
+                         + `<b>${a.title || a.key}</b> <span style="color:rgba(255,255,255,.45);font-size:10px">${a.artist || ''}</span> <span style="color:#4a9eff;font-size:10px">${(a.sim*100).toFixed(0)}%</span><br>`
+                         + `<b>${b.title || b.key}</b> <span style="color:rgba(255,255,255,.45);font-size:10px">${b.artist || ''}</span> <span style="color:#4a9eff;font-size:10px">${(b.sim*100).toFixed(0)}%</span>`;
+                } else if (t.source_seed_title) {
+                    html = `<span style="color:#1db954;font-size:10px;letter-spacing:.05em">← 시드</span><br><b>${t.source_seed_title}</b><br><span style="color:rgba(255,255,255,.55);font-size:11px">${t.source_seed_artist || ''}</span>`;
+                }
+                if (html) {
+                    mapTooltip.innerHTML = html;
+                    mapTooltip.style.left = tx + 'px';
+                    mapTooltip.style.top = ty + 'px';
+                    mapTooltip.style.display = 'block';
+                } else {
+                    mapTooltip.style.display = 'none';
+                }
+            } else {
+                mapTooltip.style.display = 'none';
+            }
+        }
     };
     const onMouseUp = e => {
         if (document.getElementById('mapView').classList.contains('hidden')) return;
@@ -1601,7 +1625,7 @@ function renderMusicMap(canvas, tracks) {
             if (item) { cam.tx=lw()/2-item.px*cam.scale; cam.ty=lh()/2-item.py*cam.scale; }
         }
     };
-    const onMouseLeave = () => { mousePos = { x: -1, y: -1 }; };
+    const onMouseLeave = () => { mousePos = { x: -1, y: -1 }; if (mapTooltip) mapTooltip.style.display='none'; };
     const onResize = () => {
         const d = window.devicePixelRatio || 1;
         canvas.width = window.innerWidth * d;
