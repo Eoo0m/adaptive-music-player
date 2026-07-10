@@ -1510,6 +1510,7 @@ function renderMusicMap(canvas, tracks) {
             const isHov = hoveredItem === item;
             const isSeed = track.is_seed;
             const isFav = track.is_favorite;
+            const isBridge = track.is_bridge;
 
             ctx.save();
             ctx.translate(sx, sy);
@@ -1545,6 +1546,7 @@ function renderMusicMap(canvas, tracks) {
                 ctx.beginPath(); roundRect(ctx,-half,-half,size,size,r);
                 if (isFav) { ctx.strokeStyle='#1db954'; ctx.lineWidth=Math.max(3,size*.065); ctx.shadowColor='#1db954'; ctx.shadowBlur=isHov?size*.55:size*.3; }
                 else if (isSeed) { ctx.strokeStyle='#1db954'; ctx.lineWidth=Math.max(2,size*.045); ctx.shadowColor='#1db954'; ctx.shadowBlur=isHov?size*.45:size*.2; }
+                else if (isBridge) { ctx.strokeStyle='#4a9eff'; ctx.lineWidth=Math.max(2,size*.04); ctx.shadowColor='#4a9eff'; ctx.shadowBlur=isHov?size*.45:size*.2; }
                 else { ctx.strokeStyle='rgba(255,255,255,.8)'; ctx.lineWidth=Math.max(1.5,size*.03); ctx.shadowColor='rgba(255,255,255,.35)'; ctx.shadowBlur=size*.25; }
                 ctx.stroke(); ctx.restore();
             }
