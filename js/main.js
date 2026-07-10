@@ -1301,8 +1301,9 @@ async function showMusicMap() {
     empty.classList.add('hidden');
 
     try {
-        // 프리패치 결과 대기 (없으면 새로 요청)
-        const data = mapPrefetchPromise ? await mapPrefetchPromise : await fetchMusicMapData();
+        // 프리패치 결과 대기, 실패(null)면 새로 요청
+        const prefetched = mapPrefetchPromise ? await mapPrefetchPromise : null;
+        const data = prefetched || await fetchMusicMapData();
         if (!data || !data.tracks || data.tracks.length === 0) {
             loading.classList.add('hidden');
             empty.classList.remove('hidden');
