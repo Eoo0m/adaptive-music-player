@@ -1339,18 +1339,29 @@ function renderMusicMap(canvas, tracks) {
     const lw = () => window.innerWidth;
     const lh = () => window.innerHeight;
 
-    // 백엔드 x,y를 캔버스 픽셀 좌표로 변환
-    // 백엔드 좌표계를 화면 크기에 맞게 스케일
-    const xVals = tracks.map(t => t.x);
-    const yVals = tracks.map(t => t.y);
-    const xMin = Math.min(...xVals), xMax = Math.max(...xVals);
-    const yMin = Math.min(...yVals), yMax = Math.max(...yVals);
-    const xRange = (xMax - xMin) || 1, yRange = (yMax - yMin) || 1;
-    const mapScale = Math.min(lw(), lh()) * 0.42;
+    const n = tracks.length;
+    const cols = Math.max(3, Math.round(Math.sqrt(n * (lw() / lh()))));
+    const rows = Math.ceil(n / cols);
 
-    const grid = tracks.map(track => {
-        const px = ((track.x - xMin) / xRange - 0.5) * mapScale * 2;
-        const py = ((track.y - yMin) / yRange - 0.5) * mapScale * 2;
+    // 시드 → x좌표 맵 (시드끼리 x 기준 정렬용)
+    const seedXMap = {};
+    tracks.forEach(t => { if (t.is_seed) seedXMap[t.track_key] = t.x; });
+
+    // 소속 시드 x로 1차 정렬, 시드 자신은 앞에, 그 다음 fill, bridge는 맨 뒤
+    const sorted = [...tracks].sort((a, b) => {
+        const ax = seedXMap[a.source_seed_key ?? a.track_key] ?? a.x;
+        const bx = seedXMap[b.source_seed_key ?? b.track_key] ?? b.x;
+        if (ax !== bx) return ax - bx;
+        // 같은 클러스터 안에서: 시드 → fill → bridge 순
+        const order = t => t.is_seed ? 0 : t.is_bridge ? 2 : 1;
+        return order(a) - order(b);
+    });
+
+    const grid = sorted.map((track, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const px = col * STEP + (row % 2 === 1 ? STEP / 2 : 0) - (cols * STEP) / 2;
+        const py = row * VSTEP - (rows * VSTEP) / 2;
         const spread = 2.5;
         return { track, px, py, apx: px * spread, apy: py * spread, animT: 0 };
     });
