@@ -1342,8 +1342,17 @@ function renderMusicMap(canvas, tracks) {
 
     const images = {};
     const TARGET_SCALE = 0.6;
-    let cam = { x: lw()/2, y: lh()/2, scale: 0.35, tx: lw()/2, ty: lh()/2 };
+    let cam = { x: lw()/2, y: lh()/2, scale: 0.04, tx: lw()/2, ty: lh()/2 };
     let destroyed = false;
+
+    // 우주 별 생성
+    const stars = Array.from({length: 200}, () => ({
+        x: Math.random() * lw(),
+        y: Math.random() * lh(),
+        r: Math.random() * 1.5 + 0.3,
+        a: Math.random(),
+    }));
+    let animStartTime = performance.now();
     let hoveredItem = null;
     const hoverScales = new Map();
     let isDragging = false, dragStart = {x:0,y:0}, camStart = {x:0,y:0};
@@ -1419,9 +1428,26 @@ function renderMusicMap(canvas, tracks) {
 
         cam.x += (cam.tx - cam.x) * 0.1;
         cam.y += (cam.ty - cam.y) * 0.1;
-        if (cam.scale < TARGET_SCALE) cam.scale += (TARGET_SCALE - cam.scale) * 0.06;
+
+        // 1.5초 동안 0.04 → TARGET_SCALE로 줌인
+        const elapsed = (performance.now() - animStartTime) / 1500;
+        const t = Math.min(1, elapsed);
+        const eased = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // ease in-out quad
+        const animScale = 0.04 + (TARGET_SCALE - 0.04) * eased;
+        if (cam.scale < TARGET_SCALE) cam.scale = animScale;
 
         ctx.clearRect(0, 0, lw(), lh());
+
+        // 별 그리기 (줌인 완료 전까지 fade out)
+        const starAlpha = Math.max(0, 1 - t * 1.5);
+        if (starAlpha > 0) {
+            for (const s of stars) {
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(255,255,255,${s.a * starAlpha})`;
+                ctx.fill();
+            }
+        }
 
         const cx = lw() / 2, cy = lh() / 2;
 
