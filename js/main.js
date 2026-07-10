@@ -1346,13 +1346,20 @@ function renderMusicMap(canvas, tracks) {
 
     // 시드 간격: fill이 들어갈 공간 확보 (반경 2칸 = 5칸 간격)
     const S = 5; // 시드 간 격자 간격
-    const seedCols = Math.max(1, Math.round(Math.sqrt(seeds.length * (lw() / lh()))));
 
-    // 시드 격자 위치 배정 (백엔드 x,y 기준 정렬)
-    const seedsSorted = [...seeds].sort((a, b) => a.x - b.x || a.y - b.y);
+    // 백엔드 x,y → 격자 col,row (2D 구조 유지)
+    const sxVals = seeds.map(t => t.x), syVals = seeds.map(t => t.y);
+    const sxMin = Math.min(...sxVals), sxMax = Math.max(...sxVals);
+    const syMin = Math.min(...syVals), syMax = Math.max(...syVals);
+    const sxRange = (sxMax - sxMin) || 1, syRange = (syMax - syMin) || 1;
+    const seedGridW = Math.max(1, Math.round(Math.sqrt(seeds.length * (lw() / lh()))));
+    const seedGridH = Math.max(1, Math.ceil(seeds.length / seedGridW));
+
     const seedCell = {}; // track_key → {c, r}
-    seedsSorted.forEach((t, i) => {
-        seedCell[t.track_key] = { c: (i % seedCols) * S, r: Math.floor(i / seedCols) * S };
+    seeds.forEach(t => {
+        const gc = Math.round((t.x - sxMin) / sxRange * (seedGridW - 1));
+        const gr = Math.round((t.y - syMin) / syRange * (seedGridH - 1));
+        seedCell[t.track_key] = { c: gc * S, r: gr * S };
     });
 
     // 나선형 인접 칸 (거리 순)
