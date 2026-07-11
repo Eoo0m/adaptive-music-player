@@ -1676,6 +1676,18 @@ body > .loading-indicator {
     .map-view {
         padding-bottom: calc(64px + env(safe-area-inset-bottom));
     }
+
+    /* 지도 검색 오버레이 모바일 */
+    .map-search-overlay {
+        left: 0;
+        transform: none;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .map-search-bar {
+        padding: 12px 12px 0;
+    }
 }
 
 /* ===== 지도 검색 오버레이 ===== */
@@ -1688,6 +1700,15 @@ body > .loading-indicator {
     z-index: 200;
     display: flex;
     flex-direction: column;
+    pointer-events: none;
+}
+
+.map-search-bar,
+.map-search-status,
+.map-search-results,
+.map-refresh-btn,
+.map-search-input {
+    pointer-events: auto;
 }
 
 .map-search-bar {
