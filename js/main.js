@@ -1324,7 +1324,7 @@ async function showMusicMap() {
 }
 
 function renderMusicMap(canvas, tracks) {
-    const COVER = 140, GAP = 22, LABEL_H = 42, STEP = COVER + GAP;
+    const COVER = 140, GAP = 50, LABEL_H = 42, STEP = COVER + GAP;
     const VSTEP = COVER + LABEL_H + GAP;
 
     const dpr = window.devicePixelRatio || 1;
