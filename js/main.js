@@ -17,6 +17,7 @@ function continueAsGuest() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('initialSongInput').classList.remove('hidden');
     document.getElementById('sideTab').classList.remove('hidden');
+    document.getElementById('bottomTab').classList.remove('hidden');
     document.getElementById('layoutToggle').classList.remove('hidden');
 }
 
@@ -31,6 +32,12 @@ function switchTab(tab) {
     document.getElementById('tabSearch').classList.toggle('active', tab === 'search');
     document.getElementById('tabFavorites').classList.toggle('active', tab === 'favorites');
     document.getElementById('tabMap').classList.toggle('active', tab === 'map');
+    // 하단 탭바 (모바일)
+    const btMap = { home: 'btHome', search: 'btSearch', favorites: 'btFavorites', map: 'btMap' };
+    ['btHome', 'btSearch', 'btFavorites', 'btMap'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('active', id === btMap[tab]);
+    });
 
     const searchInterface = document.getElementById('initialSongInput');
     const favoritesView = document.getElementById('favoritesView');
@@ -56,6 +63,11 @@ function switchTab(tab) {
         }
     } else if (tab === 'home') {
         homeFeedView.classList.remove('hidden');
+        if (!window._homePrefetchStarted) {
+            window._homePrefetchStarted = true;
+            prefetchPlaylistBuilder();
+            prefetchMusicMap();
+        }
         renderPlaylistBuilder();
         if (lastHomeFeeds.length > 0) {
             renderHomeFeeds(lastHomeFeeds);
@@ -1194,11 +1206,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('initialSongInput').classList.remove('hidden');
         document.getElementById('sideTab').classList.remove('hidden');
+        document.getElementById('bottomTab').classList.remove('hidden');
         document.getElementById('layoutToggle').classList.remove('hidden');
-        loadHomeFeed(); // 백그라운드에서 홈 피드 미리 로드
-        loadFavorites(); // 백그라운드에서 찜 목록 미리 로드
-        prefetchPlaylistBuilder(); // 플레이리스트 빌더 미리 호출
-        prefetchMusicMap(); // 취향 지도 미리 생성
+        loadFavorites(); // 찜 목록은 하트 표시용으로 백그라운드 로드
     } else {
         // 비로그인 → 로그인 선택 화면 표시
         document.getElementById('loginScreen').classList.remove('hidden');

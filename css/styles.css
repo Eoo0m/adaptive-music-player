@@ -1607,3 +1607,73 @@ body > .loading-indicator {
     overflow: hidden;
     text-overflow: ellipsis
 }
+
+/* ===== Bottom Tab (모바일) ===== */
+.bottom-tab {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    /* 사이드 탭 숨기기 */
+    .side-tab {
+        display: none !important;
+    }
+
+    /* 하단 탭바 표시 */
+    .bottom-tab {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        z-index: 500;
+        background: rgba(10, 10, 18, 0.92);
+        backdrop-filter: blur(16px);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .bottom-tab.hidden {
+        display: none !important;
+    }
+
+    .bottom-tab-btn {
+        flex: 1;
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.45);
+        cursor: pointer;
+        padding: 10px 4px 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        transition: color 0.2s;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .bottom-tab-btn span {
+        font-size: 10px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        letter-spacing: -0.2px;
+    }
+
+    .bottom-tab-btn.active {
+        color: #1db954;
+    }
+
+    .bottom-tab-btn:active {
+        color: #fff;
+    }
+
+    /* 콘텐츠 영역이 하단 탭에 가리지 않도록 */
+    .search-interface,
+    .home-feed-view,
+    .favorites-view,
+    .map-view {
+        padding-bottom: calc(64px + env(safe-area-inset-bottom));
+    }
+}
