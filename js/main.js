@@ -1647,6 +1647,7 @@ function renderMusicMap(canvas, tracks) {
         if (!moved) {
             const item=hitTest(e.clientX,e.clientY);
             if (item) { cam.tx=lw()/2-item.px*cam.scale; cam.ty=lh()/2-item.py*cam.scale; }
+            if (window._closeMapSearchIfOpen) window._closeMapSearchIfOpen();
         }
     });
     newWrap.addEventListener('wheel', e => {
