@@ -1681,18 +1681,20 @@ body > .loading-indicator {
 /* ===== 지도 검색 오버레이 ===== */
 .map-search-overlay {
     position: fixed;
-    top: 0; left: 0; right: 0;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 600px;
     z-index: 200;
     display: flex;
     flex-direction: column;
-    background: transparent;
 }
 
 .map-search-bar {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 16px 16px 0;
+    padding: 16px 0 0;
 }
 
 .map-search-input {
