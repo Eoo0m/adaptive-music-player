@@ -1590,56 +1590,10 @@ function renderMusicMap(canvas, tracks) {
 
     const mapTooltip = document.getElementById('mapTooltip');
     const onMouseMove = e => {
-        if (document.getElementById('mapView').classList.contains('hidden')) return;
-        mousePos = { x: e.clientX, y: e.clientY };
-        if (isDragging) {
-            cam.tx=camStart.x+(e.clientX-dragStart.x);
-            cam.ty=camStart.y+(e.clientY-dragStart.y);
-            hoveredItem=null; newWrap.style.cursor='grabbing';
-            if (mapTooltip) mapTooltip.style.display='none';
-            return;
-        }
-        const item=hitTest(e.clientX,e.clientY);
-        hoveredItem=item;
-        newWrap.style.cursor=item?'pointer':'grab';
-        if (mapTooltip) {
-            if (item && !item.track.is_seed) {
-                const t = item.track;
-                let tx = e.clientX + 14;
-                let ty = e.clientY - 10;
-                let html = '';
-                if (t.is_bridge && t.bridge_seed_a && t.bridge_seed_b) {
-                    const a = t.bridge_seed_a, b = t.bridge_seed_b;
-                    html = `<span style="color:#4a9eff;font-size:10px;letter-spacing:.05em">◆ 브릿지</span><br>`
-                         + `<b>${a.title || a.key}</b> <span style="color:rgba(255,255,255,.45);font-size:10px">${a.artist || ''}</span> <span style="color:#4a9eff;font-size:10px">${(a.sim*100).toFixed(0)}%</span><br>`
-                         + `<b>${b.title || b.key}</b> <span style="color:rgba(255,255,255,.45);font-size:10px">${b.artist || ''}</span> <span style="color:#4a9eff;font-size:10px">${(b.sim*100).toFixed(0)}%</span>`;
-                } else if (t.source_seed_title) {
-                    html = `<span style="color:#1db954;font-size:10px;letter-spacing:.05em">← 시드</span><br><b>${t.source_seed_title}</b><br><span style="color:rgba(255,255,255,.55);font-size:11px">${t.source_seed_artist || ''}</span>`;
-                }
-                if (html) {
-                    mapTooltip.innerHTML = html;
-                    mapTooltip.style.left = tx + 'px';
-                    mapTooltip.style.top = ty + 'px';
-                    mapTooltip.style.display = 'block';
-                } else {
-                    mapTooltip.style.display = 'none';
-                }
-            } else {
-                mapTooltip.style.display = 'none';
-            }
-        }
+        if (!isDragging) return;
+        cam.tx=camStart.x+(e.clientX-dragStart.x);
+        cam.ty=camStart.y+(e.clientY-dragStart.y);
     };
-    const onMouseUp = e => {
-        if (document.getElementById('mapView').classList.contains('hidden')) return;
-        const moved=Math.abs(e.clientX-dragStart.x)>4||Math.abs(e.clientY-dragStart.y)>4;
-        const wasDown = isDragging;
-        isDragging=false; newWrap.style.cursor='grab';
-        if (wasDown && !moved) {
-            const item=hitTest(e.clientX,e.clientY);
-            if (item) { cam.tx=lw()/2-item.px*cam.scale; cam.ty=lh()/2-item.py*cam.scale; }
-        }
-    };
-    const onMouseLeave = () => { mousePos = { x: -1, y: -1 }; if (mapTooltip) mapTooltip.style.display='none'; };
     const onResize = () => {
         const d = window.devicePixelRatio || 1;
         canvas.width = window.innerWidth * d;
@@ -1650,24 +1604,50 @@ function renderMusicMap(canvas, tracks) {
     };
 
     window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-    window.addEventListener('mouseleave', onMouseLeave);
     window.addEventListener('resize', onResize);
 
-    // newWrap 제거 시 window 리스너도 정리 + loop 중단
     new MutationObserver(() => {
         if (!document.contains(newWrap)) {
             destroyed = true;
             window.removeEventListener('mousemove', onMouseMove);
-            window.removeEventListener('mouseup', onMouseUp);
-            window.removeEventListener('mouseleave', onMouseLeave);
             window.removeEventListener('resize', onResize);
         }
     }).observe(document.getElementById('mapView'), { childList: true, subtree: true });
 
+    newWrap.addEventListener('mousemove', e => {
+        if (isDragging) { hoveredItem=null; newWrap.style.cursor='grabbing'; if (mapTooltip) mapTooltip.style.display='none'; return; }
+        const item=hitTest(e.clientX,e.clientY);
+        hoveredItem=item;
+        newWrap.style.cursor=item?'pointer':'grab';
+        if (mapTooltip) {
+            if (item && !item.track.is_seed) {
+                const t = item.track;
+                let html = '';
+                if (t.is_bridge && t.bridge_seed_a && t.bridge_seed_b) {
+                    const a = t.bridge_seed_a, b = t.bridge_seed_b;
+                    html = `<span style="color:#4a9eff;font-size:10px;letter-spacing:.05em">◆ 브릿지</span><br>`
+                         + `<b>${a.title || a.key}</b> <span style="color:rgba(255,255,255,.45);font-size:10px">${a.artist || ''}</span> <span style="color:#4a9eff;font-size:10px">${(a.sim*100).toFixed(0)}%</span><br>`
+                         + `<b>${b.title || b.key}</b> <span style="color:rgba(255,255,255,.45);font-size:10px">${b.artist || ''}</span> <span style="color:#4a9eff;font-size:10px">${(b.sim*100).toFixed(0)}%</span>`;
+                } else if (t.source_seed_title) {
+                    html = `<span style="color:#1db954;font-size:10px;letter-spacing:.05em">← 시드</span><br><b>${t.source_seed_title}</b><br><span style="color:rgba(255,255,255,.55);font-size:11px">${t.source_seed_artist || ''}</span>`;
+                }
+                if (html) { mapTooltip.innerHTML=html; mapTooltip.style.left=(e.clientX+14)+'px'; mapTooltip.style.top=(e.clientY-10)+'px'; mapTooltip.style.display='block'; }
+                else mapTooltip.style.display='none';
+            } else mapTooltip.style.display='none';
+        }
+    });
+    newWrap.addEventListener('mouseleave', () => { mousePos={x:-1,y:-1}; if (mapTooltip) mapTooltip.style.display='none'; });
     newWrap.addEventListener('mousedown', e => {
         isDragging=true; dragStart={x:e.clientX,y:e.clientY}; camStart={x:cam.tx,y:cam.ty};
         newWrap.style.cursor='grabbing';
+    });
+    newWrap.addEventListener('mouseup', e => {
+        const moved=Math.abs(e.clientX-dragStart.x)>4||Math.abs(e.clientY-dragStart.y)>4;
+        isDragging=false; newWrap.style.cursor='grab';
+        if (!moved) {
+            const item=hitTest(e.clientX,e.clientY);
+            if (item) { cam.tx=lw()/2-item.px*cam.scale; cam.ty=lh()/2-item.py*cam.scale; }
+        }
     });
     newWrap.addEventListener('wheel', e => {
         e.preventDefault();
