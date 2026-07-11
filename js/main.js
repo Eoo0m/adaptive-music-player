@@ -1636,7 +1636,8 @@ function renderMusicMap(canvas, tracks) {
         isDragging=true; dragStart={x:e.clientX,y:e.clientY}; camStart={x:cam.tx,y:cam.ty};
         newWrap.style.cursor='grabbing';
     });
-    newWrap.addEventListener('mouseup', e => {
+    window.addEventListener('mouseup', e => {
+        if (!isDragging) return;
         const moved=Math.abs(e.clientX-dragStart.x)>4||Math.abs(e.clientY-dragStart.y)>4;
         isDragging=false; newWrap.style.cursor='grab';
         if (!moved) {
