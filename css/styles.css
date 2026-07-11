@@ -1758,6 +1758,9 @@ body > .loading-indicator {
 }
 .map-result-item:hover { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.08); }
 .map-result-item.selected { background: rgba(29,185,84,.1); border-color: rgba(29,185,84,.3); }
+.map-result-item.seed { background: rgba(29,185,84,.15); border-color: #1db954; }
+.map-result-item.seed .map-result-title { color: #1db954; }
+.map-result-item.seed .map-result-cover img { box-shadow: 0 0 0 2px #1db954; border-radius: 6px; }
 
 .map-result-cover {
     width: 44px; height: 44px;
