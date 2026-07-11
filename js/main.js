@@ -1572,11 +1572,14 @@ function renderMusicMap(canvas, tracks) {
     oldWrap.parentElement.replaceChild(newWrap, oldWrap);
 
     function hitTest(mx, my) {
+        const rect = canvas.getBoundingClientRect();
+        const cx = mx - rect.left;
+        const cy = my - rect.top;
         for (let i=grid.length-1; i>=0; i--) {
             const item = grid[i];
             const { screenX: sx, screenY: sy, screenHalf: half } = item;
             if (sx===undefined) continue;
-            if (mx>=sx-half&&mx<=sx+half&&my>=sy-half&&my<=sy+half) return item;
+            if (cx>=sx-half&&cx<=sx+half&&cy>=sy-half&&cy<=sy+half) return item;
         }
         return null;
     }
