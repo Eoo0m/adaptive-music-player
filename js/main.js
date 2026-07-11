@@ -1700,11 +1700,11 @@ function renderMusicMap(canvas, tracks) {
             clearTimeout(debounce);
             const q = input.value.trim();
             if (!q) { results.innerHTML = ''; status.textContent = ''; selectedKey = null; history = []; return; }
-            debounce = setTimeout(() => doSearch(q), 280);
+            debounce = setTimeout(() => mapSearch(q), 280);
         });
 
         input.addEventListener('keydown', e => {
-            if (e.key === 'Enter') { clearTimeout(debounce); const q = input.value.trim(); if (q) doSearch(q); }
+            if (e.key === 'Enter') { clearTimeout(debounce); const q = input.value.trim(); if (q) mapSearch(q); }
             if (e.key === 'Escape') closeMapSearch();
         });
 
@@ -1752,7 +1752,7 @@ function renderMusicMap(canvas, tracks) {
         });
     });
 
-    async function doSearch(q) {
+    async function mapSearch(q) {
         const results = document.getElementById('mapSearchResults');
         const status = document.getElementById('mapSearchStatus');
         status.textContent = '검색 중...';
