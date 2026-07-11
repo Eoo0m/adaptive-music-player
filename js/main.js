@@ -1339,18 +1339,16 @@ function renderMusicMap(canvas, tracks) {
     const lw = () => window.innerWidth;
     const lh = () => window.innerHeight;
 
-    // 백엔드 x,y → 픽셀 (UMAP 구조 그대로)
-    const xVals = tracks.map(t => t.x), yVals = tracks.map(t => t.y);
-    const xMin = Math.min(...xVals), xMax = Math.max(...xVals);
-    const yMin = Math.min(...yVals), yMax = Math.max(...yVals);
-    const xRange = (xMax - xMin) || 1, yRange = (yMax - yMin) || 1;
-    const mapSpan = Math.sqrt(tracks.length) * STEP * 1.2;
+    // 백엔드 grid_col/grid_row → 픽셀 (격자 직접 매핑)
+    const maxCol = Math.max(...tracks.map(t => t.grid_col ?? t.x ?? 0));
+    const maxRow = Math.max(...tracks.map(t => t.grid_row ?? t.y ?? 0));
 
     const grid = tracks.map(track => {
-        const px = ((track.x - xMin) / xRange - 0.5) * mapSpan;
-        const py = ((track.y - yMin) / yRange - 0.5) * mapSpan * (yRange / xRange);
-        const spread = 2.5;
-        return { track, px, py, apx: px * spread, apy: py * spread, animT: 0 };
+        const col = track.grid_col ?? track.x ?? 0;
+        const row = track.grid_row ?? track.y ?? 0;
+        const px = col * STEP - maxCol * STEP / 2;
+        const py = row * VSTEP - maxRow * VSTEP / 2;
+        return { track, px, py, apx: px, apy: py, animT: 0 };
     });
 
     const images = {};
