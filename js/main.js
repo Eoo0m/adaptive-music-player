@@ -1719,7 +1719,25 @@ function renderMusicMap(canvas, tracks) {
 
         input.addEventListener('keydown', e => {
             if (e.key === 'Enter') { clearTimeout(debounce); const q = input.value.trim(); if (q) doSearch(q); }
+            if (e.key === 'Escape') closeMapSearch();
         });
+
+        // 오버레이 바깥(지도 캔버스) 터치/클릭 시 검색창 닫기
+        const overlay = document.getElementById('mapSearchOverlay');
+        document.getElementById('mapView').addEventListener('click', e => {
+            if (overlay && !overlay.contains(e.target)) closeMapSearch();
+        });
+        document.getElementById('mapView').addEventListener('touchend', e => {
+            if (overlay && !overlay.contains(e.target)) closeMapSearch();
+        }, { passive: true });
+
+        function closeMapSearch() {
+            input.value = '';
+            results.innerHTML = '';
+            if (status) status.textContent = '';
+            selectedKey = null; history = [];
+            input.blur();
+        }
 
         refreshBtn && refreshBtn.addEventListener('click', async () => {
             const token = authToken;
