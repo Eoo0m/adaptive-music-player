@@ -70,11 +70,6 @@ function switchTab(tab) {
         }
     } else if (tab === 'home') {
         homeFeedView.classList.remove('hidden');
-        if (!window._homePrefetchStarted) {
-            window._homePrefetchStarted = true;
-            prefetchPlaylistBuilder();
-            prefetchMusicMap();
-        }
         renderPlaylistBuilder();
         if (lastHomeFeeds.length > 0) {
             renderHomeFeeds(lastHomeFeeds);
