@@ -1451,15 +1451,17 @@ function renderMusicMap(canvas, tracks) {
         // 지도 탭이 닫히면 렌더 스킵 (loop는 유지)
         if (document.getElementById('mapView').classList.contains('hidden')) return;
 
-        // 엣지 패닝 (마우스가 화면 가장자리 10% 이내일 때)
+        // 엣지 패닝 (canvas 기준 가장자리 10% 이내일 때)
         if (!isDragging && mousePos.x >= 0) {
             const EDGE = 0.1;
             const SPEED = 8;
-            const w = lw(), h = lh();
-            const nx = mousePos.x / w, ny = mousePos.y / h;
-            if (nx < EDGE)       cam.tx += SPEED * (EDGE - nx) / EDGE;
+            const rect = canvas.getBoundingClientRect();
+            const cx = mousePos.x - rect.left, cy = mousePos.y - rect.top;
+            const w = rect.width, h = rect.height;
+            const nx = cx / w, ny = cy / h;
+            if (nx < EDGE)        cam.tx += SPEED * (EDGE - nx) / EDGE;
             else if (nx > 1-EDGE) cam.tx -= SPEED * (nx - (1-EDGE)) / EDGE;
-            if (ny < EDGE)       cam.ty += SPEED * (EDGE - ny) / EDGE;
+            if (ny < EDGE)        cam.ty += SPEED * (EDGE - ny) / EDGE;
             else if (ny > 1-EDGE) cam.ty -= SPEED * (ny - (1-EDGE)) / EDGE;
         }
 
