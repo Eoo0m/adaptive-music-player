@@ -1611,6 +1611,7 @@ function renderMusicMap(canvas, tracks) {
     }).observe(document.getElementById('mapView'), { childList: true, subtree: true });
 
     newWrap.addEventListener('mousemove', e => {
+        mousePos = { x: e.clientX, y: e.clientY };
         if (isDragging) { hoveredItem=null; newWrap.style.cursor='grabbing'; if (mapTooltip) mapTooltip.style.display='none'; return; }
         const item=hitTest(e.clientX,e.clientY);
         hoveredItem=item;
