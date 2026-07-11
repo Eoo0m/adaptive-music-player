@@ -1464,8 +1464,8 @@ function renderMusicMap(canvas, tracks) {
         }
 
         clampCam();
-        cam.x += (cam.tx - cam.x) * 0.2;
-        cam.y += (cam.ty - cam.y) * 0.2;
+        cam.x += (cam.tx - cam.x) * 0.1;
+        cam.y += (cam.ty - cam.y) * 0.1;
 
         // 앨범 모이는 애니메이션 (각 animT: 0→1)
         for (const item of grid) {
@@ -1511,6 +1511,8 @@ function renderMusicMap(canvas, tracks) {
             const pf = Math.max(0.3, 1 - Math.sqrt(ndx*ndx+ndy*ndy) * 0.58);
             const size = COVER * cam.scale * hs * pf;
             const half = size / 2;
+
+            item.screenX = sx; item.screenY = sy; item.screenHalf = half;
 
             if (sx+half < 0 || sx-half > lw() || sy+half < 0 || sy-half > lh()) continue;
 
@@ -1570,14 +1572,10 @@ function renderMusicMap(canvas, tracks) {
     oldWrap.parentElement.replaceChild(newWrap, oldWrap);
 
     function hitTest(mx, my) {
-        const cx = lw()/2, cy = lh()/2;
         for (let i=grid.length-1; i>=0; i--) {
             const item = grid[i];
-            const { px, py } = item;
-            const { sx, sy } = toScreen(px, py);
-            const ndx=(sx-cx)/(lw()*.48), ndy=(sy-cy)/(lh()*.48);
-            const pf=Math.max(0.3,1-Math.sqrt(ndx*ndx+ndy*ndy)*.58);
-            const half=COVER*cam.scale*pf/2;
+            const { screenX: sx, screenY: sy, screenHalf: half } = item;
+            if (sx===undefined) continue;
             if (mx>=sx-half&&mx<=sx+half&&my>=sy-half&&my<=sy+half) return item;
         }
         return null;
