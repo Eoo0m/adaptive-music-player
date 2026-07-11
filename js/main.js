@@ -1783,27 +1783,28 @@ function renderMusicMap(canvas, tracks) {
             });
             const data = await res.json();
             if (!data.results?.length) { status.textContent = '결과 없음'; return; }
-            status.textContent = `${data.results.length}개의 결과`;
+            status.textContent = '';
             syncFavKeys();
-            renderResults(data.results, false);
+            // 검색 결과는 최대 5개만
+            data.results.slice(0, 5).forEach(track => results.appendChild(createItem(track)));
         } catch(e) { status.textContent = '검색 실패'; }
     }
 
-    function renderResults(tracks, isRecommend, seedTrack) {
+    function renderResults(tracks, seedTrack) {
         const results = document.getElementById('mapSearchResults');
-        if (isRecommend && seedTrack) {
-            // 시드 트랙 초록 카드
-            const seedEl = createItem(seedTrack);
-            seedEl.classList.add('seed');
-            results.appendChild(seedEl);
+        // 결과 전체 교체: 시드 + 구분선 + 추천곡
+        results.innerHTML = '';
 
-            const div = document.createElement('div');
-            div.className = 'map-result-divider';
-            div.textContent = '이 곡과 비슷한 음악';
-            results.appendChild(div);
-        }
+        const seedEl = createItem(seedTrack);
+        seedEl.classList.add('seed');
+        results.appendChild(seedEl);
+
+        const div = document.createElement('div');
+        div.className = 'map-result-divider';
+        div.textContent = '이 곡과 비슷한 음악';
+        results.appendChild(div);
+
         tracks.forEach(track => results.appendChild(createItem(track)));
-        if (isRecommend) results.scrollTop = results.scrollHeight;
     }
 
     function createItem(track) {
@@ -1883,9 +1884,9 @@ function renderMusicMap(canvas, tracks) {
             });
             const data = await res.json();
             if (!data.recommendations?.length) throw new Error('empty');
-            status.textContent = `${data.recommendations.length}개의 추천곡`;
+            status.textContent = '';
             syncFavKeys();
-            renderResults(data.recommendations, true, track);
+            renderResults(data.recommendations, track);
         } catch(e) {
             try {
                 const res2 = await fetch(`${API}/find-similar-tracks`, {
@@ -1894,9 +1895,9 @@ function renderMusicMap(canvas, tracks) {
                 });
                 const data2 = await res2.json();
                 if (data2.recommendations?.length) {
-                    status.textContent = `${data2.recommendations.length}개의 유사곡`;
+                    status.textContent = '';
                     syncFavKeys();
-                    renderResults(data2.recommendations, true, track);
+                    renderResults(data2.recommendations, track);
                 } else { status.textContent = '추천 결과 없음'; }
             } catch(e2) { status.textContent = '추천 실패'; }
         }
