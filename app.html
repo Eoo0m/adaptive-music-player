@@ -123,6 +123,15 @@
 
     <!-- 취향 지도 화면 -->
     <div class="map-view hidden" id="mapView">
+        <!-- 지도 검색 오버레이 -->
+        <div class="map-search-overlay" id="mapSearchOverlay">
+            <div class="map-search-bar">
+                <input type="text" class="map-search-input" id="mapSearchInput" placeholder="곡 제목 또는 아티스트명 검색...">
+                <button class="map-refresh-btn" id="mapRefreshBtn" title="찜 목록으로 지도 새로 고침">↺</button>
+            </div>
+            <div class="map-search-status" id="mapSearchStatus"></div>
+            <div class="map-search-results" id="mapSearchResults"></div>
+        </div>
         <div class="map-canvas-wrap" id="mapCanvasWrap">
             <canvas id="mapCanvas"></canvas>
         </div>

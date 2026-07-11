@@ -51,6 +51,13 @@ function switchTab(tab) {
     mapView.classList.add('hidden');
     trackInfo.classList.add('hidden');
 
+    // 레이아웃 토글은 검색/홈 탭에서만 표시
+    const layoutToggle = document.getElementById('layoutToggle');
+    if (layoutToggle) {
+        if (tab === 'map' || tab === 'favorites') layoutToggle.classList.add('hidden');
+        else layoutToggle.classList.remove('hidden');
+    }
+
     if (tab === 'search') {
         searchInterface.classList.remove('hidden');
         trackInfo.classList.remove('hidden');
@@ -1685,3 +1692,195 @@ function renderMusicMap(canvas, tracks) {
         }
     });
 }
+
+// ── 지도 검색 오버레이 ──
+(function initMapSearch() {
+    const API = 'https://api.dynplayer.win';
+    let debounce = null;
+    let selectedKey = null;
+    let history = [];
+    let favKeys = new Set();
+
+    // 찜 상태 동기화 (lastFavorites 사용)
+    function syncFavKeys() {
+        if (typeof lastFavorites !== 'undefined') {
+            favKeys = new Set(lastFavorites.map(f => f.track_key));
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const input = document.getElementById('mapSearchInput');
+        const results = document.getElementById('mapSearchResults');
+        const status = document.getElementById('mapSearchStatus');
+        const refreshBtn = document.getElementById('mapRefreshBtn');
+        if (!input) return;
+
+        input.addEventListener('input', () => {
+            clearTimeout(debounce);
+            const q = input.value.trim();
+            if (!q) { results.innerHTML = ''; status.textContent = ''; selectedKey = null; history = []; return; }
+            debounce = setTimeout(() => doSearch(q), 280);
+        });
+
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { clearTimeout(debounce); const q = input.value.trim(); if (q) doSearch(q); }
+        });
+
+        refreshBtn && refreshBtn.addEventListener('click', async () => {
+            const token = authToken;
+            if (!token) { alert('로그인이 필요합니다.'); return; }
+            refreshBtn.classList.add('spinning');
+            try {
+                const res = await fetch(`${API}/favorites`, { headers: { Authorization: `Bearer ${token}` } });
+                const data = await res.json();
+                const favs = data.favorites || [];
+                if (!favs.length) { alert('찜한 곡이 없습니다.'); return; }
+                const seeds = [...favs].sort(() => Math.random() - 0.5).slice(0, 20).map(f => f.track_key);
+                const allFavKeys = favs.map(f => f.track_key);
+                lastMapData = null;
+                const mapRes = await fetch(`${API}/music-map`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ track_keys: seeds, favorite_keys: allFavKeys, fill_per_seed: 40 })
+                });
+                if (!mapRes.ok) throw new Error(await mapRes.text());
+                lastMapData = await mapRes.json();
+                const fks = new Set(allFavKeys);
+                lastMapData.tracks.forEach(t => { t.is_favorite = fks.has(t.track_key); });
+                const canvas = document.getElementById('mapCanvas');
+                if (canvas) renderMusicMap(canvas, lastMapData.tracks);
+            } catch(e) {
+                alert('지도 새로고침 실패: ' + e.message);
+            } finally {
+                refreshBtn.classList.remove('spinning');
+            }
+        });
+    });
+
+    async function doSearch(q) {
+        const results = document.getElementById('mapSearchResults');
+        const status = document.getElementById('mapSearchStatus');
+        status.textContent = '검색 중...';
+        results.innerHTML = '';
+        selectedKey = null; history = [];
+        try {
+            const res = await fetch(`${API}/search-songs`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: q })
+            });
+            const data = await res.json();
+            if (!data.results?.length) { status.textContent = '결과 없음'; return; }
+            status.textContent = `${data.results.length}개의 결과`;
+            syncFavKeys();
+            renderResults(data.results, false);
+        } catch(e) { status.textContent = '검색 실패'; }
+    }
+
+    function renderResults(tracks, isRecommend) {
+        const results = document.getElementById('mapSearchResults');
+        if (isRecommend) {
+            const div = document.createElement('div');
+            div.className = 'map-result-divider';
+            div.textContent = '이 곡과 비슷한 음악 →';
+            results.appendChild(div);
+        }
+        tracks.forEach(track => results.appendChild(createItem(track)));
+        if (isRecommend) results.scrollTop = results.scrollHeight;
+    }
+
+    function createItem(track) {
+        const item = document.createElement('div');
+        item.className = 'map-result-item' + (track.track_key === selectedKey ? ' selected' : '');
+
+        const cover = document.createElement('div');
+        cover.className = 'map-result-cover';
+        if (track.cover_image_url) {
+            const img = document.createElement('img');
+            img.src = track.cover_image_url;
+            img.alt = '';
+            cover.appendChild(img);
+        } else { cover.textContent = '♪'; }
+
+        const info = document.createElement('div');
+        info.className = 'map-result-info';
+        info.innerHTML = `<div class="map-result-title">${track.title || track.track || ''}</div><div class="map-result-artist">${track.artist || ''}</div>`;
+
+        const actions = document.createElement('div');
+        actions.className = 'map-result-actions';
+
+        const heart = document.createElement('button');
+        heart.className = 'map-result-heart' + (favKeys.has(track.track_key) ? ' active' : '');
+        heart.textContent = favKeys.has(track.track_key) ? '♥' : '♡';
+        heart.onclick = async e => {
+            e.stopPropagation();
+            const token = authToken;
+            if (!token) { alert('로그인이 필요합니다.'); return; }
+            const isFav = favKeys.has(track.track_key);
+            try {
+                await fetch(`${API}/favorites`, {
+                    method: isFav ? 'DELETE' : 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ track_key: track.track_key })
+                });
+                if (isFav) { favKeys.delete(track.track_key); heart.className = 'map-result-heart'; heart.textContent = '♡'; }
+                else { favKeys.add(track.track_key); heart.className = 'map-result-heart active'; heart.textContent = '♥'; }
+                if (typeof lastFavorites !== 'undefined') {
+                    if (isFav) lastFavorites = lastFavorites.filter(f => f.track_key !== track.track_key);
+                    else lastFavorites.push({ track_key: track.track_key, title: track.title || track.track, artist: track.artist });
+                }
+            } catch(e) { alert('찜 처리 실패'); }
+        };
+
+        const play = document.createElement('button');
+        play.className = 'map-result-play';
+        play.textContent = '▶';
+        play.title = 'YouTube';
+        play.onclick = e => {
+            e.stopPropagation();
+            window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent((track.title || track.track) + ' ' + track.artist)}`, '_blank');
+        };
+
+        actions.appendChild(heart);
+        actions.appendChild(play);
+        item.appendChild(cover);
+        item.appendChild(info);
+        item.appendChild(actions);
+
+        item.onclick = () => onItemClick(track, item);
+        return item;
+    }
+
+    async function onItemClick(track, itemEl) {
+        document.querySelectorAll('.map-result-item').forEach(el => el.classList.remove('selected'));
+        itemEl.classList.add('selected');
+        selectedKey = track.track_key;
+        history.push(track.track_key);
+
+        const status = document.getElementById('mapSearchStatus');
+        status.textContent = '추천 로드 중...';
+        try {
+            const res = await fetch(`${API}/recommend`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ track_keys: history.slice(-10), num_recommendations: 15, exclude_track_keys: history })
+            });
+            const data = await res.json();
+            if (!data.recommendations?.length) throw new Error('empty');
+            status.textContent = `${data.recommendations.length}개의 추천곡`;
+            syncFavKeys();
+            renderResults(data.recommendations, true);
+        } catch(e) {
+            try {
+                const res2 = await fetch(`${API}/find-similar-tracks`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ track_key: track.track_key, num_recommendations: 15 })
+                });
+                const data2 = await res2.json();
+                if (data2.recommendations?.length) {
+                    status.textContent = `${data2.recommendations.length}개의 유사곡`;
+                    syncFavKeys();
+                    renderResults(data2.recommendations, true);
+                } else { status.textContent = '추천 결과 없음'; }
+            } catch(e2) { status.textContent = '추천 실패'; }
+        }
+    }
+})();
