@@ -1634,7 +1634,6 @@ function renderMusicMap(canvas, tracks) {
         const moved=Math.abs(e.clientX-dragStart.x)>4||Math.abs(e.clientY-dragStart.y)>4;
         isDragging=false; newWrap.style.cursor='grab';
         if (!moved) {
-            if (window._closeMapSearchIfOpen) window._closeMapSearchIfOpen();
             const item=hitTest(e.clientX,e.clientY);
             if (item) { cam.tx=lw()/2-item.px*cam.scale; cam.ty=lh()/2-item.py*cam.scale; }
         }
