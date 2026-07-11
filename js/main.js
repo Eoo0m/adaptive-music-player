@@ -1364,7 +1364,7 @@ function renderMusicMap(canvas, tracks) {
     });
 
     const images = {};
-    const TARGET_SCALE = 0.6;
+    const TARGET_SCALE = window.innerWidth <= 768 ? 0.35 : 0.6;
     const MIN_SCALE = 0.15, MAX_SCALE = 2.0;
     let cam = { x: lw()/2, y: lh()/2, scale: TARGET_SCALE, tx: lw()/2, ty: lh()/2 };
     let destroyed = false;
