@@ -1723,28 +1723,18 @@ function renderMusicMap(canvas, tracks) {
         }
 
         refreshBtn && refreshBtn.addEventListener('click', async () => {
-            const token = authToken;
-            if (!token) { alert('로그인이 필요합니다.'); return; }
+            if (!authToken) { alert('로그인이 필요합니다.'); return; }
             refreshBtn.classList.add('spinning');
+            lastMapData = null;
+            mapPrefetchPromise = null;
             try {
-                const res = await fetch(`${API}/favorites`, { headers: { Authorization: `Bearer ${token}` } });
-                const data = await res.json();
-                const favs = data.favorites || [];
-                if (!favs.length) { alert('찜한 곡이 없습니다.'); return; }
-                const seeds = [...favs].sort(() => Math.random() - 0.5).slice(0, 20).map(f => f.track_key);
-                const allFavKeys = favs.map(f => f.track_key);
-                lastMapData = null;
-                const mapRes = await fetch(`${API}/music-map`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ track_keys: seeds, favorite_keys: allFavKeys, fill_per_seed: 40 })
-                });
-                if (!mapRes.ok) throw new Error(await mapRes.text());
-                lastMapData = await mapRes.json();
-                const fks = new Set(allFavKeys);
-                lastMapData.tracks.forEach(t => { t.is_favorite = fks.has(t.track_key); });
                 const canvas = document.getElementById('mapCanvas');
-                if (canvas) renderMusicMap(canvas, lastMapData.tracks);
+                const data = await fetchMusicMapData();
+                if (!data) { alert('찜한 곡이 없습니다.'); return; }
+                lastMapData = data;
+                const favKeys = new Set((lastFavorites || []).map(f => f.track_key));
+                data.tracks.forEach(t => { t.is_favorite = favKeys.has(t.track_key); });
+                if (canvas) renderMusicMap(canvas, data.tracks);
             } catch(e) {
                 alert('지도 새로고침 실패: ' + e.message);
             } finally {
