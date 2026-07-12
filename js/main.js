@@ -1444,6 +1444,8 @@ function renderMusicMap(canvas, tracks) {
 
     // 마우스 엣지 이동
     let mousePos = { x: -1, y: -1 };
+    let velocity = { x: 0, y: 0 };
+    let lastDragPos = { x: 0, y: 0 };
 
     function loop() {
         if (destroyed) return;
@@ -1454,7 +1456,7 @@ function renderMusicMap(canvas, tracks) {
         // 엣지 패닝 (canvas 기준 가장자리 10% 이내일 때)
         if (!isDragging && mousePos.x >= 0) {
             const EDGE = 0.1;
-            const SPEED = 8;
+            const SPEED = 16;
             const rect = canvas.getBoundingClientRect();
             const cx = mousePos.x - rect.left, cy = mousePos.y - rect.top;
             const w = rect.width, h = rect.height;
@@ -1465,9 +1467,19 @@ function renderMusicMap(canvas, tracks) {
             else if (ny > 1-EDGE) cam.ty -= SPEED * (ny - (1-EDGE)) / EDGE;
         }
 
+        // 관성: 드래그 안 할 때 velocity 감속
+        if (!isDragging) {
+            cam.tx += velocity.x;
+            cam.ty += velocity.y;
+            velocity.x *= 0.88;
+            velocity.y *= 0.88;
+            if (Math.abs(velocity.x) < 0.1) velocity.x = 0;
+            if (Math.abs(velocity.y) < 0.1) velocity.y = 0;
+        }
+
         clampCam();
-        cam.x += (cam.tx - cam.x) * 0.1;
-        cam.y += (cam.ty - cam.y) * 0.1;
+        cam.x += (cam.tx - cam.x) * 0.15;
+        cam.y += (cam.ty - cam.y) * 0.15;
 
         // 앨범 모이는 애니메이션 (각 animT: 0→1)
         for (const item of grid) {
@@ -1589,6 +1601,8 @@ function renderMusicMap(canvas, tracks) {
     const mapTooltip = document.getElementById('mapTooltip');
     const onMouseMove = e => {
         if (!isDragging) return;
+        velocity={x:e.clientX-lastDragPos.x, y:e.clientY-lastDragPos.y};
+        lastDragPos={x:e.clientX,y:e.clientY};
         cam.tx=camStart.x+(e.clientX-dragStart.x);
         cam.ty=camStart.y+(e.clientY-dragStart.y);
     };
@@ -1638,6 +1652,7 @@ function renderMusicMap(canvas, tracks) {
     newWrap.addEventListener('mouseleave', () => { mousePos={x:-1,y:-1}; if (mapTooltip) mapTooltip.style.display='none'; });
     newWrap.addEventListener('mousedown', e => {
         isDragging=true; dragStart={x:e.clientX,y:e.clientY}; camStart={x:cam.tx,y:cam.ty};
+        lastDragPos={x:e.clientX,y:e.clientY}; velocity={x:0,y:0};
         newWrap.style.cursor='grabbing';
     });
     window.addEventListener('mouseup', e => {
@@ -1645,6 +1660,7 @@ function renderMusicMap(canvas, tracks) {
         const moved=Math.abs(e.clientX-dragStart.x)>4||Math.abs(e.clientY-dragStart.y)>4;
         isDragging=false; newWrap.style.cursor='grab';
         if (!moved) {
+            velocity={x:0,y:0};
             const item=hitTest(e.clientX,e.clientY);
             if (item) { cam.tx=lw()/2-item.px*cam.scale; cam.ty=lh()/2-item.py*cam.scale; }
             if (window._closeMapSearchIfOpen) window._closeMapSearchIfOpen();
