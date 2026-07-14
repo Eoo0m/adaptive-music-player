@@ -1360,7 +1360,8 @@ function renderMusicMap(canvas, tracks) {
         const row = track.grid_row ?? track.y ?? 0;
         const px = col * STEP - maxCol * STEP / 2;
         const py = row * VSTEP - maxRow * VSTEP / 2;
-        return { track, px, py, apx: px, apy: py, animT: 0 };
+        const spread = 2.5;
+        return { track, px, py, apx: px * spread, apy: py * spread, animT: 0 };
     });
 
     const images = {};
