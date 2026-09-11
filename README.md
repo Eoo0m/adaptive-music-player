@@ -1,7 +1,7 @@
 
-# 🎧 DynPlayer — Adaptive Music Recommendation Player
+# 🎧 Caro — Adaptive Music Recommendation Player
 
->https://dynplayer.win
+>https://caromusic.kr
 
 <img width="588" height="510" alt="Screenshot 2025-11-26 at 3 11 39 PM" src="https://github.com/user-attachments/assets/4620573d-a787-4377-b68a-949ebb9bd2a8" />
 

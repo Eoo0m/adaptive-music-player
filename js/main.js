@@ -1,5 +1,5 @@
 // ===== API Configuration =====
-const API_BASE_URL = 'https://api.dynplayer.win';
+const API_BASE_URL = 'https://api.caromusic.kr';
 
 // ===== Auth =====
 let authToken = localStorage.getItem('auth_token');
@@ -1694,7 +1694,7 @@ function renderMusicMap(canvas, tracks) {
 
 // ── 지도 검색 오버레이 ──
 (function initMapSearch() {
-    const API = 'https://api.dynplayer.win';
+    const API = 'https://api.caromusic.kr';
     let debounce = null;
     let selectedKey = null;
     let history = [];

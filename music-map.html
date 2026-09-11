@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>음악 취향 지도 — Dynplayer</title>
+<title>음악 취향 지도 — Caro</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -463,7 +463,7 @@ canvas { display: block; }
 </div>
 
 <script>
-const API = 'https://api.dynplayer.win';
+const API = 'https://api.caromusic.kr';
 
 // ── 검색 입력창 관리 ──
 const trackInputsEl = document.getElementById('track-inputs');
@@ -1028,7 +1028,7 @@ function hideTooltip() {
 document.getElementById('load-fav-link').onclick = async (e) => {
   e.preventDefault();
   const token = localStorage.getItem('auth_token');
-  if (!token) { alert('dynplayer.win에서 로그인 후 다시 시도해주세요.'); return; }
+  if (!token) { alert('caromusic.kr에서 로그인 후 다시 시도해주세요.'); return; }
   try {
     const res = await fetch(`${API}/favorites`, { headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
