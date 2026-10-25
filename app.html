@@ -36,6 +36,7 @@
         <h1 class="login-title">Caro</h1>
         <button class="login-button" onclick="loginWithGoogle()">Google로 로그인</button>
         <button class="login-button login-button-spotify" onclick="loginWithSpotify()">Spotify로 로그인</button>
+        <button class="login-button login-button-apple" onclick="loginWithApple()">Apple로 로그인</button>
         <button class="login-button login-button-guest" onclick="continueAsGuest()">로그인 없이 이용하기</button>
     </div>
 
@@ -174,6 +175,8 @@
 
     <div class="track-info hidden" id="trackInfo"></div>
 
+    <!-- MusicKit JS -->
+    <script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js" data-web-components async></script>
     <!-- JavaScript Files -->
     <script src="js/main.js"></script>
     <script src="js/search.js"></script>

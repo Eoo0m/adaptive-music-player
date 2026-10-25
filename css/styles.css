@@ -66,6 +66,15 @@ body {
     background: #1ed760
 }
 
+.login-button-apple {
+    background: #000;
+    border: 1px solid rgba(255,255,255,.3)
+}
+
+.login-button-apple:hover {
+    background: #1a1a1a
+}
+
 .login-button-guest {
     background: rgba(255, 255, 255, .15);
     border: 1px solid rgba(255, 255, 255, .25)

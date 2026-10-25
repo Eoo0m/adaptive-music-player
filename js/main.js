@@ -13,6 +13,51 @@ function loginWithSpotify() {
     window.location.href = `${API_BASE_URL}/auth/spotify/login`;
 }
 
+function loginWithApple() {
+    window.location.href = `${API_BASE_URL}/auth/apple/login`;
+}
+
+// ===== MusicKit =====
+let musicKitInstance = null;
+
+async function initMusicKit() {
+    try {
+        const res = await fetch(`${API_BASE_URL}/auth/apple-music/token`);
+        if (!res.ok) return;
+        const { token } = await res.json();
+        await MusicKit.configure({
+            developerToken: token,
+            app: { name: 'Caro', build: '1.0' },
+        });
+        musicKitInstance = MusicKit.getInstance();
+        console.log('🎵 MusicKit initialized');
+    } catch (e) {
+        console.warn('MusicKit init failed:', e);
+    }
+}
+
+async function playWithAppleMusic(track) {
+    try {
+        if (!musicKitInstance) await initMusicKit();
+        if (!musicKitInstance) throw new Error('MusicKit unavailable');
+
+        // 유저 인증 (Apple Music 구독자 확인)
+        if (!musicKitInstance.isAuthorized) {
+            await musicKitInstance.authorize();
+        }
+
+        if (track.apple_music_id) {
+            await musicKitInstance.setQueue({ songs: [track.apple_music_id], startPlaying: true });
+        } else {
+            // apple_music_id 없으면 YouTube fallback
+            window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(track.title + ' ' + track.artist)}`, '_blank');
+        }
+    } catch (e) {
+        console.error('Apple Music playback failed:', e);
+        window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(track.title + ' ' + track.artist)}`, '_blank');
+    }
+}
+
 function continueAsGuest() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('initialSongInput').classList.remove('hidden');
@@ -508,7 +553,9 @@ function getTrackArtist(track) {
 function openTrackOnYouTube(track, candidateKeys = currentCandidateKeys) {
     logAction('play', { selected_track_key: track.track_key, candidate_track_keys: candidateKeys });
     const loginType = localStorage.getItem('login_type');
-    if (loginType === 'spotify') {
+    if (loginType === 'apple') {
+        playWithAppleMusic(track);
+    } else if (loginType === 'spotify') {
         window.open(`https://open.spotify.com/track/${track.track_key}`, '_blank');
     } else {
         window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(track.title + ' ' + track.artist)}`, '_blank');
@@ -1211,6 +1258,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('bottomTab').classList.remove('hidden');
         document.getElementById('layoutToggle').classList.remove('hidden');
         loadFavorites(); // 찜 목록은 하트 표시용으로 백그라운드 로드
+        // Apple 로그인 유저면 MusicKit 미리 초기화
+        if (localStorage.getItem('login_type') === 'apple') {
+            document.addEventListener('musickitloaded', () => initMusicKit(), { once: true });
+        }
     } else {
         // 비로그인 → 로그인 선택 화면 표시
         document.getElementById('loginScreen').classList.remove('hidden');
@@ -1680,15 +1731,7 @@ function renderMusicMap(canvas, tracks) {
     },{passive:false});
     newWrap.addEventListener('dblclick', e => {
         const item=hitTest(e.clientX,e.clientY);
-        if (item) {
-            const loginType = localStorage.getItem('login_type');
-            if (loginType === 'spotify') {
-                window.open(`https://open.spotify.com/track/${item.track.track_key}`, '_blank');
-            } else {
-                const t = item.track;
-                window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(t.title + ' ' + t.artist)}`, '_blank');
-            }
-        }
+        if (item) openTrackOnYouTube(item.track);
     });
 }
 
