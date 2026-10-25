@@ -50,11 +50,11 @@ async function playWithAppleMusic(track) {
             await musicKitInstance.setQueue({ songs: [track.apple_music_id], startPlaying: true });
         } else {
             // apple_music_id 없으면 YouTube fallback
-            window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(track.title + ' ' + track.artist)}`, '_blank');
+            window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(getTrackTitle(track) + ' ' + getTrackArtist(track))}`, '_blank');
         }
     } catch (e) {
         console.error('Apple Music playback failed:', e);
-        window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(track.title + ' ' + track.artist)}`, '_blank');
+        window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(getTrackTitle(track) + ' ' + getTrackArtist(track))}`, '_blank');
     }
 }
 
