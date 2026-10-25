@@ -31,6 +31,9 @@ async function initMusicKit() {
         });
         musicKitInstance = MusicKit.getInstance();
         console.log('🎵 MusicKit initialized');
+        if (!musicKitInstance.isAuthorized) {
+            await musicKitInstance.authorize();
+        }
     } catch (e) {
         console.warn('MusicKit init failed:', e);
     }
@@ -1260,7 +1263,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadFavorites(); // 찜 목록은 하트 표시용으로 백그라운드 로드
         // Apple 로그인 유저면 MusicKit 미리 초기화
         if (localStorage.getItem('login_type') === 'apple') {
-            document.addEventListener('musickitloaded', () => initMusicKit(), { once: true });
+            if (window.MusicKit) {
+                initMusicKit();
+            } else {
+                document.addEventListener('musickitloaded', () => initMusicKit(), { once: true });
+            }
         }
     } else {
         // 비로그인 → 로그인 선택 화면 표시
