@@ -1179,7 +1179,7 @@ createStars();
 setInterval(createDust, 2000);
 
 // 페이지 로드 시 인증 확인 후 화면 결정
-document.addEventListener('DOMContentLoaded', async () => {
+(async () => {
     await checkAuth();
     if (currentUser) {
         // 로그인 상태 → 바로 검색 화면
@@ -1200,7 +1200,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 비로그인 → 로그인 선택 화면 표시
         document.getElementById('loginScreen').classList.remove('hidden');
     }
-});
+})();
 
 // ===== Music Map =====
 
