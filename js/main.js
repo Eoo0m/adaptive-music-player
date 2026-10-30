@@ -42,6 +42,8 @@ async function initMusicKit() {
             const pauseIcon = document.getElementById('playerPauseIcon');
             if (playIcon) playIcon.style.display = playerIsPlaying ? 'none' : 'block';
             if (pauseIcon) pauseIcon.style.display = playerIsPlaying ? 'block' : 'none';
+            playerWidgetBump(playerIsPlaying ? 'bump' : 'bump');
+            playerWidgetSetPulse(playerIsPlaying);
         });
     } catch (e) {
         console.warn('MusicKit init failed:', e);
@@ -1976,8 +1978,28 @@ function renderMusicMap(canvas, tracks) {
 })();
 
 // ===== Player Widget =====
+function playerWidgetBump(cls) {
+    const widget = document.getElementById('playerWidget');
+    if (!widget) return;
+    widget.classList.remove('bump', 'bump-track');
+    // reflow 강제해서 animation 재시작
+    void widget.offsetWidth;
+    widget.classList.add(cls);
+    widget.addEventListener('animationend', () => {
+        widget.classList.remove(cls);
+        playerWidgetSetPulse(playerIsPlaying);
+    }, { once: true });
+}
+
+function playerWidgetSetPulse(playing) {
+    const widget = document.getElementById('playerWidget');
+    if (!widget) return;
+    widget.classList.toggle('is-playing', playing);
+}
+
 function updatePlayerWidget(track, isPlaying) {
     if (!track) return;
+    const isNewTrack = !playerCurrentTrack || playerCurrentTrack.track_key !== track.track_key;
     playerCurrentTrack = track;
     playerIsPlaying = isPlaying;
     if (isPlaying) {
@@ -2017,6 +2039,12 @@ function updatePlayerWidget(track, isPlaying) {
     // 지도탭에서만 다음 버튼 활성화
     const nextBtn = document.getElementById('playerNext');
     if (nextBtn) nextBtn.disabled = (currentTab !== 'map');
+
+    // 애니메이션
+    if (isNewTrack) {
+        playerWidgetBump('bump-track');
+    }
+    playerWidgetSetPulse(isPlaying);
 }
 
 function playerTogglePlayPause() {

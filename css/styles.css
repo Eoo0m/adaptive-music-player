@@ -125,6 +125,26 @@ body {
 }
 
 /* ===== Player Widget ===== */
+@keyframes player-pulse {
+    0%, 100% { transform: translateY(-50%) scale(1); }
+    50%       { transform: translateY(-50%) scale(1.04); }
+}
+
+@keyframes player-bump {
+    0%   { transform: translateY(-50%) scale(1); }
+    30%  { transform: translateY(-50%) scale(1.10); }
+    60%  { transform: translateY(-50%) scale(0.97); }
+    100% { transform: translateY(-50%) scale(1); }
+}
+
+@keyframes player-bump-track {
+    0%   { transform: translateY(-50%) scale(1); }
+    25%  { transform: translateY(-50%) scale(1.16); }
+    55%  { transform: translateY(-50%) scale(0.95); }
+    80%  { transform: translateY(-50%) scale(1.03); }
+    100% { transform: translateY(-50%) scale(1); }
+}
+
 .player-widget {
     position: fixed;
     right: 20px;
@@ -139,7 +159,20 @@ body {
     border-radius: 16px;
     padding: 8px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, .1)
+    border: 1px solid rgba(255, 255, 255, .1);
+    transform-origin: center center
+}
+
+.player-widget.is-playing {
+    animation: player-pulse 2.4s ease-in-out infinite
+}
+
+.player-widget.bump {
+    animation: player-bump 0.4s cubic-bezier(.36,.07,.19,.97) forwards
+}
+
+.player-widget.bump-track {
+    animation: player-bump-track 0.5s cubic-bezier(.36,.07,.19,.97) forwards
 }
 
 .player-btn {
