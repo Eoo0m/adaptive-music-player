@@ -315,7 +315,7 @@ function openSavedPlaylist(playlistId) {
     pb.userName = '';
     pb.timeOfDay = '';
 
-    switchTab('home');
+    switchTab('search');
 }
 
 // ===== Home Feed =====
