@@ -124,6 +124,78 @@ body {
     background: rgba(255, 255, 255, .15)
 }
 
+/* ===== Player Widget ===== */
+.player-widget {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    z-index: 500;
+    background: rgba(0, 0, 0, .5);
+    border-radius: 16px;
+    padding: 8px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, .1)
+}
+
+.player-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, .5);
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 12px;
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center
+}
+
+.player-btn:hover:not(:disabled) {
+    color: #fff;
+    background: rgba(255, 255, 255, .1)
+}
+
+.player-btn:disabled {
+    opacity: .3;
+    cursor: default
+}
+
+.player-album-wrap {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    background: rgba(255, 255, 255, .05)
+}
+
+.player-album-art {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none
+}
+
+.player-album-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, .4)
+}
+
+@media (max-width: 768px) {
+    .player-widget {
+        display: none !important
+    }
+}
+
 /* ===== Favorites View ===== */
 .favorites-view {
     position: absolute;

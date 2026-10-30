@@ -175,6 +175,35 @@
 
     <div class="track-info hidden" id="trackInfo"></div>
 
+    <!-- 데스크톱 플레이어 위젯 -->
+    <div class="player-widget hidden" id="playerWidget">
+        <button class="player-btn" id="playerPlayPause" onclick="playerTogglePlayPause()" title="재생/일시정지">
+            <svg id="playerPlayIcon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                <polygon points="5,3 19,12 5,21"/>
+            </svg>
+            <svg id="playerPauseIcon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" style="display:none">
+                <rect x="6" y="4" width="4" height="16"/>
+                <rect x="14" y="4" width="4" height="16"/>
+            </svg>
+        </button>
+        <div class="player-album-wrap">
+            <img class="player-album-art" id="playerAlbumArt" src="" alt="">
+            <div class="player-album-placeholder" id="playerAlbumPlaceholder">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4">
+                    <circle cx="12" cy="12" r="10"/>
+                    <circle cx="12" cy="12" r="3"/>
+                    <line x1="12" y1="2" x2="12" y2="9"/>
+                </svg>
+            </div>
+        </div>
+        <button class="player-btn" id="playerNext" onclick="playerDynamicNext()" title="다음 곡" disabled>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                <polygon points="5,4 15,12 5,20"/>
+                <rect x="16" y="4" width="3" height="16"/>
+            </svg>
+        </button>
+    </div>
+
     <!-- MusicKit JS -->
     <script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js" data-web-components async></script>
     <!-- JavaScript Files -->

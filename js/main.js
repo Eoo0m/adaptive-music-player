@@ -34,6 +34,15 @@ async function initMusicKit() {
         if (!musicKitInstance.isAuthorized) {
             await musicKitInstance.authorize();
         }
+        musicKitInstance.addEventListener('playbackStateDidChange', ({ state }) => {
+            // state 2 = playing, others = paused/stopped
+            playerIsPlaying = (state === 2);
+            if (playerIsPlaying && !playerPlayStartTime) playerPlayStartTime = Date.now();
+            const playIcon = document.getElementById('playerPlayIcon');
+            const pauseIcon = document.getElementById('playerPauseIcon');
+            if (playIcon) playIcon.style.display = playerIsPlaying ? 'none' : 'block';
+            if (pauseIcon) pauseIcon.style.display = playerIsPlaying ? 'block' : 'none';
+        });
     } catch (e) {
         console.warn('MusicKit init failed:', e);
     }
@@ -51,6 +60,7 @@ async function playWithAppleMusic(track) {
 
         if (track.apple_music_id) {
             await musicKitInstance.setQueue({ songs: [track.apple_music_id], startPlaying: true });
+            updatePlayerWidget(track, true);
         } else {
             // apple_music_id 없으면 YouTube fallback
             window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(getTrackTitle(track) + ' ' + getTrackArtist(track))}`, '_blank');
@@ -75,6 +85,9 @@ function switchTab(tab) {
         alert('로그인 후 이용할 수 있습니다.');
         return;
     }
+    currentTab = tab;
+    const nextBtn = document.getElementById('playerNext');
+    if (nextBtn) nextBtn.disabled = (tab !== 'map');
 
     document.getElementById('tabHome').classList.toggle('active', tab === 'home');
     document.getElementById('tabSearch').classList.toggle('active', tab === 'search');
@@ -506,6 +519,13 @@ let lastHomeFeeds = [];
 let lastMapData = null;      // 캐시된 취향 지도 데이터
 let mapPrefetchPromise = null; // 프리패치 중인 Promise
 
+// ===== Player Widget State =====
+let playerCurrentTrack = null;    // 현재 재생 중인 트랙
+let playerIsPlaying = false;      // 재생 상태
+let playerPlayStartTime = null;   // 재생 시작 시각 (ms)
+let playerCurrentDuration = null; // 현재 곡 전체 길이 (ms), MusicKit에서 얻음
+let currentTab = 'search';        // 현재 탭
+
 // ===== Click History Tracking =====
 let clickedTracks = [];           // 클릭한 트랙들의 track_key 저장 (최대 16개, Two-Tower 모델용)
 let shownRecommendationKeys = [];      // 이미 화면에 보여준 추천 track_key 저장
@@ -560,8 +580,10 @@ function openTrackOnYouTube(track, candidateKeys = currentCandidateKeys) {
     if (loginType === 'apple') {
         playWithAppleMusic(track);
     } else if (loginType === 'spotify') {
+        updatePlayerWidget(track, false);
         window.open(`https://open.spotify.com/track/${track.track_key}`, '_blank');
     } else {
+        updatePlayerWidget(track, false);
         window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(track.title + ' ' + track.artist)}`, '_blank');
     }
 }
@@ -1537,6 +1559,14 @@ function renderMusicMap(canvas, tracks) {
             if (Math.abs(velocity.y) < 0.1) velocity.y = 0;
         }
 
+        // 외부에서 카메라 이동 요청 (playerMoveCamToTrack)
+        if (window.mapCamTarget) {
+            const t = window.mapCamTarget;
+            cam.tx = lw() / 2 - t.px * cam.scale;
+            cam.ty = lh() / 2 - t.py * cam.scale;
+            window.mapCamTarget = null;
+        }
+
         clampCam();
         cam.x += (cam.tx - cam.x) * 0.15;
         cam.y += (cam.ty - cam.y) * 0.15;
@@ -1944,3 +1974,127 @@ function renderMusicMap(canvas, tracks) {
         }
     }
 })();
+
+// ===== Player Widget =====
+function updatePlayerWidget(track, isPlaying) {
+    if (!track) return;
+    playerCurrentTrack = track;
+    playerIsPlaying = isPlaying;
+    if (isPlaying) {
+        playerPlayStartTime = Date.now();
+        // MusicKit에서 duration 가져오기
+        if (musicKitInstance && musicKitInstance.currentPlaybackDuration) {
+            playerCurrentDuration = musicKitInstance.currentPlaybackDuration * 1000;
+        } else {
+            playerCurrentDuration = null;
+        }
+    }
+
+    const widget = document.getElementById('playerWidget');
+    const art = document.getElementById('playerAlbumArt');
+    const placeholder = document.getElementById('playerAlbumPlaceholder');
+    const playIcon = document.getElementById('playerPlayIcon');
+    const pauseIcon = document.getElementById('playerPauseIcon');
+
+    if (!widget) return;
+    widget.classList.remove('hidden');
+
+    // 앨범아트
+    const coverUrl = track.cover_image_url || track.album_art || track.cover || '';
+    if (coverUrl) {
+        art.src = coverUrl;
+        art.style.display = 'block';
+        placeholder.style.display = 'none';
+    } else {
+        art.style.display = 'none';
+        placeholder.style.display = 'flex';
+    }
+
+    // 재생/일시정지 아이콘
+    playIcon.style.display = isPlaying ? 'none' : 'block';
+    pauseIcon.style.display = isPlaying ? 'block' : 'none';
+
+    // 지도탭에서만 다음 버튼 활성화
+    const nextBtn = document.getElementById('playerNext');
+    if (nextBtn) nextBtn.disabled = (currentTab !== 'map');
+}
+
+function playerTogglePlayPause() {
+    if (!playerCurrentTrack) return;
+    const loginType = localStorage.getItem('login_type');
+    if (loginType === 'apple' && musicKitInstance) {
+        if (musicKitInstance.playbackState === 2) { // playing
+            musicKitInstance.pause();
+            playerIsPlaying = false;
+        } else {
+            musicKitInstance.play();
+            playerIsPlaying = true;
+            if (!playerPlayStartTime) playerPlayStartTime = Date.now();
+        }
+        const playIcon = document.getElementById('playerPlayIcon');
+        const pauseIcon = document.getElementById('playerPauseIcon');
+        if (playIcon) playIcon.style.display = playerIsPlaying ? 'none' : 'block';
+        if (pauseIcon) pauseIcon.style.display = playerIsPlaying ? 'block' : 'none';
+    }
+}
+
+async function playerDynamicNext() {
+    if (!playerCurrentTrack || currentTab !== 'map' || !lastMapData) return;
+
+    // 50% 기준: 재생 시작부터 경과 시간 vs 곡 길이
+    let listenedMs = playerPlayStartTime ? (Date.now() - playerPlayStartTime) : 0;
+    let durationMs = playerCurrentDuration;
+    if (!durationMs && musicKitInstance && musicKitInstance.currentPlaybackDuration) {
+        durationMs = musicKitInstance.currentPlaybackDuration * 1000;
+    }
+
+    const listenedHalf = durationMs ? (listenedMs >= durationMs * 0.5) : false;
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/dynamic-next`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                track_key: playerCurrentTrack.track_key,
+                listened_half: listenedHalf
+            })
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.track) return;
+
+        const nextTrack = data.track;
+
+        // 지도 카메라 이동
+        playerMoveCamToTrack(nextTrack.track_key);
+
+        // 재생
+        openTrackOnYouTube(nextTrack);
+    } catch (e) {
+        console.error('dynamic-next failed:', e);
+    }
+}
+
+function playerMoveCamToTrack(trackKey) {
+    if (!lastMapData) return;
+    // renderMusicMap의 grid 참조는 클로저 내부이므로 lastMapData.tracks에서 계산
+    const tracks = lastMapData.tracks;
+    const target = tracks.find(t => t.track_key === trackKey);
+    if (!target) return;
+
+    const COVER = 140, GAP = 50;
+    const STEP = COVER + GAP;
+    const VSTEP = STEP * 0.866;
+
+    const maxCol = Math.max(...tracks.map(t => t.grid_col ?? t.x ?? 0));
+    const maxRow = Math.max(...tracks.map(t => t.grid_row ?? t.y ?? 0));
+
+    const col = target.grid_col ?? target.x ?? 0;
+    const row = target.grid_row ?? target.y ?? 0;
+    const px = col * STEP - maxCol * STEP / 2;
+    const py = row * VSTEP - maxRow * VSTEP / 2;
+
+    // cam은 renderMusicMap 클로저 내부이므로 직접 접근 불가.
+    // window.mapCamTarget을 통해 통신
+    window.mapCamTarget = { px, py };
+}
