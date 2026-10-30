@@ -1184,10 +1184,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (currentUser) {
         // 로그인 상태 → 바로 검색 화면
         document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('initialSongInput').classList.remove('hidden');
         document.getElementById('sideTab').classList.remove('hidden');
         document.getElementById('bottomTab').classList.remove('hidden');
         loadFavorites();
+        switchTab('search');
         if (localStorage.getItem('login_type') === 'apple') {
             if (window.MusicKit) {
                 initMusicKit();
