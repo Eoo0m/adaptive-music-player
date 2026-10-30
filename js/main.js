@@ -1186,8 +1186,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('sideTab').classList.remove('hidden');
         document.getElementById('bottomTab').classList.remove('hidden');
+        document.getElementById('initialSongInput').classList.remove('hidden');
+        document.getElementById('trackInfo').classList.remove('hidden');
         loadFavorites();
-        switchTab('search');
         if (localStorage.getItem('login_type') === 'apple') {
             if (window.MusicKit) {
                 initMusicKit();
