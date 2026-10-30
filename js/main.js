@@ -219,6 +219,7 @@ function renderFavorites(favorites, savedPlaylists = []) {
                     album: t.album,
                     cover_image_url: t.cover_image_url,
                     playlist_count: t.playlist_count,
+                    apple_music_id: t.apple_music_id,
                 };
                 const trackDiv = createTrackCard(track, false, () => {
                     switchTab('search');
