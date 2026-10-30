@@ -82,7 +82,7 @@ function continueAsGuest() {
 
 // ===== Tab Navigation =====
 function switchTab(tab) {
-    if ((tab === 'favorites' || tab === 'map') && !authToken) {
+    if ((tab === 'favorites' || tab === 'home' || tab === 'map') && !authToken) {
         alert('로그인 후 이용할 수 있습니다.');
         return;
     }
@@ -90,6 +90,7 @@ function switchTab(tab) {
     const nextBtn = document.getElementById('playerNext');
     if (nextBtn) nextBtn.disabled = (tab !== 'map');
 
+    document.getElementById('tabHome').classList.toggle('active', tab === 'home');
     document.getElementById('tabSearch').classList.toggle('active', tab === 'search');
     document.getElementById('tabFavorites').classList.toggle('active', tab === 'favorites');
     document.getElementById('tabMap').classList.toggle('active', tab === 'map');
@@ -102,11 +103,13 @@ function switchTab(tab) {
 
     const searchInterface = document.getElementById('initialSongInput');
     const favoritesView = document.getElementById('favoritesView');
+    const homeFeedView = document.getElementById('homeFeedView');
     const mapView = document.getElementById('mapView');
     const trackInfo = document.getElementById('trackInfo');
 
     searchInterface.classList.add('hidden');
     favoritesView.classList.add('hidden');
+    homeFeedView.classList.add('hidden');
     mapView.classList.add('hidden');
     trackInfo.classList.add('hidden');
 
@@ -119,6 +122,14 @@ function switchTab(tab) {
             renderFavorites(lastFavorites, lastSavedPlaylists);
         } else {
             loadFavorites();
+        }
+    } else if (tab === 'home') {
+        homeFeedView.classList.remove('hidden');
+        renderPlaylistBuilder();
+        if (lastHomeFeeds.length > 0) {
+            renderHomeFeeds(lastHomeFeeds);
+        } else {
+            loadHomeFeed();
         }
     } else if (tab === 'map') {
         mapView.classList.remove('hidden');
@@ -304,7 +315,7 @@ function openSavedPlaylist(playlistId) {
     pb.userName = '';
     pb.timeOfDay = '';
 
-    switchTab('search');
+    switchTab('home');
 }
 
 // ===== Home Feed =====
@@ -674,6 +685,32 @@ async function logAction(actionType, data = {}) {
     }
 }
 
+// ===== Background Visual Effects =====
+function createStars() {
+    const box = document.getElementById('stars');
+    for (let i = 0; i < 200; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        const sizes = ['small', 'medium', 'large'];
+        s.classList.add(sizes[Math.floor(Math.random() * sizes.length)]);
+        s.style.left = Math.random() * 100 + '%';
+        s.style.top = Math.random() * 100 + '%';
+        s.style.animationDelay = Math.random() * 2 + 's';
+        s.style.animationDuration = (1 + Math.random() * 2) + 's';
+        box.appendChild(s);
+    }
+}
+
+function createDust() {
+    const d = document.createElement('div');
+    d.className = 'dust';
+    d.style.left = Math.random() * 100 + '%';
+    d.style.width = d.style.height = Math.random() * 3 + 1 + 'px';
+    d.style.animationDuration = (8 + Math.random() * 4) + 's';
+    d.style.animationDelay = Math.random() * 2 + 's';
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 12000);
+}
 
 // ===== Event Listeners =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -1184,11 +1221,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (currentUser) {
         // 로그인 상태 → 바로 검색 화면
         document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('initialSongInput').classList.remove('hidden');
         document.getElementById('sideTab').classList.remove('hidden');
         document.getElementById('bottomTab').classList.remove('hidden');
-        document.getElementById('initialSongInput').classList.remove('hidden');
-        document.getElementById('trackInfo').classList.remove('hidden');
-        loadFavorites();
+        loadFavorites(); // 찜 목록은 하트 표시용으로 백그라운드 로드
+        // Apple 로그인 유저면 MusicKit 미리 초기화
         if (localStorage.getItem('login_type') === 'apple') {
             if (window.MusicKit) {
                 initMusicKit();
@@ -1197,6 +1234,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     } else {
+        // 비로그인 → 로그인 선택 화면 표시
         document.getElementById('loginScreen').classList.remove('hidden');
     }
 });
