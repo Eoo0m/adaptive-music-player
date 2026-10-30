@@ -570,6 +570,7 @@ function getTrackArtist(track) {
 }
 
 function openTrackOnYouTube(track, candidateKeys = currentCandidateKeys) {
+    console.log('🎵 openTrackOnYouTube called, login_type:', localStorage.getItem('login_type'), 'track:', track?.title, 'apple_music_id:', track?.apple_music_id);
     logAction('play', { selected_track_key: track.track_key, candidate_track_keys: candidateKeys });
     const loginType = localStorage.getItem('login_type');
     if (loginType === 'apple') {
