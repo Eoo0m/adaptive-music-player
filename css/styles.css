@@ -1395,10 +1395,10 @@ body {
 }
 
 .search-interface {
-    position: absolute;
-    top: 50%;
+    position: fixed;
+    top: 60px;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
     background: transparent;
     padding: 0;
     border-radius: 25px;
@@ -1410,10 +1410,9 @@ body {
     border: none;
     backdrop-filter: none;
     z-index: 100;
-    transition: all 0.3s ease;
 }
 
-/* Mini search bar mode - above album covers */
+/* Mini search bar mode - above album covers (동일 위치 유지) */
 .search-interface.mini {
     position: fixed;
     top: 60px;
