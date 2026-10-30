@@ -90,7 +90,6 @@ function switchTab(tab) {
     const nextBtn = document.getElementById('playerNext');
     if (nextBtn) nextBtn.disabled = (tab !== 'map');
 
-    document.getElementById('tabHome').classList.toggle('active', tab === 'home');
     document.getElementById('tabSearch').classList.toggle('active', tab === 'search');
     document.getElementById('tabFavorites').classList.toggle('active', tab === 'favorites');
     document.getElementById('tabMap').classList.toggle('active', tab === 'map');
