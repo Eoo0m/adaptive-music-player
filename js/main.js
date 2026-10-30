@@ -1211,8 +1211,6 @@ function renderPlaylistBuilder() {
 }
 
 // ===== Initialization =====
-createStars();
-setInterval(createDust, 2000);
 
 // 페이지 로드 시 인증 확인 후 화면 결정
 document.addEventListener('DOMContentLoaded', async () => {
