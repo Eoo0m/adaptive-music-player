@@ -61,7 +61,9 @@ async function playWithAppleMusic(track) {
         }
 
         if (track.apple_music_id) {
+            console.log('🎵 setQueue:', track.apple_music_id, 'authorized:', musicKitInstance.isAuthorized);
             await musicKitInstance.setQueue({ songs: [track.apple_music_id], startPlaying: true });
+            console.log('🎵 setQueue done, nowPlayingItem:', musicKitInstance.nowPlayingItem);
             updatePlayerWidget(track, true);
         } else {
             // apple_music_id 없으면 YouTube fallback
