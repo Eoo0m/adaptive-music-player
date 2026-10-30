@@ -1179,7 +1179,7 @@ createStars();
 setInterval(createDust, 2000);
 
 // 페이지 로드 시 인증 확인 후 화면 결정
-(async () => {
+document.addEventListener('DOMContentLoaded', async () => {
     await checkAuth();
     if (currentUser) {
         // 로그인 상태 → 바로 검색 화면
@@ -1187,8 +1187,7 @@ setInterval(createDust, 2000);
         document.getElementById('initialSongInput').classList.remove('hidden');
         document.getElementById('sideTab').classList.remove('hidden');
         document.getElementById('bottomTab').classList.remove('hidden');
-        loadFavorites(); // 찜 목록은 하트 표시용으로 백그라운드 로드
-        // Apple 로그인 유저면 MusicKit 미리 초기화
+        loadFavorites();
         if (localStorage.getItem('login_type') === 'apple') {
             if (window.MusicKit) {
                 initMusicKit();
@@ -1197,10 +1196,9 @@ setInterval(createDust, 2000);
             }
         }
     } else {
-        // 비로그인 → 로그인 선택 화면 표시
         document.getElementById('loginScreen').classList.remove('hidden');
     }
-})();
+});
 
 // ===== Music Map =====
 
