@@ -78,7 +78,6 @@ function continueAsGuest() {
     document.getElementById('initialSongInput').classList.remove('hidden');
     document.getElementById('sideTab').classList.remove('hidden');
     document.getElementById('bottomTab').classList.remove('hidden');
-    document.getElementById('layoutToggle').classList.remove('hidden');
 }
 
 // ===== Tab Navigation =====
@@ -113,13 +112,6 @@ function switchTab(tab) {
     homeFeedView.classList.add('hidden');
     mapView.classList.add('hidden');
     trackInfo.classList.add('hidden');
-
-    // 레이아웃 토글은 검색/홈 탭에서만 표시
-    const layoutToggle = document.getElementById('layoutToggle');
-    if (layoutToggle) {
-        if (tab === 'map' || tab === 'favorites') layoutToggle.classList.add('hidden');
-        else layoutToggle.classList.remove('hidden');
-    }
 
     if (tab === 'search') {
         searchInterface.classList.remove('hidden');
@@ -512,7 +504,7 @@ function onClickOrDblClick(element, onSingle, onDouble) {
 // ===== Global Variables =====
 let currentTrackIndex = 0;        // 현재 선택된 트랙 인덱스
 let searchMode = 'track';         // 검색 모드: 'track' or 'keyword'
-let recommendationViewMode = localStorage.getItem('recommendationViewMode') || 'grid';
+const recommendationViewMode = 'grid';
 let lastRecommendationTracks = [];
 let lastRecommendationIndex = 0;
 let lastFavorites = [];
@@ -595,56 +587,6 @@ function isVisible(id) {
     return element && !element.classList.contains('hidden');
 }
 
-function setRecommendationViewMode(mode) {
-    recommendationViewMode = mode;
-    localStorage.setItem('recommendationViewMode', mode);
-    renderLayoutToggle();
-
-    if (isVisible('favoritesView')) {
-        renderFavorites(lastFavorites, lastSavedPlaylists);
-    } else if (isVisible('homeFeedView')) {
-        renderPlaylistBuilder();
-        renderHomeFeeds(lastHomeFeeds);
-    } else if (lastRecommendationTracks.length > 0) {
-        updateTrackDisplayOnly(lastRecommendationTracks, lastRecommendationIndex);
-    }
-}
-
-function createViewToggle() {
-    const viewToggle = document.createElement('div');
-    viewToggle.className = 'view-toggle';
-
-    const gridBtn = document.createElement('button');
-    gridBtn.className = `view-toggle-btn${recommendationViewMode === 'grid' ? ' active' : ''}`;
-    gridBtn.type = 'button';
-    gridBtn.setAttribute('aria-label', '앨범 커버형 보기');
-    gridBtn.innerHTML = '<span class="view-icon view-icon-grid" aria-hidden="true"></span>';
-    gridBtn.onclick = () => setRecommendationViewMode('grid');
-
-    const listBtn = document.createElement('button');
-    listBtn.className = `view-toggle-btn${recommendationViewMode === 'list' ? ' active' : ''}`;
-    listBtn.type = 'button';
-    listBtn.setAttribute('aria-label', '가로형 보기');
-    listBtn.innerHTML = '<span class="view-icon view-icon-list" aria-hidden="true"></span>';
-    listBtn.onclick = () => setRecommendationViewMode('list');
-
-    viewToggle.appendChild(gridBtn);
-    viewToggle.appendChild(listBtn);
-    return viewToggle;
-}
-
-function renderLayoutToggle() {
-    let layoutToggle = document.getElementById('layoutToggle');
-    if (!layoutToggle) {
-        layoutToggle = document.createElement('div');
-        layoutToggle.id = 'layoutToggle';
-        layoutToggle.className = 'layout-toggle';
-        layoutToggle.setAttribute('aria-label', '보기 방식 선택');
-        document.body.appendChild(layoutToggle);
-    }
-    layoutToggle.innerHTML = '';
-    layoutToggle.appendChild(createViewToggle());
-}
 
 function appendRecommendationHeader(container, tracks, currentIndex) {
     lastRecommendationTracks = tracks;
@@ -772,8 +714,6 @@ function createDust() {
 
 // ===== Event Listeners =====
 document.addEventListener('DOMContentLoaded', () => {
-    renderLayoutToggle();
-
     // 엔터로 검색
     document.getElementById('searchInput').addEventListener('keypress', e => {
         if (e.key === 'Enter') doSearch();
@@ -1284,7 +1224,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('initialSongInput').classList.remove('hidden');
         document.getElementById('sideTab').classList.remove('hidden');
         document.getElementById('bottomTab').classList.remove('hidden');
-        document.getElementById('layoutToggle').classList.remove('hidden');
         loadFavorites(); // 찜 목록은 하트 표시용으로 백그라운드 로드
         // Apple 로그인 유저면 MusicKit 미리 초기화
         if (localStorage.getItem('login_type') === 'apple') {
@@ -1297,7 +1236,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         // 비로그인 → 로그인 선택 화면 표시
         document.getElementById('loginScreen').classList.remove('hidden');
-        document.getElementById('layoutToggle').classList.add('hidden');
     }
 });
 
