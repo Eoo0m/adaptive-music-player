@@ -61,9 +61,8 @@ async function playWithAppleMusic(track) {
         }
 
         if (track.apple_music_id) {
-            console.log('🎵 setQueue:', track.apple_music_id, 'authorized:', musicKitInstance.isAuthorized);
+            try { await musicKitInstance.stop(); } catch(e) {}
             await musicKitInstance.setQueue({ songs: [track.apple_music_id], startPlaying: true });
-            console.log('🎵 setQueue done, nowPlayingItem:', musicKitInstance.nowPlayingItem);
             updatePlayerWidget(track, true);
         } else {
             // apple_music_id 없으면 YouTube fallback
@@ -2019,12 +2018,14 @@ async function playerDynamicNext() {
     const listenedHalf = durationMs ? (listenedMs >= durationMs * 0.5) : false;
 
     try {
+        const mapTrackKeys = lastMapData ? lastMapData.tracks.map(t => t.track_key) : [];
         const res = await fetch(`${API_BASE_URL}/dynamic-next`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 track_key: playerCurrentTrack.track_key,
-                listened_half: listenedHalf
+                listened_half: listenedHalf,
+                candidate_track_keys: mapTrackKeys
             })
         });
         if (!res.ok) return;
@@ -2033,8 +2034,8 @@ async function playerDynamicNext() {
 
         const nextTrack = data.track;
 
-        // 지도 카메라 이동
-        playerMoveCamToTrack(nextTrack.track_key);
+        // 지도 카메라 이동 (빠른 넘김이면 극적으로)
+        playerMoveCamToTrack(nextTrack.track_key, !listenedHalf);
 
         // 재생
         openTrackOnYouTube(nextTrack);
@@ -2043,7 +2044,7 @@ async function playerDynamicNext() {
     }
 }
 
-function playerMoveCamToTrack(trackKey) {
+function playerMoveCamToTrack(trackKey, dramatic = false) {
     if (!lastMapData) return;
     // renderMusicMap의 grid 참조는 클로저 내부이므로 lastMapData.tracks에서 계산
     const tracks = lastMapData.tracks;
@@ -2064,5 +2065,5 @@ function playerMoveCamToTrack(trackKey) {
 
     // cam은 renderMusicMap 클로저 내부이므로 직접 접근 불가.
     // window.mapCamTarget을 통해 통신
-    window.mapCamTarget = { px, py };
+    window.mapCamTarget = { px, py, dramatic, trackKey };
 }
