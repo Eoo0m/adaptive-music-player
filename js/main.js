@@ -217,9 +217,9 @@ function renderFavorites(favorites, savedPlaylists = []) {
             const row = document.createElement('div');
             row.style.cssText = 'position:relative;width:100%;max-width:900px;height:80px;overflow:hidden;border-radius:12px;border:1px solid rgba(255,255,255,.08);margin-bottom:0;';
 
-            // 삭제 버튼 (오른쪽에 고정)
+            // 삭제 버튼 (오른쪽에 고정, 스와이프 전엔 숨김)
             const deleteBtn = document.createElement('div');
-            deleteBtn.style.cssText = 'position:absolute;top:0;right:0;bottom:0;width:80px;background:#e53935;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;cursor:pointer;';
+            deleteBtn.style.cssText = 'position:absolute;top:0;right:0;bottom:0;width:80px;background:#e53935;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .15s;';
             deleteBtn.textContent = '삭제';
             deleteBtn.onclick = async () => {
                 try {
@@ -268,6 +268,10 @@ function renderFavorites(favorites, savedPlaylists = []) {
             let startX = 0, startY = 0, moved = false, opened = false;
 
             const swipeStart = (x, y) => { startX = x; startY = y; moved = false; };
+            const showDelete = (show) => {
+                deleteBtn.style.opacity = show ? '1' : '0';
+                deleteBtn.style.pointerEvents = show ? 'auto' : 'none';
+            };
             const swipeMove = (x) => {
                 const dx = startX - x;
                 if (Math.abs(dx) > 5) moved = true;
@@ -275,16 +279,20 @@ function renderFavorites(favorites, savedPlaylists = []) {
                 const val = Math.max(0, Math.min(80, base + dx));
                 card.style.transition = 'none';
                 card.style.transform = `translateX(-${val}px)`;
+                if (val > 0) showDelete(true);
             };
             const swipeEnd = (x) => {
                 const dx = startX - x;
                 card.style.transition = 'transform .25s ease';
-                if (!opened && dx > 40) { card.style.transform = 'translateX(-80px)'; opened = true; }
-                else if (opened && dx < -20) { card.style.transform = 'translateX(0)'; opened = false; }
-                else { card.style.transform = opened ? 'translateX(-80px)' : 'translateX(0)'; }
+                if (!opened && dx > 40) { card.style.transform = 'translateX(-80px)'; opened = true; showDelete(true); }
+                else if (opened && dx < -20) { card.style.transform = 'translateX(0)'; opened = false; showDelete(false); }
+                else {
+                    card.style.transform = opened ? 'translateX(-80px)' : 'translateX(0)';
+                    showDelete(opened);
+                }
                 // 클릭 (이동 없으면 재생)
                 if (!moved) {
-                    if (opened) { card.style.transform = 'translateX(0)'; opened = false; }
+                    if (opened) { card.style.transform = 'translateX(0)'; opened = false; showDelete(false); }
                     else { playPlaylist(plTracks); }
                 }
             };
@@ -315,8 +323,13 @@ function renderFavorites(favorites, savedPlaylists = []) {
     }
 
     setCurrentCandidates(favorites);
-    // 항상 6열 그리드 (home-feed-grid 스타일 사용)
     list.className = `favorites-list ${recommendationViewMode === 'list' ? 'track-list compact-track-list' : ''}`;
+
+    // playlist_count 기준으로 크기 티어 계산
+    const counts = favorites.map(f => f.playlist_count || 0);
+    const maxCount = Math.max(...counts, 1);
+    const lgThreshold = maxCount * 0.6;
+    const mdThreshold = maxCount * 0.25;
 
     favorites.forEach(fav => {
         const track = {
@@ -342,6 +355,13 @@ function renderFavorites(favorites, savedPlaylists = []) {
                 }
             }
         });
+
+        // 크기 클래스 부여
+        if (recommendationViewMode !== 'list') {
+            const cnt = fav.playlist_count || 0;
+            if (cnt >= lgThreshold) trackDiv.classList.add('fav-lg');
+            else if (cnt >= mdThreshold) trackDiv.classList.add('fav-md');
+        }
 
         list.appendChild(trackDiv);
     });
