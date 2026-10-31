@@ -1434,19 +1434,26 @@ function showMapIntro() {
     let camTX = 0, camTY = 0, camTScale = 1;
     let introStep = 0; // 0~4
     let jumpT = 0;     // 점프 애니메이션 (step3)
-    let jumpFrom = null, jumpTo = null;
+    let jumpTo = null;
     let destroyed = false;
 
-    // 카메라를 노드에 포커스
+    // 카메라를 노드에 포커스 (translate이 W/2,H/2 기준이므로 offset 없음)
     function focusOn(nodeIdx, scale) {
         const n = nodes[nodeIdx];
-        camTX = W / 2 - n.x * scale;
-        camTY = H / 2 - n.y * scale;
+        camTX = -n.x * scale;
+        camTY = -n.y * scale;
         camTScale = scale;
     }
 
-    // 초기 카메라: 전체 보기
-    camX = camTX = 0; camY = camTY = 0; camScale = camTScale = 1;
+    // 가운데 seed 노드 찾기
+    const centerSeedIdx = nodes.reduce((best, n, i) => {
+        if (!n.isSeed) return best;
+        const d = Math.sqrt(n.x * n.x + n.y * n.y);
+        return d < (best.d ?? Infinity) ? { i, d } : best;
+    }, {}).i ?? 0;
+
+    // 초기 카메라: 전체가 보이게 축소
+    camX = camTX = 0; camY = camTY = 0; camScale = camTScale = 0.55;
 
     // 실제 지도와 동일한 roundRect 헬퍼
     function introRoundRect(x, y, w, h, r) {
@@ -1521,17 +1528,18 @@ function showMapIntro() {
             }
             ctx.restore();
 
-            // 텍스트 (포커스 노드만)
+            // 텍스트 (포커스 노드만) — translate(sx,sy) 안에서 상대좌표로
             if (isFocus && n.title) {
                 const lblSz = Math.max(11, finalSz * 0.14);
                 ctx.save();
+                ctx.translate(sx, sy);
                 ctx.textAlign = 'center'; ctx.textBaseline = 'top';
                 ctx.font = `600 ${lblSz}px -apple-system,sans-serif`;
                 ctx.fillStyle = '#fff';
-                ctx.fillText(n.title, sx, sy + fhalf + 5);
+                ctx.fillText(n.title, 0, fhalf + 6);
                 ctx.font = `${lblSz * 0.85}px -apple-system,sans-serif`;
                 ctx.fillStyle = 'rgba(255,255,255,.55)';
-                ctx.fillText(n.artist || '', sx, sy + fhalf + 5 + lblSz + 3);
+                ctx.fillText(n.artist || '', 0, fhalf + 6 + lblSz + 3);
                 ctx.restore();
             }
 
@@ -1589,50 +1597,48 @@ function showMapIntro() {
 
         if (step === 0) {
             // 전체 지도 보기
-            camTX = 0; camTY = 0; camTScale = 1;
+            camTX = 0; camTY = 0; camTScale = 0.55;
             focusIdx = -1;
         } else if (step === 1) {
-            // 중앙 시드 클러스터 포커스 → 곡 재생
-            focusIdx = nodes.findIndex(n => n.cluster === 4);
-            focusOn(focusIdx, 1.4);
+            // 가운데 seed 노드 포커스 → 재생 중 느낌
+            focusIdx = centerSeedIdx;
+            focusOn(centerSeedIdx, 1.6);
         } else if (step === 2) {
-            // 인접 노드로 이동 (같은 클러스터 중 가장 가까운)
-            const prev = nodes.findIndex(n => n.cluster === 4);
-            const base = nodes[prev];
+            // 인접 노드로 이동 (현재 포커스 기준 가장 가까운 다른 노드)
+            const base = nodes[centerSeedIdx];
             let bestIdx = -1, bestDist = Infinity;
             nodes.forEach((n, i) => {
-                if (i === prev) return;
+                if (i === centerSeedIdx) return;
                 const dx = n.x - base.x, dy = n.y - base.y;
                 const d = Math.sqrt(dx*dx + dy*dy);
                 if (d < bestDist) { bestDist = d; bestIdx = i; }
             });
-            focusIdx = bestIdx;
+            focusIdx = bestIdx >= 0 ? bestIdx : centerSeedIdx;
             focusOn(focusIdx, 1.6);
         } else if (step === 3) {
             // 먼 노드로 점프
-            const base = nodes[focusIdx >= 0 ? focusIdx : 0];
+            const base = nodes[centerSeedIdx];
             let bestIdx = -1, bestDist = 0;
             nodes.forEach((n, i) => {
                 const dx = n.x - base.x, dy = n.y - base.y;
                 const d = Math.sqrt(dx*dx + dy*dy);
                 if (d > bestDist) { bestDist = d; bestIdx = i; }
             });
-            jumpFrom = nodes[focusIdx >= 0 ? focusIdx : 0];
             jumpTo = nodes[bestIdx];
             jumpT = 0;
-            // 점프 애니메이션: 카메라 먼저 멀리 당겼다가 목적지로
-            camTX = W/2 - (jumpFrom.x + (jumpTo.x - jumpFrom.x)*0.5) * 0.6;
-            camTY = H/2 - (jumpFrom.y + (jumpTo.y - jumpFrom.y)*0.5) * 0.6;
-            camTScale = 0.6;
+            // 카메라 먼저 줌 아웃해서 양쪽 다 보여주다가 목적지로 이동
+            camTX = -(base.x + (jumpTo.x - base.x) * 0.5) * 0.4;
+            camTY = -(base.y + (jumpTo.y - base.y) * 0.5) * 0.4;
+            camTScale = 0.4;
             setTimeout(() => {
                 focusIdx = bestIdx;
-                focusOn(focusIdx, 1.5);
+                focusOn(bestIdx, 1.6);
                 jumpT = 1;
-            }, 700);
+            }, 800);
         } else if (step === 4) {
             // 아웃트로: 전체 지도 다시 보기
             focusIdx = -1;
-            camTX = 0; camTY = 0; camTScale = 1;
+            camTX = 0; camTY = 0; camTScale = 0.55;
         }
     }
 
