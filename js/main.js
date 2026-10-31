@@ -89,7 +89,7 @@ function switchTab(tab) {
     }
     currentTab = tab;
     const nextBtn = document.getElementById('playerNext');
-    if (nextBtn) nextBtn.disabled = (tab !== 'map');
+    if (nextBtn) nextBtn.disabled = (tab !== 'map' && !currentPlaylistQueue);
 
     document.getElementById('tabSearch').classList.toggle('active', tab === 'search');
     document.getElementById('tabFavorites').classList.toggle('active', tab === 'favorites');
@@ -244,7 +244,47 @@ function renderFavorites(favorites, savedPlaylists = []) {
             card.appendChild(info);
             card.appendChild(playBtn);
 
-            plSection.appendChild(card);
+            // 스와이프 삭제
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'position:relative;overflow:hidden;border-radius:12px;width:100%;max-width:900px;';
+            const deleteBtn = document.createElement('div');
+            deleteBtn.style.cssText = 'position:absolute;right:0;top:0;bottom:0;width:80px;background:#e53935;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;cursor:pointer;border-radius:0 12px 12px 0;';
+            deleteBtn.textContent = '삭제';
+            deleteBtn.onclick = async () => {
+                try {
+                    await fetch(`${API_BASE_URL}/playlist-builder/playlists/${pl.id}`, { method: 'DELETE', headers: getAuthHeaders() });
+                    wrapper.remove();
+                    lastSavedPlaylists = lastSavedPlaylists.filter(p => p.id !== pl.id);
+                } catch(e) { console.error('플리 삭제 실패', e); }
+            };
+
+            let startX = 0, isDragging = false;
+            const onStart = (x) => { startX = x; isDragging = true; };
+            const onMove = (x) => {
+                if (!isDragging) return;
+                const dx = startX - x;
+                card.style.transform = dx > 0 ? `translateX(-${Math.min(dx, 80)}px)` : '';
+            };
+            const onEnd = (x) => {
+                if (!isDragging) return;
+                isDragging = false;
+                const dx = startX - x;
+                if (dx > 50) {
+                    card.style.transform = 'translateX(-80px)';
+                } else {
+                    card.style.transform = '';
+                }
+            };
+            card.addEventListener('mousedown', e => onStart(e.clientX));
+            window.addEventListener('mousemove', e => { if (isDragging) onMove(e.clientX); });
+            window.addEventListener('mouseup', e => onEnd(e.clientX));
+            card.addEventListener('touchstart', e => onStart(e.touches[0].clientX), { passive: true });
+            card.addEventListener('touchmove', e => onMove(e.touches[0].clientX), { passive: true });
+            card.addEventListener('touchend', e => onEnd(e.changedTouches[0].clientX));
+
+            wrapper.appendChild(deleteBtn);
+            wrapper.appendChild(card);
+            plSection.appendChild(wrapper);
         });
 
         // fav-songs-card 앞에 삽입
@@ -1977,9 +2017,9 @@ function updatePlayerWidget(track, isPlaying) {
     playIcon.style.display = isPlaying ? 'none' : 'block';
     pauseIcon.style.display = isPlaying ? 'block' : 'none';
 
-    // 지도탭에서만 다음 버튼 활성화
+    // 지도탭이거나 플리 재생 중이면 다음 버튼 활성화
     const nextBtn = document.getElementById('playerNext');
-    if (nextBtn) nextBtn.disabled = (currentTab !== 'map');
+    if (nextBtn) nextBtn.disabled = (currentTab !== 'map' && !currentPlaylistQueue);
 
     // 애니메이션
     if (isNewTrack) {
@@ -2058,6 +2098,8 @@ function playPlaylist(tracks) {
     if (!tracks || tracks.length === 0) return;
     currentPlaylistQueue = tracks;
     currentPlaylistIndex = 0;
+    const nextBtn = document.getElementById('playerNext');
+    if (nextBtn) nextBtn.disabled = false;
     openTrackOnYouTube(tracks[0], tracks.map(t => t.track_key), true);
 }
 

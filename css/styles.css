@@ -283,11 +283,10 @@ body {
     border: 1px solid rgba(255, 255, 255, .08);
     border-radius: 12px;
     padding: 14px 18px;
-    cursor: pointer;
-    transition: background .15s;
+    transition: background .15s, transform .2s;
     width: 100%;
-    max-width: 900px;
     box-sizing: border-box;
+    position: relative;
 }
 .fav-playlist-card:hover {
     background: rgba(255, 255, 255, .1);
