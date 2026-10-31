@@ -194,20 +194,22 @@ function renderFavorites(favorites, savedPlaylists = []) {
             const card = document.createElement('div');
             card.className = 'fav-playlist-card';
 
-            // 앨범 커버 스택 (앞 5장 겹치게)
+            // 앨범 커버 스택 (첫곡이 제일 앞에)
             const stackWrap = document.createElement('div');
             stackWrap.className = 'fav-playlist-stack';
             const previewTracks = (pl.tracks || []).slice(0, 5);
+            const total = previewTracks.length;
             previewTracks.forEach((t, i) => {
                 const img = document.createElement('img');
                 img.src = t.cover_image_url || '';
-                img.style.cssText = `position:absolute;left:${i * 22}px;width:52px;height:52px;border-radius:6px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);`;
+                // 뒤에서부터 쌓아서 첫곡이 제일 앞(zIndex 높음)
+                img.style.cssText = `position:absolute;left:${i * 22}px;width:52px;height:52px;border-radius:6px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);z-index:${total - i};`;
                 img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
                 stackWrap.appendChild(img);
             });
-            stackWrap.style.width = `${52 + (previewTracks.length - 1) * 22}px`;
+            stackWrap.style.width = `${52 + (total - 1) * 22}px`;
 
-            // 오른쪽 텍스트
+            // 텍스트
             const info = document.createElement('div');
             info.style.cssText = 'flex:1;min-width:0;';
             const nameEl = document.createElement('div');
@@ -219,10 +221,28 @@ function renderFavorites(favorites, savedPlaylists = []) {
             info.appendChild(nameEl);
             info.appendChild(countEl);
 
+            // 재생 버튼
+            const playBtn = document.createElement('button');
+            playBtn.style.cssText = 'background:rgba(255,255,255,.15);border:none;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background .15s;';
+            playBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="white"><polygon points="4,2 14,8 4,14"/></svg>';
+            playBtn.onmouseenter = () => playBtn.style.background = 'rgba(255,255,255,.25)';
+            playBtn.onmouseleave = () => playBtn.style.background = 'rgba(255,255,255,.15)';
+            playBtn.onclick = (e) => {
+                e.stopPropagation();
+                const tracks = (pl.tracks || []).map(t => ({
+                    track_key: t.track_key,
+                    title: t.track_name || t.title,
+                    artist: t.artist,
+                    album: t.album,
+                    cover_image_url: t.cover_image_url,
+                    apple_music_id: t.apple_music_id,
+                }));
+                playPlaylist(tracks);
+            };
+
             card.appendChild(stackWrap);
             card.appendChild(info);
-
-            card.onclick = () => openSavedPlaylist(pl.id);
+            card.appendChild(playBtn);
 
             plSection.appendChild(card);
         });
@@ -496,6 +516,8 @@ let playerIsPlaying = false;      // 재생 상태
 let playerPlayStartTime = null;   // 재생 시작 시각 (ms)
 let playerCurrentDuration = null; // 현재 곡 전체 길이 (ms), MusicKit에서 얻음
 let currentTab = 'search';        // 현재 탭
+let currentPlaylistQueue = null;  // 플리 순서 재생 중일 때 트랙 배열
+let currentPlaylistIndex = -1;    // 현재 재생 중인 인덱스
 
 // ===== Click History Tracking =====
 let clickedTracks = [];           // 클릭한 트랙들의 track_key 저장 (최대 16개, Two-Tower 모델용)
@@ -545,8 +567,11 @@ function getTrackArtist(track) {
     return track.artist || track.artist_name || 'Unknown Artist';
 }
 
-function openTrackOnYouTube(track, candidateKeys = currentCandidateKeys) {
-    console.log('🎵 openTrackOnYouTube called, login_type:', localStorage.getItem('login_type'), 'track:', track?.title, 'apple_music_id:', track?.apple_music_id);
+function openTrackOnYouTube(track, candidateKeys = currentCandidateKeys, keepQueue = false) {
+    if (!keepQueue) {
+        currentPlaylistQueue = null;
+        currentPlaylistIndex = -1;
+    }
     logAction('play', { selected_track_key: track.track_key, candidate_track_keys: candidateKeys });
     const loginType = localStorage.getItem('login_type');
     if (loginType === 'apple') {
@@ -1983,7 +2008,19 @@ function playerTogglePlayPause() {
 }
 
 async function playerDynamicNext() {
-    if (!playerCurrentTrack || currentTab !== 'map' || !lastMapData) return;
+    if (!playerCurrentTrack) return;
+
+    // 플리 순서 재생 중이면 다음 곡 순서대로
+    if (currentPlaylistQueue && currentPlaylistIndex >= 0) {
+        const nextIndex = currentPlaylistIndex + 1;
+        if (nextIndex >= currentPlaylistQueue.length) return; // 마지막 곡
+        currentPlaylistIndex = nextIndex;
+        const nextTrack = currentPlaylistQueue[nextIndex];
+        openTrackOnYouTube(nextTrack, currentPlaylistQueue.map(t => t.track_key), true);
+        return;
+    }
+
+    if (currentTab !== 'map' || !lastMapData) return;
 
     // 50% 기준: 재생 시작부터 경과 시간 vs 곡 길이
     let listenedMs = playerPlayStartTime ? (Date.now() - playerPlayStartTime) : 0;
@@ -2010,15 +2047,18 @@ async function playerDynamicNext() {
         if (!data.track) return;
 
         const nextTrack = data.track;
-
-        // 지도 카메라 이동 (빠른 넘김이면 극적으로)
         playerMoveCamToTrack(nextTrack.track_key, !listenedHalf);
-
-        // 재생
         openTrackOnYouTube(nextTrack);
     } catch (e) {
         console.error('dynamic-next failed:', e);
     }
+}
+
+function playPlaylist(tracks) {
+    if (!tracks || tracks.length === 0) return;
+    currentPlaylistQueue = tracks;
+    currentPlaylistIndex = 0;
+    openTrackOnYouTube(tracks[0], tracks.map(t => t.track_key), true);
 }
 
 function playerMoveCamToTrack(trackKey, dramatic = false) {
