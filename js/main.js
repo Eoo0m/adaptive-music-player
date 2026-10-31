@@ -325,12 +325,6 @@ function renderFavorites(favorites, savedPlaylists = []) {
     setCurrentCandidates(favorites);
     list.className = `favorites-list ${recommendationViewMode === 'list' ? 'track-list compact-track-list' : ''}`;
 
-    // playlist_count 기준으로 크기 티어 계산
-    const counts = favorites.map(f => f.playlist_count || 0);
-    const maxCount = Math.max(...counts, 1);
-    const lgThreshold = maxCount * 0.6;
-    const mdThreshold = maxCount * 0.25;
-
     favorites.forEach(fav => {
         const track = {
             track_key: fav.track_key,
@@ -355,13 +349,6 @@ function renderFavorites(favorites, savedPlaylists = []) {
                 }
             }
         });
-
-        // 크기 클래스 부여
-        if (recommendationViewMode !== 'list') {
-            const cnt = fav.playlist_count || 0;
-            if (cnt >= lgThreshold) trackDiv.classList.add('fav-lg');
-            else if (cnt >= mdThreshold) trackDiv.classList.add('fav-md');
-        }
 
         list.appendChild(trackDiv);
     });
