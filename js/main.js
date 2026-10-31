@@ -133,7 +133,11 @@ function switchTab(tab) {
         }
     } else if (tab === 'map') {
         mapView.classList.remove('hidden');
-        showMusicMap();
+        if (!mapIntroShown) {
+            showMapIntro();
+        } else {
+            showMusicMap();
+        }
     }
 }
 
@@ -245,10 +249,12 @@ function renderFavorites(favorites, savedPlaylists = []) {
             card.appendChild(playBtn);
 
             // 스와이프 삭제
+            // 구조: wrapper(overflow:hidden) > card(translateX로 밀림) + deleteBtn(card 뒤 절대위치)
             const wrapper = document.createElement('div');
             wrapper.style.cssText = 'position:relative;overflow:hidden;border-radius:12px;width:100%;max-width:900px;';
+
             const deleteBtn = document.createElement('div');
-            deleteBtn.style.cssText = 'position:absolute;right:0;top:0;bottom:0;width:80px;background:#e53935;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;cursor:pointer;border-radius:0 12px 12px 0;';
+            deleteBtn.style.cssText = 'position:absolute;top:0;right:0;bottom:0;width:80px;background:#e53935;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;cursor:pointer;';
             deleteBtn.textContent = '삭제';
             deleteBtn.onclick = async () => {
                 try {
@@ -258,32 +264,48 @@ function renderFavorites(favorites, savedPlaylists = []) {
                 } catch(e) { console.error('플리 삭제 실패', e); }
             };
 
-            let startX = 0, isDragging = false;
+            // card는 wrapper 100% 너비로 deleteBtn을 가림
+            card.style.width = '100%';
+            card.style.boxSizing = 'border-box';
+            card.style.margin = '0';
+            card.style.transition = 'transform .2s';
+            card.style.willChange = 'transform';
+
+            wrapper.appendChild(deleteBtn);
+            wrapper.appendChild(card);
+
+            let startX = 0, isDragging = false, opened = false;
             const onStart = (x) => { startX = x; isDragging = true; };
             const onMove = (x) => {
                 if (!isDragging) return;
                 const dx = startX - x;
-                card.style.transform = dx > 0 ? `translateX(-${Math.min(dx, 80)}px)` : '';
+                const base = opened ? 80 : 0;
+                const val = Math.min(80, Math.max(0, base + dx));
+                card.style.transition = 'none';
+                card.style.transform = `translateX(-${val}px)`;
             };
             const onEnd = (x) => {
                 if (!isDragging) return;
                 isDragging = false;
+                card.style.transition = 'transform .2s';
                 const dx = startX - x;
-                if (dx > 50) {
+                if (!opened && dx > 40) {
                     card.style.transform = 'translateX(-80px)';
+                    opened = true;
+                } else if (opened && dx < -20) {
+                    card.style.transform = 'translateX(0)';
+                    opened = false;
                 } else {
-                    card.style.transform = '';
+                    card.style.transform = opened ? 'translateX(-80px)' : 'translateX(0)';
                 }
             };
             card.addEventListener('mousedown', e => onStart(e.clientX));
             window.addEventListener('mousemove', e => { if (isDragging) onMove(e.clientX); });
             window.addEventListener('mouseup', e => onEnd(e.clientX));
             card.addEventListener('touchstart', e => onStart(e.touches[0].clientX), { passive: true });
-            card.addEventListener('touchmove', e => onMove(e.touches[0].clientX), { passive: true });
+            card.addEventListener('touchmove', e => { if (isDragging) onMove(e.touches[0].clientX); }, { passive: true });
             card.addEventListener('touchend', e => onEnd(e.changedTouches[0].clientX));
 
-            wrapper.appendChild(deleteBtn);
-            wrapper.appendChild(card);
             plSection.appendChild(wrapper);
         });
 
@@ -549,6 +571,7 @@ let lastSavedPlaylists = [];
 let lastHomeFeeds = [];
 let lastMapData = null;      // 캐시된 취향 지도 데이터
 let mapPrefetchPromise = null; // 프리패치 중인 Promise
+let mapIntroShown = false;   // 인트로를 이미 봤으면 스킵 (세션 중 1회)
 
 // ===== Player Widget State =====
 let playerCurrentTrack = null;    // 현재 재생 중인 트랙
@@ -1279,6 +1302,281 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('loginScreen').classList.remove('hidden');
     }
 });
+
+// ===== Map Intro =====
+
+function showMapIntro() {
+    const overlay = document.getElementById('mapIntroOverlay');
+    const scroller = document.getElementById('mapIntroScrollOuter');
+    const canvas = document.getElementById('mapIntroCanvas');
+    if (!overlay || !canvas) { mapIntroShown = true; showMusicMap(); return; }
+
+    overlay.style.display = 'block';
+    overlay.scrollTop = 0;
+
+    // 인트로 canvas 초기화
+    const dpr = window.devicePixelRatio || 1;
+    const W = window.innerWidth, H = window.innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    // 노드 생성: 5개 클러스터, 각 8~10개
+    const nodes = [];
+    const clusterCenters = [
+        { x: W * 0.28, y: H * 0.38 },
+        { x: W * 0.62, y: H * 0.32 },
+        { x: W * 0.72, y: H * 0.65 },
+        { x: W * 0.35, y: H * 0.68 },
+        { x: W * 0.50, y: H * 0.50 },
+    ];
+    const clusterColors = ['#e8c4a0','#a0c8e8','#c8a0e8','#a0e8c0','#e8a0a0'];
+    clusterCenters.forEach((c, ci) => {
+        const count = ci === 4 ? 4 : 8;
+        for (let i = 0; i < count; i++) {
+            const angle = (i / count) * Math.PI * 2 + ci * 0.4;
+            const r = 55 + Math.random() * 70;
+            nodes.push({
+                x: c.x + Math.cos(angle) * r,
+                y: c.y + Math.sin(angle) * r,
+                size: ci === 4 ? 52 : (i < 2 ? 44 : 32 + Math.random() * 18),
+                color: clusterColors[ci],
+                isSeed: ci === 4 || i < 2,
+                alpha: 0,
+                targetAlpha: 1,
+                cluster: ci,
+            });
+        }
+    });
+
+    // 현재 "포커스" 노드 인덱스와 애니메이션 상태
+    let focusIdx = 0;  // 하이라이트된 노드
+    let pulseT = 0;    // 재생 펄스
+    let camX = 0, camY = 0, camScale = 1; // 카메라 (intro용)
+    let camTX = 0, camTY = 0, camTScale = 1;
+    let introStep = 0; // 0~4
+    let jumpT = 0;     // 점프 애니메이션 (step3)
+    let jumpFrom = null, jumpTo = null;
+    let destroyed = false;
+
+    // 카메라를 노드에 포커스
+    function focusOn(nodeIdx, scale) {
+        const n = nodes[nodeIdx];
+        camTX = W / 2 - n.x * scale;
+        camTY = H / 2 - n.y * scale;
+        camTScale = scale;
+    }
+
+    // 초기 카메라: 전체 보기
+    camX = camTX = 0; camY = camTY = 0; camScale = camTScale = 1;
+
+    function drawIntro() {
+        if (destroyed) return;
+        requestAnimationFrame(drawIntro);
+        if (overlay.style.display === 'none') return;
+
+        // 카메라 lerp
+        camX += (camTX - camX) * 0.07;
+        camY += (camTY - camY) * 0.07;
+        camScale += (camTScale - camScale) * 0.07;
+
+        pulseT += 0.04;
+
+        ctx.clearRect(0, 0, W, H);
+
+        // 배경 그라디언트
+        const bg = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)*0.7);
+        bg.addColorStop(0, '#0d0e1a');
+        bg.addColorStop(1, '#07080f');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.save();
+        ctx.translate(camX, camY);
+        ctx.scale(camScale, camScale);
+
+        // 연결선 (같은 클러스터끼리)
+        ctx.globalAlpha = 0.08;
+        nodes.forEach((a, i) => {
+            nodes.forEach((b, j) => {
+                if (j <= i) return;
+                if (a.cluster !== b.cluster) return;
+                const dx = a.x - b.x, dy = a.y - b.y;
+                if (dx*dx + dy*dy > 160*160) return;
+                ctx.beginPath();
+                ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+                ctx.strokeStyle = clusterColors[a.cluster];
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            });
+        });
+        ctx.globalAlpha = 1;
+
+        // 노드
+        nodes.forEach((n, i) => {
+            n.alpha += (n.targetAlpha - n.alpha) * 0.05;
+            if (n.alpha < 0.01) return;
+
+            const isFocus = (i === focusIdx);
+            const isJumpDest = (jumpTo && n === jumpTo);
+            const pulse = (isFocus && introStep === 1) ? (1 + 0.1 * Math.sin(pulseT * 2)) : 1;
+            const sz = n.size * pulse;
+            const half = sz / 2;
+
+            ctx.save();
+            ctx.globalAlpha = n.alpha;
+            ctx.translate(n.x, n.y);
+
+            // glow
+            if (isFocus || n.isSeed) {
+                ctx.shadowColor = n.isSeed ? '#1db954' : 'rgba(255,255,255,.6)';
+                ctx.shadowBlur = isFocus ? sz * 0.8 : sz * 0.3;
+            }
+            if (isJumpDest && jumpT > 0.5) {
+                ctx.shadowColor = '#a0c8e8';
+                ctx.shadowBlur = sz * 1.2 * (jumpT - 0.5) * 2;
+            }
+
+            // 둥근 사각형
+            ctx.beginPath();
+            const r = sz * 0.18;
+            ctx.moveTo(-half+r, -half); ctx.lineTo(half-r, -half);
+            ctx.quadraticCurveTo(half, -half, half, -half+r);
+            ctx.lineTo(half, half-r);
+            ctx.quadraticCurveTo(half, half, half-r, half);
+            ctx.lineTo(-half+r, half);
+            ctx.quadraticCurveTo(-half, half, -half, half-r);
+            ctx.lineTo(-half, -half+r);
+            ctx.quadraticCurveTo(-half, -half, -half+r, -half);
+            ctx.closePath();
+
+            ctx.fillStyle = n.color;
+            ctx.fill();
+
+            // 어둡게 오버레이 (비시드)
+            if (!n.isSeed && !isFocus) {
+                ctx.fillStyle = 'rgba(0,0,0,.38)';
+                ctx.fill();
+            }
+
+            // 테두리
+            if (n.isSeed || isFocus) {
+                ctx.strokeStyle = n.isSeed ? '#1db954' : 'rgba(255,255,255,.7)';
+                ctx.lineWidth = isFocus ? Math.max(2.5, sz * 0.07) : Math.max(2, sz * 0.05);
+                ctx.shadowBlur = 0;
+                ctx.stroke();
+            }
+
+            // 재생 아이콘 (step1 포커스 노드)
+            if (isFocus && introStep === 1) {
+                ctx.fillStyle = 'rgba(255,255,255,.9)';
+                ctx.shadowBlur = 0;
+                const ps = sz * 0.22;
+                ctx.beginPath();
+                ctx.moveTo(-ps*0.4, -ps*0.6);
+                ctx.lineTo(ps*0.8, 0);
+                ctx.lineTo(-ps*0.4, ps*0.6);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            ctx.restore();
+        });
+
+        ctx.restore();
+    }
+    requestAnimationFrame(drawIntro);
+
+    // 패널 전환
+    const panels = [0,1,2,3,4].map(i => document.getElementById('mapIntroPanel' + i));
+
+    function showPanel(idx) {
+        panels.forEach((p, i) => {
+            if (!p) return;
+            if (i === idx) { p.classList.remove('hidden'); }
+            else { p.classList.add('hidden'); }
+        });
+        introStep = idx;
+    }
+    showPanel(0);
+
+    // 스크롤 진행도 → 스텝 전환
+    const STEPS = 5;
+    let lastStep = -1;
+
+    function onIntroScroll() {
+        const max = scroller.scrollHeight - H;
+        const progress = max > 0 ? overlay.scrollTop / max : 0;
+        const step = Math.min(STEPS - 1, Math.floor(progress * STEPS));
+
+        if (step === lastStep) return;
+        lastStep = step;
+        showPanel(step);
+
+        if (step === 0) {
+            // 전체 지도 보기
+            camTX = 0; camTY = 0; camTScale = 1;
+            focusIdx = -1;
+        } else if (step === 1) {
+            // 중앙 시드 클러스터 포커스 → 곡 재생
+            focusIdx = nodes.findIndex(n => n.cluster === 4);
+            focusOn(focusIdx, 1.4);
+        } else if (step === 2) {
+            // 인접 노드로 이동 (같은 클러스터 중 가장 가까운)
+            const prev = nodes.findIndex(n => n.cluster === 4);
+            const base = nodes[prev];
+            let bestIdx = -1, bestDist = Infinity;
+            nodes.forEach((n, i) => {
+                if (i === prev) return;
+                const dx = n.x - base.x, dy = n.y - base.y;
+                const d = Math.sqrt(dx*dx + dy*dy);
+                if (d < bestDist) { bestDist = d; bestIdx = i; }
+            });
+            focusIdx = bestIdx;
+            focusOn(focusIdx, 1.6);
+        } else if (step === 3) {
+            // 먼 노드로 점프
+            const base = nodes[focusIdx >= 0 ? focusIdx : 0];
+            let bestIdx = -1, bestDist = 0;
+            nodes.forEach((n, i) => {
+                const dx = n.x - base.x, dy = n.y - base.y;
+                const d = Math.sqrt(dx*dx + dy*dy);
+                if (d > bestDist) { bestDist = d; bestIdx = i; }
+            });
+            jumpFrom = nodes[focusIdx >= 0 ? focusIdx : 0];
+            jumpTo = nodes[bestIdx];
+            jumpT = 0;
+            // 점프 애니메이션: 카메라 먼저 멀리 당겼다가 목적지로
+            camTX = W/2 - (jumpFrom.x + (jumpTo.x - jumpFrom.x)*0.5) * 0.6;
+            camTY = H/2 - (jumpFrom.y + (jumpTo.y - jumpFrom.y)*0.5) * 0.6;
+            camTScale = 0.6;
+            setTimeout(() => {
+                focusIdx = bestIdx;
+                focusOn(focusIdx, 1.5);
+                jumpT = 1;
+            }, 700);
+        } else if (step === 4) {
+            // 아웃트로: 전체 지도 다시 보기
+            focusIdx = -1;
+            camTX = 0; camTY = 0; camTScale = 1;
+        }
+    }
+
+    overlay.addEventListener('scroll', onIntroScroll, { passive: true });
+
+    // 시작 버튼
+    const startBtn = document.getElementById('mapIntroStartBtn');
+    if (startBtn) {
+        startBtn.onclick = () => {
+            destroyed = true;
+            overlay.removeEventListener('scroll', onIntroScroll);
+            overlay.style.display = 'none';
+            mapIntroShown = true;
+            showMusicMap();
+        };
+    }
+}
 
 // ===== Music Map =====
 
