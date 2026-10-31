@@ -1338,49 +1338,55 @@ function showMapIntro() {
         });
         favs = [...userFavs, ...extra].slice(0, Math.max(favs.length, 36));
     }
-    const clusterCenters = [
-        { x: W * 0.25, y: H * 0.35 },
-        { x: W * 0.65, y: H * 0.28 },
-        { x: W * 0.75, y: H * 0.68 },
-        { x: W * 0.32, y: H * 0.70 },
-        { x: W * 0.52, y: H * 0.50 },
-    ];
     const nodes = [];
     const imgCache = {};
 
-    // 찜 곡 셔플 후 순서대로 배정 (중복 최소화)
+    // 실제 지도와 동일한 격자 배치
+    // 찜곡을 중앙에, 보충 커버는 주변에 배치
+    const COVER = 56, GAP = 28, STEP = COVER + GAP;
     const shuffledFavs = [...favs].sort(() => Math.random() - 0.5);
-    let favAssignIdx = 0;
-    clusterCenters.forEach((c, ci) => {
-        const count = ci === 4 ? 4 : 8;
-        for (let i = 0; i < count; i++) {
-            const fav = shuffledFavs.length > 0
-                ? shuffledFavs[favAssignIdx++ % shuffledFavs.length]
-                : null;
-            const angle = (i / count) * Math.PI * 2 + ci * 0.7;
-            const r = 60 + Math.random() * 80;
-            const isSeed = ci === 4 || i === 0;
-            const node = {
-                x: c.x + Math.cos(angle) * r,
-                y: c.y + Math.sin(angle) * r,
-                size: isSeed ? 56 : (i < 2 ? 48 : 34 + Math.random() * 16),
-                isSeed,
-                alpha: 1,
-                cluster: ci,
-                img: null,
-                coverUrl: fav ? fav.cover_image_url : null,
-            };
-            // 이미지 로드
-            if (node.coverUrl && !imgCache[node.coverUrl]) {
-                const im = new Image();
-                im.crossOrigin = 'anonymous';
-                im.onload = () => { imgCache[node.coverUrl] = im; };
-                im.onerror = () => { imgCache[node.coverUrl] = null; };
-                im.src = node.coverUrl;
-                imgCache[node.coverUrl] = im; // 로딩 중에도 참조 유지
+
+    // 클러스터: 5개 그룹, 격자 내부 + 클러스터 간 공간 확보
+    const clusterOffsets = [
+        { cx:  0,   cy:  0,   cols: 4, rows: 3 }, // 중앙
+        { cx: -7.5, cy: -5.5, cols: 3, rows: 3 }, // 좌상
+        { cx:  7.5, cy: -5.5, cols: 3, rows: 3 }, // 우상
+        { cx: -7.5, cy:  5.5, cols: 3, rows: 3 }, // 좌하
+        { cx:  7.5, cy:  5.5, cols: 3, rows: 3 }, // 우하
+    ];
+
+    let favIdx = 0;
+    const seedCount = Math.min(userFavs.length, 12); // 찜곡은 중앙 클러스터에
+
+    clusterOffsets.forEach((cl, ci) => {
+        for (let r = 0; r < cl.rows; r++) {
+            for (let c = 0; c < cl.cols; c++) {
+                const fav = shuffledFavs[favIdx % Math.max(shuffledFavs.length, 1)];
+                favIdx++;
+                const isSeed = ci === 0 && favIdx <= seedCount;
+                nodes.push({
+                    x: (cl.cx + c - (cl.cols - 1) / 2) * STEP,
+                    y: (cl.cy + r - (cl.rows - 1) / 2) * STEP,
+                    size: isSeed ? 56 : 44,
+                    isSeed,
+                    cluster: ci,
+                    coverUrl: fav ? fav.cover_image_url : null,
+                    title: fav ? (fav.title || '') : '',
+                    artist: fav ? (fav.artist || '') : '',
+                });
             }
-            nodes.push(node);
         }
+    });
+
+    // 이미지 로드
+    nodes.forEach(n => {
+        if (!n.coverUrl || imgCache[n.coverUrl] !== undefined) return;
+        const im = new Image();
+        im.crossOrigin = 'anonymous';
+        im.onload = () => { imgCache[n.coverUrl] = im; };
+        im.onerror = () => { imgCache[n.coverUrl] = null; };
+        im.src = n.coverUrl;
+        imgCache[n.coverUrl] = im;
     });
 
     // 현재 "포커스" 노드 인덱스와 애니메이션 상태
@@ -1401,167 +1407,116 @@ function showMapIntro() {
         camTScale = scale;
     }
 
-    // 클러스터별 색상 팔레트
-    const CLUSTER_COLORS = [
-        '#ff6b6b', // 빨강-코럴
-        '#ffd93d', // 노랑
-        '#6bcb77', // 초록
-        '#4d96ff', // 파랑
-        '#c77dff', // 보라
-    ];
-
     // 초기 카메라: 전체 보기
     camX = camTX = 0; camY = camTY = 0; camScale = camTScale = 1;
+
+    // 실제 지도와 동일한 roundRect 헬퍼
+    function introRoundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+        ctx.quadraticCurveTo(x+w,y,x+w,y+r); ctx.lineTo(x+w,y+h-r);
+        ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h);
+        ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r);
+        ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+    }
 
     function drawIntro() {
         if (destroyed) return;
         requestAnimationFrame(drawIntro);
         if (overlay.style.display === 'none') return;
 
-        // 카메라 lerp
         camX += (camTX - camX) * 0.07;
         camY += (camTY - camY) * 0.07;
         camScale += (camTScale - camScale) * 0.07;
-
         pulseT += 0.04;
 
         ctx.clearRect(0, 0, W, H);
 
-        // 배경 — 클러스터 색으로 은은한 멀티 glow
-        ctx.fillStyle = '#08090f';
+        // 실제 지도와 동일한 배경
+        ctx.fillStyle = '#0a0a0f';
         ctx.fillRect(0, 0, W, H);
-        clusterCenters.forEach((c, ci) => {
-            const col = CLUSTER_COLORS[ci];
-            const gx = c.x * camScale + camX;
-            const gy = c.y * camScale + camY;
-            const gr = ctx.createRadialGradient(gx, gy, 0, gx, gy, Math.max(W, H) * 0.45);
-            gr.addColorStop(0, col.replace(')', ', .07)').replace('rgb', 'rgba').replace('#', 'rgba(').replace('rgba(', 'rgba(').replace(/^rgba\(([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/, (_, r, g, b) => `rgba(${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)}`));
-            gr.addColorStop(1, 'rgba(0,0,0,0)');
-            // hex → rgba 변환 인라인
-            const hex = col.replace('#', '');
-            const rr = parseInt(hex.slice(0,2),16), gg = parseInt(hex.slice(2,4),16), bb = parseInt(hex.slice(4,6),16);
-            const gr2 = ctx.createRadialGradient(gx, gy, 0, gx, gy, Math.max(W, H) * 0.45);
-            gr2.addColorStop(0, `rgba(${rr},${gg},${bb},.07)`);
-            gr2.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = gr2;
-            ctx.fillRect(0, 0, W, H);
-        });
 
         ctx.save();
-        ctx.translate(camX, camY);
+        ctx.translate(camX + W/2, camY + H/2);
         ctx.scale(camScale, camScale);
 
-        // 연결선 (같은 클러스터끼리 — 클러스터 색으로)
-        nodes.forEach((a, i) => {
-            nodes.forEach((b, j) => {
-                if (j <= i) return;
-                if (a.cluster !== b.cluster) return;
-                const dx = a.x - b.x, dy = a.y - b.y;
-                if (dx*dx + dy*dy > 160*160) return;
-                const col = CLUSTER_COLORS[a.cluster];
-                const hex = col.replace('#', '');
-                const rr = parseInt(hex.slice(0,2),16), gg = parseInt(hex.slice(2,4),16), bb = parseInt(hex.slice(4,6),16);
-                ctx.beginPath();
-                ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
-                ctx.strokeStyle = `rgba(${rr},${gg},${bb},.25)`;
-                ctx.lineWidth = 1;
-                ctx.stroke();
-            });
-        });
-
-        // 노드
+        // 노드 (실제 지도 스타일)
         nodes.forEach((n, i) => {
-            n.alpha += (n.targetAlpha - n.alpha) * 0.05;
-            if (n.alpha < 0.01) return;
-
             const isFocus = (i === focusIdx);
             const isJumpDest = (jumpTo && n === jumpTo);
-            const pulse = (isFocus && introStep === 1) ? (1 + 0.1 * Math.sin(pulseT * 2)) : 1;
+            const pulse = (isFocus && introStep === 1) ? (1 + 0.07 * Math.sin(pulseT * 2)) : 1;
             const sz = n.size * pulse;
-            const half = sz / 2;
-            const clusterColor = CLUSTER_COLORS[n.cluster];
+            const sx = n.x, sy = n.y;
+
+            // 중앙에서 멀수록 살짝 어둡게 (실제 지도의 pf 효과)
+            const ndx = sx / (W * 0.5), ndy = sy / (H * 0.5);
+            const pf = Math.max(0.4, 1 - Math.sqrt(ndx*ndx + ndy*ndy) * 0.35);
+            const finalSz = sz * pf;
+            const fhalf = finalSz / 2;
+            const fr = finalSz * 0.12;
 
             ctx.save();
-            ctx.globalAlpha = n.alpha;
-            ctx.translate(n.x, n.y);
+            ctx.translate(sx, sy);
 
-            // glow — 클러스터 색
+            // glow (포커스/시드만 — 초록)
             if (isFocus || n.isSeed) {
-                ctx.shadowColor = clusterColor;
-                ctx.shadowBlur = isFocus ? sz * 0.9 : sz * 0.4;
+                ctx.shadowColor = '#1db954';
+                ctx.shadowBlur = isFocus ? finalSz * 0.8 : finalSz * 0.3;
             }
             if (isJumpDest && jumpT > 0.5) {
-                ctx.shadowColor = clusterColor;
-                ctx.shadowBlur = sz * 1.2 * (jumpT - 0.5) * 2;
+                ctx.shadowColor = '#1db954';
+                ctx.shadowBlur = finalSz * 1.0 * (jumpT - 0.5) * 2;
             }
 
-            // 둥근 사각형
-            ctx.beginPath();
-            const r = sz * 0.18;
-            ctx.moveTo(-half+r, -half); ctx.lineTo(half-r, -half);
-            ctx.quadraticCurveTo(half, -half, half, -half+r);
-            ctx.lineTo(half, half-r);
-            ctx.quadraticCurveTo(half, half, half-r, half);
-            ctx.lineTo(-half+r, half);
-            ctx.quadraticCurveTo(-half, half, -half, half-r);
-            ctx.lineTo(-half, -half+r);
-            ctx.quadraticCurveTo(-half, -half, -half+r, -half);
-            ctx.closePath();
-
-            // 이미지 또는 색상 채우기
+            // 클립 + 이미지
+            ctx.beginPath(); introRoundRect(-fhalf, -fhalf, finalSz, finalSz, fr); ctx.clip();
+            ctx.shadowBlur = 0;
             const im = n.coverUrl ? imgCache[n.coverUrl] : null;
             if (im && im.complete && im.naturalWidth > 0) {
-                ctx.save();
-                ctx.clip();
-                ctx.drawImage(im, -half, -half, sz, sz);
-                ctx.restore();
-                ctx.beginPath();
-                const r2 = sz * 0.18;
-                ctx.moveTo(-half+r2,-half); ctx.lineTo(half-r2,-half);
-                ctx.quadraticCurveTo(half,-half,half,-half+r2); ctx.lineTo(half,half-r2);
-                ctx.quadraticCurveTo(half,half,half-r2,half); ctx.lineTo(-half+r2,half);
-                ctx.quadraticCurveTo(-half,half,-half,half-r2); ctx.lineTo(-half,-half+r2);
-                ctx.quadraticCurveTo(-half,-half,-half+r2,-half); ctx.closePath();
+                ctx.drawImage(im, -fhalf, -fhalf, finalSz, finalSz);
             } else {
-                ctx.fillStyle = '#1a1a2e';
-                ctx.fill();
+                ctx.fillStyle = '#1a1a24'; ctx.fill();
             }
-
-            // 어둡게 오버레이 (비시드, 비포커스)
+            // 비포커스/비시드 어둡게
             if (!n.isSeed && !isFocus) {
-                ctx.beginPath();
-                const r3 = sz * 0.18;
-                ctx.moveTo(-half+r3,-half); ctx.lineTo(half-r3,-half);
-                ctx.quadraticCurveTo(half,-half,half,-half+r3); ctx.lineTo(half,half-r3);
-                ctx.quadraticCurveTo(half,half,half-r3,half); ctx.lineTo(-half+r3,half);
-                ctx.quadraticCurveTo(-half,half,-half,half-r3); ctx.lineTo(-half,-half+r3);
-                ctx.quadraticCurveTo(-half,-half,-half+r3,-half); ctx.closePath();
-                ctx.fillStyle = 'rgba(0,0,0,.4)';
-                ctx.fill();
+                ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(-fhalf, -fhalf, finalSz, finalSz);
+            }
+            ctx.restore();
+
+            // 텍스트 (포커스 노드만)
+            if (isFocus && n.title) {
+                const lblSz = Math.max(11, finalSz * 0.14);
+                ctx.save();
+                ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                ctx.font = `600 ${lblSz}px -apple-system,sans-serif`;
+                ctx.fillStyle = '#fff';
+                ctx.fillText(n.title, sx, sy + fhalf + 5);
+                ctx.font = `${lblSz * 0.85}px -apple-system,sans-serif`;
+                ctx.fillStyle = 'rgba(255,255,255,.55)';
+                ctx.fillText(n.artist || '', sx, sy + fhalf + 5 + lblSz + 3);
+                ctx.restore();
             }
 
-            // 테두리 — 클러스터 색
+            // 테두리 (포커스/시드 — 실제 지도와 동일)
             if (n.isSeed || isFocus) {
-                ctx.strokeStyle = clusterColor;
-                ctx.lineWidth = isFocus ? Math.max(2.5, sz * 0.07) : Math.max(2, sz * 0.05);
-                ctx.shadowBlur = 0;
-                ctx.stroke();
+                ctx.save(); ctx.translate(sx, sy);
+                ctx.beginPath(); introRoundRect(-fhalf, -fhalf, finalSz, finalSz, fr);
+                ctx.strokeStyle = '#1db954';
+                ctx.lineWidth = isFocus ? Math.max(3, finalSz * 0.065) : Math.max(2, finalSz * 0.045);
+                ctx.shadowColor = '#1db954';
+                ctx.shadowBlur = isFocus ? finalSz * 0.55 : finalSz * 0.25;
+                ctx.stroke(); ctx.restore();
             }
 
             // 재생 아이콘 (step1 포커스 노드)
             if (isFocus && introStep === 1) {
+                ctx.save(); ctx.translate(sx, sy);
                 ctx.fillStyle = 'rgba(255,255,255,.9)';
-                ctx.shadowBlur = 0;
-                const ps = sz * 0.22;
+                const ps = finalSz * 0.22;
                 ctx.beginPath();
-                ctx.moveTo(-ps*0.4, -ps*0.6);
-                ctx.lineTo(ps*0.8, 0);
-                ctx.lineTo(-ps*0.4, ps*0.6);
-                ctx.closePath();
-                ctx.fill();
+                ctx.moveTo(-ps*0.4, -ps*0.6); ctx.lineTo(ps*0.8, 0); ctx.lineTo(-ps*0.4, ps*0.6);
+                ctx.closePath(); ctx.fill(); ctx.restore();
             }
-
-            ctx.restore();
         });
 
         ctx.restore();
