@@ -251,7 +251,7 @@ function renderFavorites(favorites, savedPlaylists = []) {
             // 스와이프 삭제
             // 구조: wrapper(overflow:hidden) > card(translateX로 밀림) + deleteBtn(card 뒤 절대위치)
             const wrapper = document.createElement('div');
-            wrapper.style.cssText = 'position:relative;overflow:hidden;border-radius:12px;width:100%;max-width:900px;';
+            wrapper.style.cssText = 'position:relative;overflow:hidden;border-radius:12px;width:100%;max-width:900px;border:1px solid rgba(255,255,255,.08);';
 
             const deleteBtn = document.createElement('div');
             deleteBtn.style.cssText = 'position:absolute;top:0;right:0;bottom:0;width:80px;background:#e53935;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;cursor:pointer;';

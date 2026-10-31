@@ -280,12 +280,12 @@ body {
     align-items: center;
     gap: 18px;
     background: rgba(255, 255, 255, .06);
-    border: 1px solid rgba(255, 255, 255, .08);
     border-radius: 12px;
     padding: 14px 18px;
     transition: background .15s;
     box-sizing: border-box;
     position: relative;
+    width: 100%;
 }
 .fav-playlist-card:hover {
     background: rgba(255, 255, 255, .1);
