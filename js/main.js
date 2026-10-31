@@ -1332,13 +1332,15 @@ function showMapIntro() {
     const nodes = [];
     const imgCache = {};
 
-    // 찜 곡을 5개 클러스터에 배분
-    const perCluster = Math.ceil(Math.max(favs.length, 20) / 5);
+    // 찜 곡 셔플 후 순서대로 배정 (중복 최소화)
+    const shuffledFavs = [...favs].sort(() => Math.random() - 0.5);
+    let favAssignIdx = 0;
     clusterCenters.forEach((c, ci) => {
         const count = ci === 4 ? 4 : 8;
         for (let i = 0; i < count; i++) {
-            const favIdx = ci * perCluster + i;
-            const fav = favs[favIdx % Math.max(favs.length, 1)];
+            const fav = shuffledFavs.length > 0
+                ? shuffledFavs[favAssignIdx++ % shuffledFavs.length]
+                : null;
             const angle = (i / count) * Math.PI * 2 + ci * 0.7;
             const r = 60 + Math.random() * 80;
             const isSeed = ci === 4 || i === 0;
@@ -1383,6 +1385,15 @@ function showMapIntro() {
         camTScale = scale;
     }
 
+    // 클러스터별 색상 팔레트
+    const CLUSTER_COLORS = [
+        '#ff6b6b', // 빨강-코럴
+        '#ffd93d', // 노랑
+        '#6bcb77', // 초록
+        '#4d96ff', // 파랑
+        '#c77dff', // 보라
+    ];
+
     // 초기 카메라: 전체 보기
     camX = camTX = 0; camY = camTY = 0; camScale = camTScale = 1;
 
@@ -1400,33 +1411,47 @@ function showMapIntro() {
 
         ctx.clearRect(0, 0, W, H);
 
-        // 배경 그라디언트
-        const bg = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)*0.7);
-        bg.addColorStop(0, '#0d0e1a');
-        bg.addColorStop(1, '#07080f');
-        ctx.fillStyle = bg;
+        // 배경 — 클러스터 색으로 은은한 멀티 glow
+        ctx.fillStyle = '#08090f';
         ctx.fillRect(0, 0, W, H);
+        clusterCenters.forEach((c, ci) => {
+            const col = CLUSTER_COLORS[ci];
+            const gx = c.x * camScale + camX;
+            const gy = c.y * camScale + camY;
+            const gr = ctx.createRadialGradient(gx, gy, 0, gx, gy, Math.max(W, H) * 0.45);
+            gr.addColorStop(0, col.replace(')', ', .07)').replace('rgb', 'rgba').replace('#', 'rgba(').replace('rgba(', 'rgba(').replace(/^rgba\(([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/, (_, r, g, b) => `rgba(${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)}`));
+            gr.addColorStop(1, 'rgba(0,0,0,0)');
+            // hex → rgba 변환 인라인
+            const hex = col.replace('#', '');
+            const rr = parseInt(hex.slice(0,2),16), gg = parseInt(hex.slice(2,4),16), bb = parseInt(hex.slice(4,6),16);
+            const gr2 = ctx.createRadialGradient(gx, gy, 0, gx, gy, Math.max(W, H) * 0.45);
+            gr2.addColorStop(0, `rgba(${rr},${gg},${bb},.07)`);
+            gr2.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = gr2;
+            ctx.fillRect(0, 0, W, H);
+        });
 
         ctx.save();
         ctx.translate(camX, camY);
         ctx.scale(camScale, camScale);
 
-        // 연결선 (같은 클러스터끼리)
-        ctx.globalAlpha = 0.08;
+        // 연결선 (같은 클러스터끼리 — 클러스터 색으로)
         nodes.forEach((a, i) => {
             nodes.forEach((b, j) => {
                 if (j <= i) return;
                 if (a.cluster !== b.cluster) return;
                 const dx = a.x - b.x, dy = a.y - b.y;
                 if (dx*dx + dy*dy > 160*160) return;
+                const col = CLUSTER_COLORS[a.cluster];
+                const hex = col.replace('#', '');
+                const rr = parseInt(hex.slice(0,2),16), gg = parseInt(hex.slice(2,4),16), bb = parseInt(hex.slice(4,6),16);
                 ctx.beginPath();
                 ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
-                ctx.strokeStyle = 'rgba(255,255,255,.3)';
+                ctx.strokeStyle = `rgba(${rr},${gg},${bb},.25)`;
                 ctx.lineWidth = 1;
                 ctx.stroke();
             });
         });
-        ctx.globalAlpha = 1;
 
         // 노드
         nodes.forEach((n, i) => {
@@ -1438,18 +1463,19 @@ function showMapIntro() {
             const pulse = (isFocus && introStep === 1) ? (1 + 0.1 * Math.sin(pulseT * 2)) : 1;
             const sz = n.size * pulse;
             const half = sz / 2;
+            const clusterColor = CLUSTER_COLORS[n.cluster];
 
             ctx.save();
             ctx.globalAlpha = n.alpha;
             ctx.translate(n.x, n.y);
 
-            // glow
+            // glow — 클러스터 색
             if (isFocus || n.isSeed) {
-                ctx.shadowColor = n.isSeed ? '#1db954' : 'rgba(255,255,255,.6)';
-                ctx.shadowBlur = isFocus ? sz * 0.8 : sz * 0.3;
+                ctx.shadowColor = clusterColor;
+                ctx.shadowBlur = isFocus ? sz * 0.9 : sz * 0.4;
             }
             if (isJumpDest && jumpT > 0.5) {
-                ctx.shadowColor = '#a0c8e8';
+                ctx.shadowColor = clusterColor;
                 ctx.shadowBlur = sz * 1.2 * (jumpT - 0.5) * 2;
             }
 
@@ -1498,9 +1524,9 @@ function showMapIntro() {
                 ctx.fill();
             }
 
-            // 테두리
+            // 테두리 — 클러스터 색
             if (n.isSeed || isFocus) {
-                ctx.strokeStyle = n.isSeed ? '#1db954' : 'rgba(255,255,255,.7)';
+                ctx.strokeStyle = clusterColor;
                 ctx.lineWidth = isFocus ? Math.max(2.5, sz * 0.07) : Math.max(2, sz * 0.05);
                 ctx.shadowBlur = 0;
                 ctx.stroke();
