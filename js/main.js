@@ -1319,100 +1319,86 @@ function showMapIntro() {
     const ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr);
 
-    // 고정 데모 씬 — 실제 music-map API 결과 하드코딩 (팝+국내 혼합, 유사도 기반 배치)
+    // 고정 데모 씬 — 5개 클러스터, 화면 기준 픽셀 좌표로 직접 배치
+    // 클러스터마다 대표곡(seed) 1개 + 유사곡 5~6개, 총 ~30개
     const BASE = 'https://yxihvsnrszafmluyjqke.supabase.co/storage/v1/object/public/new_cover_image/';
-    const DEMO_TRACKS = [
-        // seed 트랙 (is_seed: true)
-        {c:13,r:20,seed:true, url:'09mC49exdvPmL1y7tusWhd', title:'like JENNIE',          artist:'jen'},
-        {c:17,r:16,seed:true, url:'4pryE6cN2gFL1FVF5fYINl', title:'Leave The Door Open',  artist:'Bruno Mars'},
-        {c:11,r:16,seed:true, url:'0NZPBYD5qbEWRs3PrGiRkT', title:'Unholy',               artist:'Sam Smith'},
-        {c:14,r:19,seed:true, url:'6epn3r7S14KUqlReYr77hA', title:'Baby',                  artist:'Justin Bieber'},
-        {c:21,r:20,seed:true, url:'0THW04vlFAkfflASMFam0t', title:'잊어버리지마',           artist:'Crush'},
-        {c:12,r:14,seed:true, url:'2Pner0zYKaSPQ3YeYYXdup', title:'INDUSTRY BABY',         artist:'Lil Nas X'},
-        {c:20,r:21,seed:true, url:'2TfsNTyC4uuamXBZJnU0ga', title:'Nerdy Love',            artist:'pH-1'},
-        {c:10,r:14,seed:true, url:'1niP7DB1WHgskkr8LrRjXS', title:'Mood',                  artist:'24kGoldn'},
-        {c:15,r:20,seed:true, url:'1osW08ygBwopWmjWzqWbfJ', title:'Antifreeze',            artist:'백예린'},
-        {c:19,r:18,seed:true, url:'4BSluGpjdLQihMmKgHXMxp', title:'홀로',                  artist:'이하이'},
-        {c:18,r:13,seed:true, url:'3fX3N9yUo3hNatc2BbJDLs', title:'Who Hurt You?',         artist:'Daniel Caesar'},
-        {c:14,r:15,seed:true, url:'6dOtVTDdiauQNBQEDOtlAB', title:'BIRDS OF A FEATHER',    artist:'Billie Eilish'},
-        {c:18,r:20,seed:true, url:'7saJl9V0kRYGWuyeURHYNU', title:'양화대교',              artist:'Zion.T'},
-        {c:19,r:15,seed:true, url:'2QfznFotJNZmnIEYFdzE5T', title:'Heartbreak Anniversary',artist:'GIVĒON'},
-        {c:15,r:14,seed:true, url:'1Qrg8KqiBpW07V7PNxwwwL', title:'Kill Bill',             artist:'SZA'},
-        {c:19,r:12,seed:true, url:'0tziUvXJBqjdmV8gWxOjfV', title:'Love Songs',            artist:'Kaash Paige'},
-        {c:18,r:22,seed:true, url:'6FZAc2XaVYc8G8jaDnBshv', title:'비도 오고 그래서',       artist:'헤이즈'},
-        {c:12,r:11,seed:true, url:'0sf12qNH5qcw8qpgymFOqD', title:'Blinding Lights',       artist:'The Weeknd'},
-        {c:14,r:12,seed:true, url:'1A6OTy97kk0mMdm78rHsm8', title:'Sunflower',             artist:'Post Malone'},
-        // fill 트랙
-        {c:12,r:18,seed:false,url:'41FzP8TjIK1aK4LTVY5TUy', title:'LOOK AT ME',            artist:'ALLDAY PROJECT'},
-        {c:13,r:19,seed:false,url:'6IST7HiO2OlytkRp866Xdd', title:'HOME SWEET HOME',       artist:'G-DRAGON'},
-        {c:15,r:22,seed:false,url:'6oeMntjclWLoguzwj5ECTo', title:'THUNDER',               artist:'세븐틴'},
-        {c:11,r:17,seed:false,url:'0vLUcf0D21qANv4C2ES7Ay', title:'Upside Down',           artist:'JVKE'},
-        {c:12,r:16,seed:false,url:'20R4HfKloPKgXDqU7UKk3x', title:'Therefore I Am',        artist:'Billie Eilish'},
-        {c:13,r:15,seed:false,url:'6UN73IYd0hZxLi8wFPMQij', title:'Players',               artist:'Coi Leray'},
-        {c:12,r:12,seed:false,url:'1rgnBhdG2JDFTbYkYRZAku', title:'Dance Monkey',          artist:'Tones And I'},
-        {c:11,r:12,seed:false,url:'463CkQjx2Zk1yXoBuierM9', title:'Levitating',            artist:'Dua Lipa'},
-        {c:21,r:21,seed:false,url:'01jZKFyNcPRUP2gX9zxScj', title:'어떻게 지내',            artist:'Crush'},
-        {c:22,r:16,seed:false,url:'06ZjtFrSVuESKVe9bnZrNp', title:'바라봐줘요',             artist:'죠지'},
-        {c:20,r:19,seed:false,url:'1pz24zu5H9A0S1a2NKT4F0', title:'SoulMate',              artist:'지코'},
-        {c:17,r:18,seed:false,url:'3eHkFA3StDR9BU7EVrUFLs', title:'오늘 취하면',            artist:'SURAN'},
-        {c:21,r:17,seed:false,url:'3yUNSNlU0h7ag5DTABjr2a', title:'가끔',                  artist:'Crush'},
-        {c:20,r:20,seed:false,url:'7LN1f9jAIu7yxBzsLMN7RB', title:'넘어와',                artist:'DEAN'},
-        {c:20,r:13,seed:false,url:'3f3cliOygeuUpGRwdohy12', title:'Comfortable',           artist:'H.E.R.'},
-        {c:18,r:11,seed:false,url:'6N3qHjcwly8ZuhE4bPYJAX', title:'Get You',               artist:'Daniel Caesar'},
-        {c:15,r:12,seed:false,url:'14mHfNsSHN0FbLftyjrV9g', title:'Leave Me Alone',        artist:'Flipp Dinero'},
-        {c:14,r:11,seed:false,url:'1OmcAT5Y8eg5bUPv9qJT4R', title:'rockstar',              artist:'Post Malone'},
-        {c:16,r:11,seed:false,url:'3OHfY25tqY28d16oZczHc8', title:'Kill Bill',             artist:'SZA'},
-        {c:15,r:13,seed:false,url:'4iZ4pt7kvcaH6Yo8UoZ4s2', title:'Snooze',               artist:'SZA'},
-        {c:16,r:14,seed:false,url:'7BRD7x5pt8Lqa1eGYC4dzj', title:'CHIHIRO',              artist:'Billie Eilish'},
-        {c:16,r:12,seed:false,url:'7oDd86yk8itslrA9HRP2ki', title:'Die For You Remix',     artist:'The Weeknd'},
-        {c:17,r:14,seed:false,url:'2Ch7LmS7r2Gy2kc64wv3Bz', title:'Die For You',          artist:'The Weeknd'},
-        {c:18,r:16,seed:false,url:'3FAJ6O0NOHQV8Mc5Ri6ENp', title:'Heartbreak Anniversary',artist:'GIVĒON'},
-        {c:19,r:14,seed:false,url:'47isJpIIO8m7BJEhiFhnaf', title:'double take',            artist:'Dhruv'},
-        {c:16,r:21,seed:false,url:'2rXabO62OjjZIZAOn6uzuv', title:'0310',                  artist:'백예린'},
-        {c:15,r:19,seed:false,url:'4Hc4QeHMGsmSZ5HP8wQFPP', title:'산책',                  artist:'백예린'},
-        {c:15,r:21,seed:false,url:'6bPfwzy9EY7Nb3zLAqOZaB', title:'물고기',                artist:'백예린'},
-        {c:16,r:22,seed:false,url:'6XdXTQV3qwim4Bji87TT8t', title:'Bye bye my blue',       artist:'백예린'},
-        {c:15,r:15,seed:false,url:'2CGNAOSuO1MEFCbBRgUzjd', title:'luther',                artist:'Kendrick Lamar'},
-        {c:16,r:13,seed:false,url:'3DarAbFujv6eYNliUTyqtz', title:'Kiss Me More',          artist:'Doja Cat'},
-        {c:14,r:17,seed:false,url:'2tHwzyyOLoWSFqYNjeVMzj', title:'Please Please Please',  artist:'Sabrina Carpenter'},
-        {c:15,r:16,seed:false,url:'3QaPy1KgI7nu9FJEQUgn6h', title:'WILDFLOWER',            artist:'Billie Eilish'},
-        {c:14,r:16,seed:false,url:'5BZsQlgw21vDOAjoqkNgKb', title:'DAISIES',               artist:'Justin Bieber'},
-        {c:15,r:17,seed:false,url:'5G2f63n7IPVPPjfNIGih7Q', title:'Taste',                 artist:'Sabrina Carpenter'},
-        {c:14,r:14,seed:false,url:'7ne4VBA60CxGM75vw0EYad', title:"That's So True",        artist:'Gracie Abrams'},
-        {c:16,r:15,seed:false,url:'3jiKUMXqwEodB7gVv1RMZU', title:'After Last Night',      artist:'Bruno Mars'},
-        {c:16,r:16,seed:false,url:'3xVZYkcuWalGudeKl861wb', title:'Smokin Out The Window', artist:'Bruno Mars'},
-        {c:17,r:17,seed:false,url:'4Nw7kywWurWS6ceinn1cHK', title:'Baby Powder',           artist:'Jenevieve'},
-        {c:17,r:23,seed:false,url:'34HSEUn4YGAFBW9OHGIkU7', title:'Boat',                  artist:'죠지'},
-        {c:20,r:18,seed:false,url:'51kQvG4aghW17VSZKkfxTp', title:'MOVIE',                 artist:'JUNNY'},
-        {c:21,r:18,seed:false,url:'6VYY26Wws3jIS1DdqeOsXZ', title:'365&7',                 artist:'pH-1'},
-        {c:19,r:13,seed:false,url:'0b83L1ToHRiwlpmUAjiCHc', title:'Valentina',             artist:'Daniel Caesar'},
-        {c:17,r:21,seed:false,url:'1Zv6zo71iDXH07Lin7hxMg', title:'널 너무 모르고',          artist:'헤이즈'},
-        {c:18,r:21,seed:false,url:'3uFDwY5EPKxnVhfjKHhnCP', title:'밤이 되니까',             artist:'펀치'},
-        {c:17,r:20,seed:false,url:'09Nhl3YQnChjlq8WmJz7FS', title:'꺼내 먹어요',            artist:'Zion.T'},
-        {c:19,r:20,seed:false,url:'4ppKRxity3jJd2hGoVyD4u', title:'No Make Up',            artist:'Zion.T'},
-        {c:18,r:19,seed:false,url:'3gVbD5APaL2N4yDWM5YWiQ', title:'5월의 밤',               artist:'Zion.T'},
-        {c:19,r:19,seed:false,url:'5i6gHFXg4aLK5xvc2jJJC5', title:'너였다면',              artist:'정승환'},
-        {c:20,r:16,seed:false,url:'3P3UA61WRQqwCXaoFOTENd', title:'밤편지',                artist:'아이유'},
-        {c:21,r:19,seed:false,url:'0JL7DoEqAUcOntWmBuOSdh', title:'For You',               artist:'이하이'},
-        {c:20,r:17,seed:false,url:'6MksZu2sx5jzoPszxbRZMw', title:'Rose',                  artist:'이하이'},
-    ];
 
-    const maxC = Math.max(...DEMO_TRACKS.map(t => t.c));
-    const maxR = Math.max(...DEMO_TRACKS.map(t => t.r));
-    const STEP = 84;
+    // 클러스터 중심 (화면 비율, 0~1) + 소속 트랙 정의
+    // 배치: 좌상(팝/팝), 우상(R&B), 중앙(팝+국내 교차), 좌하(국내 발라드), 우하(국내 감성)
+    const CLUSTERS = [
+        {
+            cx: 0.18, cy: 0.28, // 좌상 — 팝 힙합
+            tracks: [
+                {seed:true,  url:'0sf12qNH5qcw8qpgymFOqD', title:'Blinding Lights',   artist:'The Weeknd',    dx:0,    dy:0},
+                {seed:false, url:'1A6OTy97kk0mMdm78rHsm8', title:'Sunflower',          artist:'Post Malone',   dx:-72,  dy:60},
+                {seed:false, url:'1niP7DB1WHgskkr8LrRjXS', title:'Mood',               artist:'24kGoldn',      dx:68,   dy:52},
+                {seed:false, url:'2Pner0zYKaSPQ3YeYYXdup', title:'INDUSTRY BABY',      artist:'Lil Nas X',     dx:-58,  dy:-58},
+                {seed:false, url:'1rgnBhdG2JDFTbYkYRZAku', title:'Dance Monkey',       artist:'Tones And I',   dx:62,   dy:-50},
+                {seed:false, url:'463CkQjx2Zk1yXoBuierM9', title:'Levitating',         artist:'Dua Lipa',      dx:10,   dy:-72},
+            ]
+        },
+        {
+            cx: 0.78, cy: 0.22, // 우상 — R&B / 소울
+            tracks: [
+                {seed:true,  url:'2QfznFotJNZmnIEYFdzE5T', title:'Heartbreak Anniversary', artist:'GIVĒON',     dx:0,    dy:0},
+                {seed:false, url:'0tziUvXJBqjdmV8gWxOjfV', title:'Love Songs',         artist:'Kaash Paige',   dx:-70,  dy:55},
+                {seed:false, url:'3fX3N9yUo3hNatc2BbJDLs', title:'Who Hurt You?',      artist:'Daniel Caesar', dx:65,   dy:48},
+                {seed:false, url:'6N3qHjcwly8ZuhE4bPYJAX', title:'Get You',            artist:'Daniel Caesar', dx:-60,  dy:-55},
+                {seed:false, url:'3f3cliOygeuUpGRwdohy12', title:'Comfortable',        artist:'H.E.R.',        dx:58,   dy:-60},
+                {seed:false, url:'47isJpIIO8m7BJEhiFhnaf', title:'double take',         artist:'Dhruv',         dx:5,    dy:72},
+            ]
+        },
+        {
+            cx: 0.50, cy: 0.50, // 중앙 — 팝+국내 교차
+            tracks: [
+                {seed:true,  url:'1Qrg8KqiBpW07V7PNxwwwL', title:'Kill Bill',          artist:'SZA',           dx:0,    dy:0},
+                {seed:false, url:'6dOtVTDdiauQNBQEDOtlAB', title:'BIRDS OF A FEATHER', artist:'Billie Eilish', dx:-72,  dy:50},
+                {seed:false, url:'4pryE6cN2gFL1FVF5fYINl', title:'Leave The Door Open',artist:'Bruno Mars',    dx:68,   dy:45},
+                {seed:false, url:'09mC49exdvPmL1y7tusWhd', title:'like JENNIE',        artist:'jen',           dx:0,    dy:-70},
+                {seed:false, url:'3xVZYkcuWalGudeKl861wb', title:'Smokin Out The Window',artist:'Bruno Mars',  dx:-65,  dy:-52},
+                {seed:false, url:'7ne4VBA60CxGM75vw0EYad', title:"That's So True",     artist:'Gracie Abrams', dx:60,   dy:-58},
+            ]
+        },
+        {
+            cx: 0.20, cy: 0.76, // 좌하 — 국내 발라드/감성
+            tracks: [
+                {seed:true,  url:'4BSluGpjdLQihMmKgHXMxp', title:'홀로',               artist:'이하이',        dx:0,    dy:0},
+                {seed:false, url:'6FZAc2XaVYc8G8jaDnBshv', title:'비도 오고 그래서',    artist:'헤이즈',        dx:-70,  dy:52},
+                {seed:false, url:'1Zv6zo71iDXH07Lin7hxMg', title:'널 너무 모르고',      artist:'헤이즈',        dx:65,   dy:48},
+                {seed:false, url:'5i6gHFXg4aLK5xvc2jJJC5', title:'너였다면',           artist:'정승환',        dx:-55,  dy:-58},
+                {seed:false, url:'3P3UA61WRQqwCXaoFOTENd', title:'밤편지',             artist:'아이유',        dx:60,   dy:-55},
+                {seed:false, url:'3uFDwY5EPKxnVhfjKHhnCP', title:'밤이 되니까',         artist:'펀치',          dx:5,    dy:-75},
+            ]
+        },
+        {
+            cx: 0.80, cy: 0.78, // 우하 — 국내 R&B/힙합 감성
+            tracks: [
+                {seed:true,  url:'7saJl9V0kRYGWuyeURHYNU', title:'양화대교',           artist:'Zion.T',        dx:0,    dy:0},
+                {seed:false, url:'0THW04vlFAkfflASMFam0t', title:'잊어버리지마',        artist:'Crush',         dx:-72,  dy:50},
+                {seed:false, url:'3yUNSNlU0h7ag5DTABjr2a', title:'가끔',               artist:'Crush',         dx:65,   dy:52},
+                {seed:false, url:'09Nhl3YQnChjlq8WmJz7FS', title:'꺼내 먹어요',        artist:'Zion.T',        dx:-58,  dy:-55},
+                {seed:false, url:'2TfsNTyC4uuamXBZJnU0ga', title:'Nerdy Love',         artist:'pH-1',          dx:62,   dy:-58},
+                {seed:false, url:'06ZjtFrSVuESKVe9bnZrNp', title:'바라봐줘요',         artist:'죠지',          dx:5,    dy:72},
+            ]
+        },
+    ];
 
     const nodes = [];
     const imgCache = {};
 
-    DEMO_TRACKS.forEach(t => {
-        nodes.push({
-            x: (t.c - maxC / 2) * STEP,
-            y: (t.r - maxR / 2) * STEP,
-            size: t.seed ? 56 : 44,
-            isSeed: t.seed,
-            coverUrl: BASE + t.url + '.webp',
-            title: t.title,
-            artist: t.artist,
+    CLUSTERS.forEach((cl, ci) => {
+        const cx = cl.cx * W, cy = cl.cy * H;
+        cl.tracks.forEach(t => {
+            nodes.push({
+                x: cx + t.dx - W / 2,
+                y: cy + t.dy - H / 2,
+                size: t.seed ? 62 : 48,
+                isSeed: t.seed,
+                cluster: ci,
+                coverUrl: BASE + t.url + '.webp',
+                title: t.title,
+                artist: t.artist,
+            });
         });
     });
 
@@ -1452,8 +1438,8 @@ function showMapIntro() {
         return d < (best.d ?? Infinity) ? { i, d } : best;
     }, {}).i ?? 0;
 
-    // 초기 카메라: 전체가 보이게 축소
-    camX = camTX = 0; camY = camTY = 0; camScale = camTScale = 0.55;
+    // 초기 카메라: scale=1 (노드가 이미 화면 픽셀 좌표로 배치됨)
+    camX = camTX = 0; camY = camTY = 0; camScale = camTScale = 1.0;
 
     // 실제 지도와 동일한 roundRect 헬퍼
     function introRoundRect(x, y, w, h, r) {
@@ -1597,7 +1583,7 @@ function showMapIntro() {
 
         if (step === 0) {
             // 전체 지도 보기
-            camTX = 0; camTY = 0; camTScale = 0.55;
+            camTX = 0; camTY = 0; camTScale = 1.0;
             focusIdx = -1;
         } else if (step === 1) {
             // 가운데 seed 노드 포커스 → 재생 중 느낌
@@ -1627,9 +1613,9 @@ function showMapIntro() {
             jumpTo = nodes[bestIdx];
             jumpT = 0;
             // 카메라 먼저 줌 아웃해서 양쪽 다 보여주다가 목적지로 이동
-            camTX = -(base.x + (jumpTo.x - base.x) * 0.5) * 0.4;
-            camTY = -(base.y + (jumpTo.y - base.y) * 0.5) * 0.4;
-            camTScale = 0.4;
+            camTX = -(base.x + (jumpTo.x - base.x) * 0.5) * 0.55;
+            camTY = -(base.y + (jumpTo.y - base.y) * 0.5) * 0.55;
+            camTScale = 0.55;
             setTimeout(() => {
                 focusIdx = bestIdx;
                 focusOn(bestIdx, 1.6);
@@ -1638,7 +1624,7 @@ function showMapIntro() {
         } else if (step === 4) {
             // 아웃트로: 전체 지도 다시 보기
             focusIdx = -1;
-            camTX = 0; camTY = 0; camTScale = 0.55;
+            camTX = 0; camTY = 0; camTScale = 1.0;
         }
     }
 
