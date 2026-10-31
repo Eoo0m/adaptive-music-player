@@ -275,6 +275,29 @@ body {
     color: rgba(255, 255, 255, .9)
 }
 
+.fav-playlist-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: background .15s;
+    width: 100%;
+    max-width: 900px;
+    box-sizing: border-box;
+}
+.fav-playlist-card:hover {
+    background: rgba(255, 255, 255, .1);
+}
+.fav-playlist-stack {
+    position: relative;
+    height: 52px;
+    flex-shrink: 0;
+}
+
 .fav-songs-card {
     background: rgba(255, 255, 255, .06);
     backdrop-filter: blur(10px);
@@ -429,12 +452,12 @@ body {
 }
 
 .home-feed-grid .track-item img {
-    width: 100px;
-    height: 100px
+    width: 72px;
+    height: 72px
 }
 
 .home-feed-grid .track-item-info {
-    width: 100px
+    width: 72px
 }
 
 .home-feed-grid .track-item-title {

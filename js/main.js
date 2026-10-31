@@ -192,60 +192,37 @@ function renderFavorites(favorites, savedPlaylists = []) {
 
         savedPlaylists.forEach((pl, idx) => {
             const card = document.createElement('div');
-            card.className = 'home-feed-card';
+            card.className = 'fav-playlist-card';
 
-            const titleRow = document.createElement('div');
-            titleRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:0;cursor:pointer;';
-
-            const titleEl = document.createElement('h3');
-            titleEl.className = 'home-feed-card-title';
-            titleEl.style.margin = '0';
-            titleEl.textContent = pl.name;
-
-            const toggleBtn = document.createElement('button');
-            toggleBtn.style.cssText = 'background:none;border:none;color:rgba(255,255,255,.5);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;';
-            toggleBtn.textContent = '▲';
-
-            titleRow.appendChild(titleEl);
-            titleRow.appendChild(toggleBtn);
-            card.appendChild(titleRow);
-
-            // 12곡 그리드
-            const grid = document.createElement('div');
-            grid.className = recommendationViewMode === 'list'
-                ? 'home-feed-grid track-list compact-track-list'
-                : 'home-feed-grid';
-            grid.style.marginTop = '10px';
-
-            (pl.tracks || []).forEach(t => {
-                const track = {
-                    track_key: t.track_key,
-                    track: t.track_name || t.title,
-                    title: t.track_name || t.title,
-                    artist: t.artist,
-                    album: t.album,
-                    cover_image_url: t.cover_image_url,
-                    playlist_count: t.playlist_count,
-                    apple_music_id: t.apple_music_id,
-                };
-                const trackDiv = createTrackCard(track, false, () => {
-                    switchTab('search');
-                    selectTrack(track);
-                }, { candidateKeys: (pl.tracks || []).map(x => x.track_key) });
-
-                trackDiv.classList.add('pb-chosen');
-                grid.appendChild(trackDiv);
+            // 앨범 커버 스택 (앞 5장 겹치게)
+            const stackWrap = document.createElement('div');
+            stackWrap.className = 'fav-playlist-stack';
+            const previewTracks = (pl.tracks || []).slice(0, 5);
+            previewTracks.forEach((t, i) => {
+                const img = document.createElement('img');
+                img.src = t.cover_image_url || '';
+                img.style.cssText = `position:absolute;left:${i * 22}px;width:52px;height:52px;border-radius:6px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);`;
+                img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
+                stackWrap.appendChild(img);
             });
+            stackWrap.style.width = `${52 + (previewTracks.length - 1) * 22}px`;
 
-            card.appendChild(grid);
+            // 오른쪽 텍스트
+            const info = document.createElement('div');
+            info.style.cssText = 'flex:1;min-width:0;';
+            const nameEl = document.createElement('div');
+            nameEl.style.cssText = 'font-size:15px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+            nameEl.textContent = pl.name;
+            const countEl = document.createElement('div');
+            countEl.style.cssText = 'font-size:12px;color:rgba(255,255,255,.45);margin-top:3px;';
+            countEl.textContent = `${(pl.tracks || []).length}곡`;
+            info.appendChild(nameEl);
+            info.appendChild(countEl);
 
-            // 접기/펼치기
-            titleRow.onclick = () => {
-                const collapsed = grid.style.display === 'none';
-                grid.style.display = collapsed ? '' : 'none';
-                grid.style.marginTop = collapsed ? '10px' : '0';
-                toggleBtn.textContent = collapsed ? '▲' : '▼';
-            };
+            card.appendChild(stackWrap);
+            card.appendChild(info);
+
+            card.onclick = () => openSavedPlaylist(pl.id);
 
             plSection.appendChild(card);
         });
