@@ -1320,8 +1320,24 @@ function showMapIntro() {
     ctx.scale(dpr, dpr);
 
     // 실제 찜 곡 이미지로 노드 생성
-    const favs = (typeof lastFavorites !== 'undefined' && lastFavorites.length > 0)
+    const userFavs = (typeof lastFavorites !== 'undefined' && lastFavorites.length > 0)
         ? lastFavorites : [];
+
+    // 찜곡이 20개 미만이면 홈피드 유사곡 커버로 보충
+    let favs = [...userFavs];
+    if (favs.length < 20 && typeof lastHomeFeeds !== 'undefined' && lastHomeFeeds.length > 0) {
+        const favUrls = new Set(userFavs.map(f => f.cover_image_url).filter(Boolean));
+        const extra = [];
+        lastHomeFeeds.forEach(feed => {
+            (feed.similar || []).forEach(t => {
+                if (t.cover_image_url && !favUrls.has(t.cover_image_url)) {
+                    favUrls.add(t.cover_image_url);
+                    extra.push({ cover_image_url: t.cover_image_url });
+                }
+            });
+        });
+        favs = [...userFavs, ...extra].slice(0, Math.max(favs.length, 36));
+    }
     const clusterCenters = [
         { x: W * 0.25, y: H * 0.35 },
         { x: W * 0.65, y: H * 0.28 },
