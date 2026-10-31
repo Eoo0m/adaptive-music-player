@@ -223,7 +223,7 @@ function renderFavorites(favorites, savedPlaylists = []) {
             deleteBtn.textContent = '삭제';
             deleteBtn.onclick = async () => {
                 try {
-                    await fetch(`${API_BASE_URL}/playlist-builder/playlists/${pl.id}`, { method: 'DELETE', headers: getAuthHeaders() });
+                    await fetch(`${API_BASE_URL}/playlist-builder/playlist/${pl.id}`, { method: 'DELETE', headers: getAuthHeaders() });
                     row.remove();
                     lastSavedPlaylists = lastSavedPlaylists.filter(p => p.id !== pl.id);
                 } catch(e) { console.error('플리 삭제 실패', e); }
