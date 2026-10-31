@@ -372,9 +372,31 @@ body {
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
 }
+.map-intro-close-btn {
+    position: fixed;
+    top: 24px;
+    right: 28px;
+    z-index: 210;
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.15);
+    color: rgba(255,255,255,.7);
+    font-size: 16px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .2s, color .2s;
+}
+.map-intro-close-btn:hover {
+    background: rgba(255,255,255,.2);
+    color: #fff;
+}
 .map-intro-scroll-outer {
     position: relative;
-    height: 550vh;
+    height: 900vh;
 }
 .map-intro-sticky {
     position: sticky;

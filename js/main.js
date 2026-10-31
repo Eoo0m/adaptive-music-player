@@ -1319,64 +1319,72 @@ function showMapIntro() {
     const ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr);
 
-    // 실제 찜 곡 이미지로 노드 생성
-    const userFavs = (typeof lastFavorites !== 'undefined' && lastFavorites.length > 0)
-        ? lastFavorites : [];
-
-    // 찜곡이 20개 미만이면 홈피드 유사곡 커버로 보충
-    let favs = [...userFavs];
-    if (favs.length < 20 && typeof lastHomeFeeds !== 'undefined' && lastHomeFeeds.length > 0) {
-        const favUrls = new Set(userFavs.map(f => f.cover_image_url).filter(Boolean));
-        const extra = [];
-        lastHomeFeeds.forEach(feed => {
-            (feed.similar || []).forEach(t => {
-                if (t.cover_image_url && !favUrls.has(t.cover_image_url)) {
-                    favUrls.add(t.cover_image_url);
-                    extra.push({ cover_image_url: t.cover_image_url });
-                }
-            });
-        });
-        favs = [...userFavs, ...extra].slice(0, Math.max(favs.length, 36));
-    }
+    // 실제 지도 데이터(prefetch 결과) 사용 — 유사도 기반 배치 그대로 반영
     const nodes = [];
     const imgCache = {};
 
-    // 실제 지도와 동일한 격자 배치
-    // 찜곡을 중앙에, 보충 커버는 주변에 배치
-    const COVER = 56, GAP = 28, STEP = COVER + GAP;
-    const shuffledFavs = [...favs].sort(() => Math.random() - 0.5);
+    const COVER = 56, GAP = 28, STEP = COVER + GAP, VSTEP = COVER + 18 + GAP;
 
-    // 클러스터: 5개 그룹, 격자 내부 + 클러스터 간 공간 확보
-    const clusterOffsets = [
-        { cx:  0,   cy:  0,   cols: 4, rows: 3 }, // 중앙
-        { cx: -7.5, cy: -5.5, cols: 3, rows: 3 }, // 좌상
-        { cx:  7.5, cy: -5.5, cols: 3, rows: 3 }, // 우상
-        { cx: -7.5, cy:  5.5, cols: 3, rows: 3 }, // 좌하
-        { cx:  7.5, cy:  5.5, cols: 3, rows: 3 }, // 우하
-    ];
-
-    let favIdx = 0;
-    const seedCount = Math.min(userFavs.length, 12); // 찜곡은 중앙 클러스터에
-
-    clusterOffsets.forEach((cl, ci) => {
-        for (let r = 0; r < cl.rows; r++) {
-            for (let c = 0; c < cl.cols; c++) {
-                const fav = shuffledFavs[favIdx % Math.max(shuffledFavs.length, 1)];
-                favIdx++;
-                const isSeed = ci === 0 && favIdx <= seedCount;
-                nodes.push({
-                    x: (cl.cx + c - (cl.cols - 1) / 2) * STEP,
-                    y: (cl.cy + r - (cl.rows - 1) / 2) * STEP,
-                    size: isSeed ? 56 : 44,
-                    isSeed,
-                    cluster: ci,
-                    coverUrl: fav ? fav.cover_image_url : null,
-                    title: fav ? (fav.title || '') : '',
-                    artist: fav ? (fav.artist || '') : '',
+    if (lastMapData && lastMapData.tracks && lastMapData.tracks.length > 0) {
+        // 실제 지도와 동일한 grid_col/grid_row 좌표 사용
+        const tracks = lastMapData.tracks;
+        const maxCol = Math.max(...tracks.map(t => t.grid_col ?? 0));
+        const maxRow = Math.max(...tracks.map(t => t.grid_row ?? 0));
+        const favKeys = new Set((lastFavorites || []).map(f => f.track_key));
+        tracks.forEach(t => {
+            const col = t.grid_col ?? 0;
+            const row = t.grid_row ?? 0;
+            nodes.push({
+                x: (col - maxCol / 2) * STEP,
+                y: (row - maxRow / 2) * VSTEP,
+                size: (t.is_seed || favKeys.has(t.track_key)) ? 56 : 44,
+                isSeed: t.is_seed || favKeys.has(t.track_key),
+                coverUrl: t.cover_image_url || null,
+                title: t.title || '',
+                artist: t.artist || '',
+            });
+        });
+    } else {
+        // prefetch 전이면 찜곡 + 홈피드로 임시 배치
+        const userFavs = (lastFavorites || []);
+        let pool = [...userFavs];
+        if (pool.length < 20 && lastHomeFeeds && lastHomeFeeds.length > 0) {
+            const seen = new Set(pool.map(f => f.cover_image_url).filter(Boolean));
+            lastHomeFeeds.forEach(feed => {
+                (feed.similar || []).forEach(t => {
+                    if (t.cover_image_url && !seen.has(t.cover_image_url)) {
+                        seen.add(t.cover_image_url);
+                        pool.push({ cover_image_url: t.cover_image_url, title: t.title || '', artist: t.artist || '' });
+                    }
                 });
-            }
+            });
         }
-    });
+        pool = pool.sort(() => Math.random() - 0.5);
+        const clusterOffsets = [
+            { cx:  0,   cy:  0,   cols: 4, rows: 3 },
+            { cx: -7.5, cy: -5.5, cols: 3, rows: 3 },
+            { cx:  7.5, cy: -5.5, cols: 3, rows: 3 },
+            { cx: -7.5, cy:  5.5, cols: 3, rows: 3 },
+            { cx:  7.5, cy:  5.5, cols: 3, rows: 3 },
+        ];
+        let pi = 0;
+        clusterOffsets.forEach((cl, ci) => {
+            for (let r = 0; r < cl.rows; r++) {
+                for (let c = 0; c < cl.cols; c++) {
+                    const fav = pool[pi++ % Math.max(pool.length, 1)];
+                    nodes.push({
+                        x: (cl.cx + c - (cl.cols - 1) / 2) * STEP,
+                        y: (cl.cy + r - (cl.rows - 1) / 2) * STEP,
+                        size: ci === 0 ? 56 : 44,
+                        isSeed: ci === 0,
+                        coverUrl: fav ? fav.cover_image_url : null,
+                        title: fav ? (fav.title || '') : '',
+                        artist: fav ? (fav.artist || '') : '',
+                    });
+                }
+            }
+        });
+    }
 
     // 이미지 로드
     nodes.forEach(n => {
@@ -1600,17 +1608,21 @@ function showMapIntro() {
 
     overlay.addEventListener('scroll', onIntroScroll, { passive: true });
 
+    const closeIntro = () => {
+        destroyed = true;
+        overlay.removeEventListener('scroll', onIntroScroll);
+        overlay.style.display = 'none';
+        mapIntroShown = true;
+        showMusicMap();
+    };
+
     // 시작 버튼
     const startBtn = document.getElementById('mapIntroStartBtn');
-    if (startBtn) {
-        startBtn.onclick = () => {
-            destroyed = true;
-            overlay.removeEventListener('scroll', onIntroScroll);
-            overlay.style.display = 'none';
-            mapIntroShown = true;
-            showMusicMap();
-        };
-    }
+    if (startBtn) startBtn.onclick = closeIntro;
+
+    // 닫기 버튼
+    const closeBtn = document.getElementById('mapIntroCloseBtn');
+    if (closeBtn) closeBtn.onclick = closeIntro;
 }
 
 // ===== Music Map =====
