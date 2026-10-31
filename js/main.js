@@ -1349,7 +1349,7 @@ function showMapIntro() {
             ]
         },
         {
-            cx: 0.50, cy: 0.50, // 중앙 — 팝+국내 교차
+            cx: 0.50, cy: 0.60, // 중앙 — 팝+국내 교차
             tracks: [
                 {seed:true,  url:'1Qrg8KqiBpW07V7PNxwwwL', title:'Kill Bill',          artist:'SZA',           dx:0,    dy:0},
                 {seed:false, url:'6dOtVTDdiauQNBQEDOtlAB', title:'BIRDS OF A FEATHER', artist:'Billie Eilish', dx:-72,  dy:50},
@@ -1392,7 +1392,7 @@ function showMapIntro() {
             nodes.push({
                 x: cx + t.dx - W / 2,
                 y: cy + t.dy - H / 2,
-                size: t.seed ? 62 : 48,
+                size: t.seed ? 76 : 60,
                 isSeed: t.seed,
                 cluster: ci,
                 coverUrl: BASE + t.url + '.webp',
