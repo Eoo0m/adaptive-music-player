@@ -1312,31 +1312,49 @@ function showMapIntro() {
     const ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr);
 
-    // 노드 생성: 5개 클러스터, 각 8~10개
-    const nodes = [];
+    // 실제 찜 곡 이미지로 노드 생성
+    const favs = (typeof lastFavorites !== 'undefined' && lastFavorites.length > 0)
+        ? lastFavorites : [];
     const clusterCenters = [
-        { x: W * 0.28, y: H * 0.38 },
-        { x: W * 0.62, y: H * 0.32 },
-        { x: W * 0.72, y: H * 0.65 },
-        { x: W * 0.35, y: H * 0.68 },
-        { x: W * 0.50, y: H * 0.50 },
+        { x: W * 0.25, y: H * 0.35 },
+        { x: W * 0.65, y: H * 0.28 },
+        { x: W * 0.75, y: H * 0.68 },
+        { x: W * 0.32, y: H * 0.70 },
+        { x: W * 0.52, y: H * 0.50 },
     ];
-    const clusterColors = ['#e8c4a0','#a0c8e8','#c8a0e8','#a0e8c0','#e8a0a0'];
+    const nodes = [];
+    const imgCache = {};
+
+    // 찜 곡을 5개 클러스터에 배분
+    const perCluster = Math.ceil(Math.max(favs.length, 20) / 5);
     clusterCenters.forEach((c, ci) => {
         const count = ci === 4 ? 4 : 8;
         for (let i = 0; i < count; i++) {
-            const angle = (i / count) * Math.PI * 2 + ci * 0.4;
-            const r = 55 + Math.random() * 70;
-            nodes.push({
+            const favIdx = ci * perCluster + i;
+            const fav = favs[favIdx % Math.max(favs.length, 1)];
+            const angle = (i / count) * Math.PI * 2 + ci * 0.7;
+            const r = 60 + Math.random() * 80;
+            const isSeed = ci === 4 || i === 0;
+            const node = {
                 x: c.x + Math.cos(angle) * r,
                 y: c.y + Math.sin(angle) * r,
-                size: ci === 4 ? 52 : (i < 2 ? 44 : 32 + Math.random() * 18),
-                color: clusterColors[ci],
-                isSeed: ci === 4 || i < 2,
-                alpha: 0,
-                targetAlpha: 1,
+                size: isSeed ? 56 : (i < 2 ? 48 : 34 + Math.random() * 16),
+                isSeed,
+                alpha: 1,
                 cluster: ci,
-            });
+                img: null,
+                coverUrl: fav ? fav.cover_image_url : null,
+            };
+            // 이미지 로드
+            if (node.coverUrl && !imgCache[node.coverUrl]) {
+                const im = new Image();
+                im.crossOrigin = 'anonymous';
+                im.onload = () => { imgCache[node.coverUrl] = im; };
+                im.onerror = () => { imgCache[node.coverUrl] = null; };
+                im.src = node.coverUrl;
+                imgCache[node.coverUrl] = im; // 로딩 중에도 참조 유지
+            }
+            nodes.push(node);
         }
     });
 
@@ -1396,7 +1414,7 @@ function showMapIntro() {
                 if (dx*dx + dy*dy > 160*160) return;
                 ctx.beginPath();
                 ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
-                ctx.strokeStyle = clusterColors[a.cluster];
+                ctx.strokeStyle = 'rgba(255,255,255,.3)';
                 ctx.lineWidth = 1;
                 ctx.stroke();
             });
@@ -1441,12 +1459,35 @@ function showMapIntro() {
             ctx.quadraticCurveTo(-half, -half, -half+r, -half);
             ctx.closePath();
 
-            ctx.fillStyle = n.color;
-            ctx.fill();
+            // 이미지 또는 색상 채우기
+            const im = n.coverUrl ? imgCache[n.coverUrl] : null;
+            if (im && im.complete && im.naturalWidth > 0) {
+                ctx.save();
+                ctx.clip();
+                ctx.drawImage(im, -half, -half, sz, sz);
+                ctx.restore();
+                ctx.beginPath();
+                const r2 = sz * 0.18;
+                ctx.moveTo(-half+r2,-half); ctx.lineTo(half-r2,-half);
+                ctx.quadraticCurveTo(half,-half,half,-half+r2); ctx.lineTo(half,half-r2);
+                ctx.quadraticCurveTo(half,half,half-r2,half); ctx.lineTo(-half+r2,half);
+                ctx.quadraticCurveTo(-half,half,-half,half-r2); ctx.lineTo(-half,-half+r2);
+                ctx.quadraticCurveTo(-half,-half,-half+r2,-half); ctx.closePath();
+            } else {
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fill();
+            }
 
-            // 어둡게 오버레이 (비시드)
+            // 어둡게 오버레이 (비시드, 비포커스)
             if (!n.isSeed && !isFocus) {
-                ctx.fillStyle = 'rgba(0,0,0,.38)';
+                ctx.beginPath();
+                const r3 = sz * 0.18;
+                ctx.moveTo(-half+r3,-half); ctx.lineTo(half-r3,-half);
+                ctx.quadraticCurveTo(half,-half,half,-half+r3); ctx.lineTo(half,half-r3);
+                ctx.quadraticCurveTo(half,half,half-r3,half); ctx.lineTo(-half+r3,half);
+                ctx.quadraticCurveTo(-half,half,-half,half-r3); ctx.lineTo(-half,-half+r3);
+                ctx.quadraticCurveTo(-half,-half,-half+r3,-half); ctx.closePath();
+                ctx.fillStyle = 'rgba(0,0,0,.4)';
                 ctx.fill();
             }
 
