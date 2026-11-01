@@ -2589,21 +2589,40 @@ async function playerDynamicNext() {
     const listenedHalf = durationMs ? (listenedMs >= durationMs * 0.5) : false;
 
     try {
-        const mapTrackKeys = lastMapData ? lastMapData.tracks.map(t => t.track_key) : [];
-        const res = await fetch(`${API_BASE_URL}/dynamic-next`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                track_key: playerCurrentTrack.track_key,
-                listened_half: listenedHalf,
-                candidate_track_keys: mapTrackKeys
-            })
-        });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!data.track) return;
+        const candidates = lastMapData ? lastMapData.tracks.filter(
+            t => t.track_key !== playerCurrentTrack.track_key && t.embedding
+        ) : [];
 
-        const nextTrack = data.track;
+        if (candidates.length === 0) return;
+
+        const currentEmb = (lastMapData.tracks.find(t => t.track_key === playerCurrentTrack.track_key) || {}).embedding;
+        if (!currentEmb) return;
+
+        const cosine = (a, b) => {
+            let dot = 0, na = 0, nb = 0;
+            for (let i = 0; i < a.length; i++) { dot += a[i]*b[i]; na += a[i]*a[i]; nb += b[i]*b[i]; }
+            return dot / (Math.sqrt(na) * Math.sqrt(nb));
+        };
+
+        let nextTrack = null;
+        if (listenedHalf) {
+            // 가장 가까운 트랙
+            let best = -Infinity;
+            for (const t of candidates) {
+                const score = cosine(currentEmb, t.embedding);
+                if (score > best) { best = score; nextTrack = t; }
+            }
+        } else {
+            // playlist_count 상위 200개 중 가장 먼 트랙
+            const pool200 = [...candidates].sort((a, b) => b.playlist_count - a.playlist_count).slice(0, 200);
+            let best = Infinity;
+            for (const t of pool200) {
+                const score = cosine(currentEmb, t.embedding);
+                if (score < best) { best = score; nextTrack = t; }
+            }
+        }
+
+        if (!nextTrack) return;
         playerMoveCamToTrack(nextTrack.track_key, !listenedHalf);
         openTrackOnYouTube(nextTrack);
     } catch (e) {

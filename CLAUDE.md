@@ -14,7 +14,8 @@ AI 기반 음악 추천 플레이어 프론트엔드. 바닐라 HTML/CSS/JS, SPA
 index.html           # 단일 HTML 엔트리포인트
 css/styles.css       # 전체 스타일
 js/
-  main.js            # Auth, 탭 전환, 찜/홈피드, 액션 로그, 비주얼 이펙트
+  main.js            # Auth, 탭 전환, 찜/홈피드, 액션 로그, 취향 지도(music-map),
+                     # 플레이어(MusicKit), 다음 곡 선택(playerDynamicNext — JS cosine 계산)
   search.js          # 검색 (트랙/키워드), 검색 결과 표시, 트랙 선택
   recommend.js       # Two-Tower 추천, 앨범 그리드 표시
 ```
@@ -46,6 +47,14 @@ js/
 - `favorite` — 찜 추가/해제
 - `play` — 더블클릭 YouTube 재생
 
+## 다음 곡 선택 (playerDynamicNext)
+`/dynamic-next` API 호출 없이 JS에서 직접 처리.
+- `/music-map` 응답에 각 트랙의 `embedding` (64d float array) 포함됨
+- `listened_half=true` → candidates 중 cosine 가장 가까운 트랙
+- `listened_half=false` → playlist_count 상위 200개 중 cosine 가장 먼 트랙
+- `lastMapData`가 없으면(지도 미오픈) 동작 안 함
+
 ## Notes
 - 비로그인도 검색/추천 가능, 찜/홈피드는 로그인 필요
 - Cloudflare 캐시로 JS 업데이트 지연 가능 → Cmd+Shift+R 필요할 수 있음
+- 배포: git push → Cloudflare Pages 자동 배포
