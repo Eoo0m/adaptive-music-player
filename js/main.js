@@ -2374,19 +2374,21 @@ function updatePlayerWidget(track, isPlaying) {
             artwork: track.cover_image_url ? [{ src: track.cover_image_url, sizes: '512x512', type: 'image/jpeg' }] : [],
         });
         navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
-        navigator.mediaSession.setActionHandler('nexttrack', () => {
-            console.log('🎧 Media Session: nexttrack fired');
-            playerDynamicNext();
-        });
         navigator.mediaSession.setActionHandler('play', () => {
-            console.log('🎧 Media Session: play fired');
-            playerTogglePlayPause();
+            console.log('🎧 MediaSession: play');
+            if (musicKitInstance) musicKitInstance.play();
+            else playerTogglePlayPause();
         });
         navigator.mediaSession.setActionHandler('pause', () => {
-            console.log('🎧 Media Session: pause fired');
-            playerTogglePlayPause();
+            console.log('🎧 MediaSession: pause');
+            if (musicKitInstance) musicKitInstance.pause();
+            else playerTogglePlayPause();
         });
-        console.log('🎧 Media Session handlers registered, state:', navigator.mediaSession.playbackState);
+        navigator.mediaSession.setActionHandler('nexttrack', () => {
+            console.log('🎧 MediaSession: nexttrack');
+            playerDynamicNext();
+        });
+        console.log('🎧 MediaSession handlers registered, playbackState:', navigator.mediaSession.playbackState);
     }
     if (isPlaying) {
         playerPlayStartTime = Date.now();
