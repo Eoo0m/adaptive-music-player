@@ -2298,21 +2298,25 @@ function renderMusicMap(canvas, tracks) {
             lastMapData = null;
             mapPrefetchPromise = null;
 
-            // 앨범커버 날아다니는 애니메이션
-            const covers = (lastFavorites || []).map(f => f.cover_image_url).filter(Boolean);
-            const anim = showMapRebuildAnimation(covers);
+            const canvasWrap = document.getElementById('mapCanvasWrap');
+            const loading = document.getElementById('mapLoading');
+            const loadingMsg = document.getElementById('mapLoadingMsg');
+            if (canvasWrap) canvasWrap.classList.add('hidden');
+            if (loading) { loading.classList.remove('hidden'); if (loadingMsg) loadingMsg.textContent = '취향 지도 생성 중...'; }
 
             try {
                 const canvas = document.getElementById('mapCanvas');
                 const data = await fetchMusicMapData();
-                anim.finish();
                 if (!data) return;
                 lastMapData = data;
                 const favKeys = new Set((lastFavorites || []).map(f => f.track_key));
                 data.tracks.forEach(t => { t.is_favorite = favKeys.has(t.track_key); });
+                if (loading) loading.classList.add('hidden');
+                if (canvasWrap) canvasWrap.classList.remove('hidden');
                 if (canvas) renderMusicMap(canvas, data.tracks);
             } catch(e) {
-                anim.finish();
+                if (loading) loading.classList.add('hidden');
+                if (canvasWrap) canvasWrap.classList.remove('hidden');
                 console.error('지도 새로고침 실패:', e);
             } finally {
                 refreshBtn.classList.remove('loading');
