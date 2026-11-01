@@ -2109,10 +2109,11 @@ function renderMusicMap(canvas, tracks) {
             }
 
             // 테두리
-            if (isSeed || isFav || isHov) {
+            if (isPlaying || isSeed || isFav || isHov) {
                 ctx.save(); ctx.translate(sx,sy);
                 ctx.beginPath(); roundRect(ctx,-half,-half,size,size,r);
-                if (isFav) { ctx.strokeStyle='#1db954'; ctx.lineWidth=Math.max(3,size*.065); ctx.shadowColor='#1db954'; ctx.shadowBlur=isHov?size*.55:size*.3; }
+                if (isPlaying) { ctx.strokeStyle='#4fc3f7'; ctx.lineWidth=Math.max(3,size*.07); ctx.shadowColor='#4fc3f7'; ctx.shadowBlur=size*(0.5 + 0.3 * Math.sin(Date.now() / 280)); }
+                else if (isFav) { ctx.strokeStyle='#1db954'; ctx.lineWidth=Math.max(3,size*.065); ctx.shadowColor='#1db954'; ctx.shadowBlur=isHov?size*.55:size*.3; }
                 else if (isSeed) { ctx.strokeStyle='#1db954'; ctx.lineWidth=Math.max(2,size*.045); ctx.shadowColor='#1db954'; ctx.shadowBlur=isHov?size*.45:size*.2; }
                 else if (isBridge) { ctx.strokeStyle='#4a9eff'; ctx.lineWidth=Math.max(2,size*.04); ctx.shadowColor='#4a9eff'; ctx.shadowBlur=isHov?size*.45:size*.2; }
                 else { ctx.strokeStyle='rgba(255,255,255,.8)'; ctx.lineWidth=Math.max(1.5,size*.03); ctx.shadowColor='rgba(255,255,255,.35)'; ctx.shadowBlur=size*.25; }
