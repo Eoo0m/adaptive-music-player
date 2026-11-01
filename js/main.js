@@ -1366,19 +1366,48 @@ async function loadDefaultTracks() {
     if (!container || container.innerHTML.trim()) return;
 
     try {
-        let data = _homeFeedCache;
-        if (!data) {
-            const res = await fetch(`${API_BASE_URL}/home-feed-v2`);
-            if (!res.ok) throw new Error();
-            data = await res.json();
-            _homeFeedCache = data;
+        // 홈피드 + top-tracks 병렬 로드
+        const [feedRes, topRes] = await Promise.all([
+            _homeFeedCache
+                ? Promise.resolve({ ok: true, _cached: true })
+                : fetch(`${API_BASE_URL}/home-feed-v2`),
+            fetch(`${API_BASE_URL}/top-tracks?limit=100`)
+        ]);
+
+        let feedData = _homeFeedCache;
+        if (!feedData && feedRes.ok) {
+            feedData = await feedRes.json();
+            _homeFeedCache = feedData;
+        }
+        const feedTracks = (feedData?.tracks || []);
+
+        // top-tracks 랜덤 10개
+        let topTracks = [];
+        if (topRes.ok) {
+            const topData = await topRes.json();
+            const all = topData.tracks || [];
+            const feedKeys = new Set(feedTracks.map(t => t.track_key));
+            const pool = all.filter(t => !feedKeys.has(t.track_key));
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+            topTracks = pool.slice(0, 10);
         }
 
-        const tracks = data.tracks || [];
-        if (!tracks.length || container.innerHTML.trim()) return;
+        if (container.innerHTML.trim()) return;
 
-        setCurrentCandidates(tracks);
-        renderHomeFeed(tracks, container);
+        // #searchResults: 홈피드 20개 리스트
+        renderHomeFeed(feedTracks, container);
+
+        // #trackInfo: top10 + 홈피드10 그리드 (20개)
+        const trackInfo = document.getElementById('trackInfo');
+        if (trackInfo && !trackInfo.innerHTML.trim()) {
+            const gridTracks = [...topTracks, ...feedTracks.slice(0, 20 - topTracks.length)];
+            setCurrentCandidates(gridTracks);
+            updateTrackDisplay(gridTracks, 0);
+            trackInfo.classList.remove('hidden');
+        }
     } catch (e) {
         // 실패 시 조용히 무시
     }

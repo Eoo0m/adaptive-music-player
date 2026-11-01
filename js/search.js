@@ -271,7 +271,7 @@ async function showRecommendations(selectedTrack) {
         if (d.error) {
             alert(d.error);
         } else if (d.recommendations?.length > 0) {
-            const displayTracks = [selectedTrack, ...d.recommendations.slice(0, 14)];
+            const displayTracks = [selectedTrack, ...d.recommendations.slice(0, 19)];
             updateTrackDisplay(displayTracks, 0);
         } else {
             alert('추천곡을 찾을 수 없습니다.');
@@ -298,7 +298,7 @@ function updateTrackDisplay(tracks, currentIndex) {
     trackGrid.className = `track-grid ${recommendationViewMode === 'list' ? 'track-list' : ''}`;
     trackInfoContainer.appendChild(trackGrid);
 
-    const endIdx = Math.min(tracks.length, currentIndex + 15);
+    const endIdx = Math.min(tracks.length, currentIndex + 20);
     const tracksToDisplay = [];
     for (let i = currentIndex; i < endIdx; i++) {
         tracksToDisplay.push({ track: tracks[i], originalIndex: i });
