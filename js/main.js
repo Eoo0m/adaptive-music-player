@@ -1400,7 +1400,7 @@ async function loadDefaultTracks() {
         // #trackInfo: top10 + 홈피드10 그리드 (20개)
         const trackInfo = document.getElementById('trackInfo');
         if (trackInfo && !trackInfo.innerHTML.trim()) {
-            const gridTracks = [...topTracks, ...feedTracks.slice(0, 20 - topTracks.length)];
+            const gridTracks = [...topTracks, ...feedTracks.slice(0, 24 - topTracks.length)];
             setCurrentCandidates(gridTracks);
             updateTrackDisplay(gridTracks, 0);
             trackInfo.classList.remove('hidden');
