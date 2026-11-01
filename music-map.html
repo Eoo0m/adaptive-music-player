@@ -295,9 +295,7 @@ canvas { display: block; }
   color: #fff;
   font-size: 14px;
   outline: none;
-  transition: border-color .2s;
 }
-#map-search-input:focus { border-color: #1db954; }
 #map-search-input::placeholder { color: rgba(255,255,255,.35); }
 
 #map-refresh-btn {
@@ -884,7 +882,7 @@ wrap.addEventListener('mousedown', e => {
   wrap.classList.add('grabbing');
 });
 
-wrap.addEventListener('mousemove', e => {
+window.addEventListener('mousemove', e => {
   if (!mapData) return;
   if (isDragging) {
     cam.tx = camStart.x + (e.clientX - dragStart.x);
@@ -902,15 +900,13 @@ wrap.addEventListener('mousemove', e => {
 });
 
 window.addEventListener('mouseup', e => {
+  const moved = Math.abs(e.clientX - dragStart.x) > 4 || Math.abs(e.clientY - dragStart.y) > 4;
   isDragging = false;
   wrap.classList.remove('grabbing');
-});
-
-wrap.addEventListener('mouseleave', () => {
-  isDragging = false;
-  wrap.classList.remove('grabbing');
-  hoveredTrack = null;
-  hideTooltip();
+  if (!moved) {
+    const track = trackAt(e.clientX, e.clientY);
+    if (track) centerOn(track);
+  }
 });
 
 // 휠 줌
@@ -981,7 +977,8 @@ wrap.addEventListener('touchend', e => {
     const t = e.changedTouches[0];
     const dx = t.clientX - touchStartPos.x, dy = t.clientY - touchStartPos.y;
     if (Math.sqrt(dx*dx + dy*dy) < 10) {
-      trackAt(t.clientX, t.clientY); // 탭 감지만
+      const track = trackAt(t.clientX, t.clientY);
+      if (track) centerOn(track);
     }
   }
   touchStartPos = null;
