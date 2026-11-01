@@ -231,9 +231,7 @@ async function selectTrack(trackData) {
 
     await showRecommendations(trackData);
 
-    // 검색 인터페이스를 미니 모드로 전환하고 오른쪽 상단에 표시
     const searchInterface = document.getElementById('initialSongInput');
-    searchInterface.classList.add('mini');
     searchInterface.classList.remove('hidden');
 
     const trackInfo = document.getElementById('trackInfo');
