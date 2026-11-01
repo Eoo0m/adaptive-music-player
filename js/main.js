@@ -777,6 +777,21 @@ function createDust() {
 
 // ===== Event Listeners =====
 document.addEventListener('DOMContentLoaded', () => {
+    // 스페이스바 재생/일시정지
+    document.addEventListener('keydown', e => {
+        if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            playerTogglePlayPause();
+        }
+    });
+
+    // Media Session API — 에어팟 두번 탭(다음곡), 한번 탭(재생/정지) 연동
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.setActionHandler('play', () => playerTogglePlayPause());
+        navigator.mediaSession.setActionHandler('pause', () => playerTogglePlayPause());
+        navigator.mediaSession.setActionHandler('nexttrack', () => playerDynamicNext());
+    }
+
     // 엔터로 검색
     document.getElementById('searchInput').addEventListener('keypress', e => {
         if (e.key === 'Enter') doSearch();
@@ -2350,6 +2365,16 @@ function updatePlayerWidget(track, isPlaying) {
     const isNewTrack = !playerCurrentTrack || playerCurrentTrack.track_key !== track.track_key;
     playerCurrentTrack = track;
     playerIsPlaying = isPlaying;
+    // Media Session 메타데이터 업데이트 (에어팟 등 하드웨어 버튼 연동)
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: track.title || '',
+            artist: track.artist || '',
+            album: track.album || '',
+            artwork: track.cover_image_url ? [{ src: track.cover_image_url, sizes: '512x512', type: 'image/jpeg' }] : [],
+        });
+        navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    }
     if (isPlaying) {
         playerPlayStartTime = Date.now();
         // MusicKit에서 duration 가져오기
