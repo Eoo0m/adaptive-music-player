@@ -1638,7 +1638,8 @@ body {
     text-align: center;
     color: rgba(255,255,255,.75);
     font-size: 14px;
-    margin-bottom: 20px;
+    margin-top: 12px;
+    margin-bottom: 0;
     letter-spacing: .2px;
     transition: opacity .4s ease;
 }
