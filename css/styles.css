@@ -1600,6 +1600,13 @@ body {
 .search-section {
     margin-bottom: 0;
 }
+.search-guide-text {
+    text-align: center;
+    color: rgba(255,255,255,.35);
+    font-size: 13px;
+    margin-bottom: 16px;
+    letter-spacing: .2px;
+}
 
 .loading-indicator {
     color: rgba(255, 255, 255, 0.7);
