@@ -1632,8 +1632,9 @@ body > .loading-indicator {
 
 .search-row {
     display: flex;
+    align-items: center;
     gap: 10px;
-    margin-bottom: 0;
+    width: 100%;
 }
 
 
