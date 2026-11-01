@@ -2228,7 +2228,22 @@ function renderMusicMap(canvas, tracks) {
     },{passive:false});
     newWrap.addEventListener('dblclick', e => {
         const item=hitTest(e.clientX,e.clientY);
-        if (item) openTrackOnYouTube(item.track);
+        if (!item) return;
+        // 플레이 버튼 flash
+        const flash = document.createElement('div');
+        flash.style.cssText = `position:fixed;left:${item.screenX}px;top:${item.screenY}px;transform:translate(-50%,-50%) scale(0.6);width:56px;height:56px;border-radius:50%;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:999;transition:transform .18s ease,opacity .3s ease;`;
+        flash.innerHTML = '<svg width="22" height="22" viewBox="0 0 22 22" fill="white"><polygon points="6,3 19,11 6,19"/></svg>';
+        document.body.appendChild(flash);
+        requestAnimationFrame(() => {
+            flash.style.transform = 'translate(-50%,-50%) scale(1)';
+            flash.style.opacity = '1';
+        });
+        setTimeout(() => {
+            flash.style.opacity = '0';
+            flash.style.transform = 'translate(-50%,-50%) scale(1.3)';
+            setTimeout(() => flash.remove(), 300);
+        }, 350);
+        openTrackOnYouTube(item.track);
     });
 }
 
