@@ -102,6 +102,7 @@ function continueAsGuest() {
     document.getElementById('initialSongInput').classList.remove('hidden');
     document.getElementById('sideTab').classList.remove('hidden');
     document.getElementById('bottomTab').classList.remove('hidden');
+    loadDefaultTracks();
 }
 
 // ===== Tab Navigation =====
@@ -484,7 +485,7 @@ async function toggleFavorite(track, btn) {
             });
             if (res.ok) {
                 btn.classList.remove('favorited');
-                btn.innerHTML = '&#9825;';
+                btn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
                 lastFavorites = lastFavorites.filter(f => f.track_key !== track.track_key);
                 logAction('favorite', { selected_track_key: track.track_key, candidate_track_keys: currentCandidateKeys, extra: 'remove' });
             }
@@ -496,7 +497,7 @@ async function toggleFavorite(track, btn) {
             });
             if (res.ok) {
                 btn.classList.add('favorited');
-                btn.innerHTML = '&#9829;';
+                btn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
                 btn.classList.remove('pop');
                 void btn.offsetWidth;
                 btn.classList.add('pop');
@@ -715,7 +716,8 @@ function createTrackCard(track, isCurrent, singleAction, options = {}) {
 
     const heartBtn = document.createElement('button');
     heartBtn.className = `heart-btn${options.favorited ? ' favorited' : ''}`;
-    heartBtn.innerHTML = options.favorited ? '&#9829;' : '&#9825;';
+    const heartSvg = (filled) => `<svg viewBox="0 0 24 24" width="16" height="16" fill="${filled ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+    heartBtn.innerHTML = heartSvg(options.favorited);
     heartBtn.onclick = (e) => {
         e.stopPropagation();
         toggleFavorite(track, heartBtn);
@@ -1312,6 +1314,62 @@ function renderPlaylistBuilder() {
 // ===== Initialization =====
 
 // 페이지 로드 시 인증 확인 후 화면 결정
+async function loadDefaultTracks() {
+    const container = document.getElementById('searchResults');
+    if (!container || container.innerHTML.trim()) return; // 이미 검색 결과 있으면 스킵
+
+    try {
+        let tracks;
+        const favs = lastFavorites && lastFavorites.length > 0 ? lastFavorites : null;
+
+        if (favs) {
+            // 찜한 곡 중 랜덤 1개 기준으로 유사곡 20개
+            const seed = favs[Math.floor(Math.random() * favs.length)];
+            const res = await fetch(`${API_BASE_URL}/find-similar-tracks`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ track_key: seed.track_key, num_results: 20 })
+            });
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+            tracks = (data.results || []).map(t => ({
+                track_key: t.track_key, title: t.title, artist: t.artist,
+                album: t.album, cover_image_url: t.cover_image_url,
+                apple_music_id: t.apple_music_id, playlist_count: t.playlist_count
+            }));
+        } else {
+            // 찜 없으면 인기곡 200개 중 랜덤 20개
+            const res = await fetch(`${API_BASE_URL}/top-tracks?limit=200`);
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+            const all = data.tracks || [];
+            for (let i = all.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [all[i], all[j]] = [all[j], all[i]];
+            }
+            tracks = all.slice(0, 20);
+        }
+
+        if (!tracks || tracks.length === 0 || container.innerHTML.trim()) return;
+
+        const grid = document.createElement('div');
+        grid.className = 'track-grid';
+        setCurrentCandidates(tracks);
+        const favSet = new Set((lastFavorites || []).map(f => f.track_key));
+        tracks.forEach(track => {
+            const div = createTrackCard(track, false, () => selectTrack(track), {
+                favorited: favSet.has(track.track_key),
+                candidateKeys: tracks.map(t => t.track_key)
+            });
+            grid.appendChild(div);
+        });
+        // 아직 사용자가 검색 안 했으면 표시
+        if (!container.innerHTML.trim()) container.appendChild(grid);
+    } catch (e) {
+        // 실패 시 조용히 무시
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     updateAppleMusicBtn();
     await checkAuth();
@@ -1321,7 +1379,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('initialSongInput').classList.remove('hidden');
         document.getElementById('sideTab').classList.remove('hidden');
         document.getElementById('bottomTab').classList.remove('hidden');
-        loadFavorites(); // 찜 목록은 하트 표시용으로 백그라운드 로드
+        loadFavorites().then(() => loadDefaultTracks()); // 찜 로드 후 기본 트랙 표시
         // Apple Music 이전 연동 이력 있으면 자동 재연동
         if (localStorage.getItem('apple_music_linked') === '1') {
             if (window.MusicKit) {
