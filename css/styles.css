@@ -1526,16 +1526,14 @@ body {
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    background: transparent;
+    background: #0a0b12;
     padding: 16px 0 0;
     color: #fff;
     text-align: center;
     max-width: 600px;
     width: 80%;
-    box-shadow: none;
-    border: none;
-    backdrop-filter: none;
     z-index: 100;
+    border-radius: 0 0 10px 10px;
 }
 
 /* Mini search bar mode - 동일 위치 유지 */
@@ -1820,21 +1818,9 @@ body > .loading-indicator {
 
 /* ===== Search Result Rows (지도 탭 스타일) ===== */
 #searchResults {
-    position: fixed;
-    top: 56px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80%;
-    max-width: 600px;
-    z-index: 500;
     max-height: 50vh;
     overflow-y: auto;
     text-align: left;
-    background: #0a0b12;
-    border-radius: 0 0 10px 10px;
-    border: 1px solid rgba(255,255,255,.08);
-    border-top: none;
-    padding: 4px 0;
 }
 .search-result-row {
     display: flex;
