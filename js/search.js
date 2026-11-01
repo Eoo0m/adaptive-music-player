@@ -125,7 +125,25 @@ async function searchByKeyword(retryCount = 0) {
             console.log('📊 찾은 플레이리스트 수:', data.debug.playlists_found);
         }
 
-        displaySearchResults(data.results, 'keyword');
+        const tracks = (data.results || []).map(r => ({
+            ...r,
+            track: r.track_name || r.track || 'Unknown'
+        }));
+
+        // 검색창 닫기
+        document.getElementById('searchResults').innerHTML = '';
+        document.getElementById('searchInput').value = '';
+
+        // 추천 그리드에 표시
+        updateTrackDisplay(tracks, 0);
+
+        const searchInterface = document.getElementById('initialSongInput');
+        if (searchInterface) {
+            searchInterface.classList.add('mini');
+            searchInterface.classList.remove('hidden');
+        }
+        const trackInfo = document.getElementById('trackInfo');
+        if (trackInfo) trackInfo.classList.remove('hidden');
 
     } catch (e) {
         clearTimeout(timeoutId);
