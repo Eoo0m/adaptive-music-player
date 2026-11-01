@@ -32,10 +32,6 @@ async function searchByTrack(retryCount = 0) {
         return;
     }
 
-    const searchInput = document.getElementById('searchInput');
-    searchInput.disabled = true;
-    showLoadingIndicator('검색중입니다.');
-
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -80,9 +76,6 @@ async function searchByTrack(retryCount = 0) {
         } else {
             document.getElementById('searchResults').innerHTML = '<div class="error-message">검색 서비스에 연결할 수 없습니다.</div>';
         }
-    } finally {
-        searchInput.disabled = false;
-        hideLoadingIndicator();
     }
 }
 
@@ -93,10 +86,6 @@ async function searchByKeyword(retryCount = 0) {
         alert('키워드를 입력해주세요.');
         return;
     }
-
-    const searchInput = document.getElementById('searchInput');
-    searchInput.disabled = true;
-    showLoadingIndicator('검색중입니다.');
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -148,9 +137,6 @@ async function searchByKeyword(retryCount = 0) {
         } else {
             alert('키워드 검색 중 오류가 발생했습니다.');
         }
-    } finally {
-        searchInput.disabled = false;
-        hideLoadingIndicator();
     }
 }
 
