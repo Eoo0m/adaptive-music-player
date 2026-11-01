@@ -2067,7 +2067,7 @@ function renderMusicMap(canvas, tracks) {
 
             const ndx = (sx - cx) / (lw() * 0.48);
             const ndy = (sy - cy) / (lh() * 0.48);
-            const pf = Math.max(0.3, 1 - Math.sqrt(ndx*ndx+ndy*ndy) * 0.58);
+            const pf = Math.max(0.22, 1 - Math.sqrt(ndx*ndx+ndy*ndy) * 0.75);
             const isPlaying = playerIsPlaying && playerCurrentTrack && playerCurrentTrack.track_key === track.track_key;
             const pulse = isPlaying ? (1 + 0.07 * Math.sin(Date.now() / 280)) : 1;
             const size = COVER * cam.scale * hs * pf * pulse;
