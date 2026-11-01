@@ -1170,10 +1170,11 @@ function createMapResultItem(track) {
   const actions = document.createElement('div');
   actions.className = 'map-result-actions';
 
+  const isFav = mapFavoriteKeys.has(track.track_key);
   const heartBtn = document.createElement('button');
-  heartBtn.className = 'map-result-heart' + (mapFavoriteKeys.has(track.track_key) ? ' active' : '');
-  heartBtn.textContent = mapFavoriteKeys.has(track.track_key) ? '♥' : '♡';
+  heartBtn.className = 'map-result-heart' + (isFav ? ' active' : '');
   heartBtn.title = '찜';
+  heartBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
   heartBtn.onclick = async (e) => {
     e.stopPropagation();
     await toggleMapFavorite(track, heartBtn);
@@ -1181,8 +1182,8 @@ function createMapResultItem(track) {
 
   const playBtn = document.createElement('button');
   playBtn.className = 'map-result-play';
-  playBtn.textContent = '▶';
   playBtn.title = 'YouTube에서 재생';
+  playBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>`;
   playBtn.onclick = (e) => {
     e.stopPropagation();
     const q = encodeURIComponent(`${track.title || track.track} ${track.artist}`);
@@ -1265,7 +1266,7 @@ async function toggleMapFavorite(track, btn) {
       });
       mapFavoriteKeys.delete(track.track_key);
       btn.className = 'map-result-heart';
-      btn.textContent = '♡';
+      btn.querySelector('svg').setAttribute('fill', 'none');
     } else {
       await fetch(`${API}/favorites`, {
         method: 'POST',
@@ -1274,7 +1275,7 @@ async function toggleMapFavorite(track, btn) {
       });
       mapFavoriteKeys.add(track.track_key);
       btn.className = 'map-result-heart active';
-      btn.textContent = '♥';
+      btn.querySelector('svg').setAttribute('fill', 'currentColor');
     }
   } catch(e) { alert('찜 처리 실패'); }
 }
