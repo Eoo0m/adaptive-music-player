@@ -1343,78 +1343,61 @@ function showMapRebuildAnimation(coverUrls) {
     overlay.appendChild(msg);
     document.body.appendChild(overlay);
 
-    setTimeout(() => { msg.style.opacity = '1'; }, 100);
+    // 검은 화면으로 페이드인
+    requestAnimationFrame(() => {
+        overlay.classList.add('visible');
+        setTimeout(() => { msg.style.opacity = '1'; }, 300);
+    });
 
     const W = window.innerWidth, H = window.innerHeight;
-    const SIZE = Math.min(W, H) * 0.13;
+    const PADDING = 40;
     const urls = coverUrls.length > 0 ? coverUrls : [];
-    const timers = [];
-    let finished = false;
-
-    function spawnCover() {
-        if (finished) return;
-        const url = urls[Math.floor(Math.random() * urls.length)];
-        if (!url) return;
-
-        const img = document.createElement('img');
-        img.className = 'map-rebuild-cover';
-        const sz = SIZE * (0.7 + Math.random() * 0.6);
-        img.style.width = sz + 'px';
-        img.style.height = sz + 'px';
-
-        // 화면 가장자리 4면 중 하나에서 시작
-        const side = Math.floor(Math.random() * 4);
-        let startX, startY, endX, endY;
-        if (side === 0) { // 왼쪽
-            startX = -sz; startY = Math.random() * H;
-            endX = W * (0.3 + Math.random() * 0.6); endY = Math.random() * H;
-        } else if (side === 1) { // 오른쪽
-            startX = W + sz; startY = Math.random() * H;
-            endX = W * (0.05 + Math.random() * 0.5); endY = Math.random() * H;
-        } else if (side === 2) { // 위
-            startX = Math.random() * W; startY = -sz;
-            endX = Math.random() * W; endY = H * (0.3 + Math.random() * 0.5);
-        } else { // 아래
-            startX = Math.random() * W; startY = H + sz;
-            endX = Math.random() * W; endY = H * (0.05 + Math.random() * 0.5);
-        }
-
-        img.style.left = startX + 'px';
-        img.style.top = startY + 'px';
-        img.style.opacity = '0';
-        img.src = url;
-        overlay.appendChild(img);
-
-        const duration = 900 + Math.random() * 600;
-        let start = null;
-
-        function step(ts) {
-            if (!start) start = ts;
-            const p = Math.min((ts - start) / duration, 1);
-            const ease = p < 0.5 ? 2*p*p : -1+(4-2*p)*p;
-            const x = startX + (endX - startX) * ease;
-            const y = startY + (endY - startY) * ease;
-            const alpha = p < 0.15 ? p/0.15 : p > 0.75 ? (1-p)/0.25 : 1;
-            img.style.transform = `translate(${x - startX}px, ${y - startY}px) rotate(${(p*15 - 7) * (side % 2 === 0 ? 1 : -1)}deg)`;
-            img.style.opacity = (alpha * 0.85).toFixed(2);
-            if (p < 1 && !finished) requestAnimationFrame(step);
-            else img.remove();
-        }
-        requestAnimationFrame(step);
+    if (urls.length === 0) {
+        return {
+            finish() {
+                msg.style.opacity = '0';
+                overlay.classList.remove('visible');
+                setTimeout(() => overlay.remove(), 400);
+            }
+        };
     }
 
-    // 일정 간격으로 계속 스폰
-    spawnCover();
-    const t1 = setInterval(spawnCover, 150);
-    timers.push(t1);
+    // 격자 크기 계산 — 화면을 꽉 채우도록
+    const count = Math.min(urls.length * 3, 80); // 반복 허용해서 격자 채움
+    const cols = Math.ceil(Math.sqrt(count * (W / H)));
+    const rows = Math.ceil(count / cols);
+    const cellW = (W - PADDING * 2) / cols;
+    const cellH = (H - PADDING * 2) / rows;
+    const SIZE = Math.floor(Math.min(cellW, cellH) * 0.82);
+    const GAP_X = (W - PADDING * 2 - cols * SIZE) / Math.max(cols - 1, 1);
+    const GAP_Y = (H - PADDING * 2 - rows * SIZE) / Math.max(rows - 1, 1);
+
+    const imgs = [];
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const idx = (r * cols + c) % urls.length;
+            const img = document.createElement('img');
+            img.className = 'map-rebuild-cover';
+            img.style.width = SIZE + 'px';
+            img.style.height = SIZE + 'px';
+            img.style.left = (PADDING + c * (SIZE + GAP_X)) + 'px';
+            img.style.top  = (PADDING + r * (SIZE + GAP_Y)) + 'px';
+            img.src = urls[idx];
+            overlay.appendChild(img);
+            imgs.push({ el: img, row: r, col: c });
+        }
+    }
+
+    // 왼쪽 위 → 오른쪽 아래 순서로 등장 (대각선 웨이브)
+    imgs.forEach(({ el, row, col }) => {
+        const delay = (row + col) * 60;
+        setTimeout(() => { el.classList.add('visible'); }, 300 + delay);
+    });
 
     return {
         finish() {
-            finished = true;
-            timers.forEach(clearInterval);
             msg.style.opacity = '0';
-            overlay.style.transition = 'opacity .4s';
-            overlay.style.opacity = '0';
+            overlay.classList.remove('visible');
             setTimeout(() => overlay.remove(), 400);
         }
     };

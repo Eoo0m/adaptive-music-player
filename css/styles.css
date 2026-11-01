@@ -1998,14 +1998,25 @@ body > .loading-indicator {
     position: fixed;
     inset: 0;
     z-index: 300;
-    pointer-events: none;
+    background: #000;
     overflow: hidden;
+    opacity: 0;
+    transition: opacity .3s;
+}
+.map-rebuild-overlay.visible {
+    opacity: 1;
 }
 .map-rebuild-cover {
     position: absolute;
     border-radius: 10px;
     object-fit: cover;
-    will-change: transform, opacity;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity .35s ease, transform .35s ease;
+}
+.map-rebuild-cover.visible {
+    opacity: 1;
+    transform: scale(1);
 }
 .map-rebuild-msg {
     position: absolute;
