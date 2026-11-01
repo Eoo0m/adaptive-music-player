@@ -99,7 +99,7 @@ async function playWithAppleMusic(track, onFail) {
 
 function continueAsGuest() {
     document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('initialSongInput').classList.remove('hidden');
+    document.getElementById('map-search-overlay').classList.remove('hidden');
     document.getElementById('sideTab').classList.remove('hidden');
     document.getElementById('bottomTab').classList.remove('hidden');
     loadDefaultTracks();
@@ -134,20 +134,20 @@ function switchTab(tab) {
         if (el) el.classList.toggle('active', id === btMap[tab]);
     });
 
-    const searchInterface = document.getElementById('initialSongInput');
+    const searchInterface = document.getElementById('map-search-overlay');
     const favoritesView = document.getElementById('favoritesView');
     const homeFeedView = document.getElementById('homeFeedView');
     const mapView = document.getElementById('mapView');
     const trackInfo = document.getElementById('trackInfo');
 
-    searchInterface.classList.add('hidden');
+    searchInterface.classList.remove('visible');
     favoritesView.classList.add('hidden');
     homeFeedView.classList.add('hidden');
     mapView.classList.add('hidden');
     trackInfo.classList.add('hidden');
 
     if (tab === 'search') {
-        searchInterface.classList.remove('hidden');
+        searchInterface.classList.add('visible');
         trackInfo.classList.remove('hidden');
     } else if (tab === 'favorites') {
         favoritesView.classList.remove('hidden');
@@ -1413,7 +1413,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (currentUser) {
         // 로그인 상태 → 바로 검색 화면
         document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('initialSongInput').classList.remove('hidden');
+        document.getElementById('map-search-overlay').classList.remove('hidden');
         document.getElementById('sideTab').classList.remove('hidden');
         document.getElementById('bottomTab').classList.remove('hidden');
         loadFavorites().then(() => loadDefaultTracks()); // 찜 로드 후 기본 트랙 표시

@@ -231,8 +231,8 @@ async function selectTrack(trackData) {
 
     await showRecommendations(trackData);
 
-    const searchInterface = document.getElementById('initialSongInput');
-    searchInterface.classList.remove('hidden');
+    const searchInterface = document.getElementById('map-search-overlay');
+    searchInterface.classList.add('visible');
 
     const trackInfo = document.getElementById('trackInfo');
     if (trackInfo) trackInfo.classList.remove('hidden');
