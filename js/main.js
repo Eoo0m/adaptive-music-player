@@ -1966,6 +1966,8 @@ async function showMusicMap() {
         loading.classList.add('hidden');
         wrap.classList.remove('hidden');
         renderMusicMap(canvas, data.tracks);
+        // 현재 재생 중인 트랙이 있으면 즉시 프리패치
+        if (playerCurrentTrack) prefetchDynamicNext(playerCurrentTrack.track_key, true);
     } catch(e) {
         console.error('Map load error:', e);
         loading.classList.add('hidden');
@@ -2613,6 +2615,10 @@ function updatePlayerWidget(track, isPlaying) {
         } else {
             playerCurrentDuration = null;
         }
+        // 새 트랙 재생 시작 → 다음 곡 프리패치 (지도 탭일 때만)
+        if (isNewTrack && currentTab === 'map' && lastMapData) {
+            prefetchDynamicNext(track.track_key, true);
+        }
     }
 
     const widget = document.getElementById('playerWidget');
@@ -2669,6 +2675,35 @@ function playerTogglePlayPause() {
     }
 }
 
+// 프리패치 캐시: { trackKey, listenedHalf, tracks }
+let dynamicNextCache = null;
+let dynamicNextFetching = false;
+
+async function prefetchDynamicNext(trackKey, listenedHalf) {
+    if (!trackKey || dynamicNextFetching) return;
+    dynamicNextFetching = true;
+    try {
+        const candidateKeys = lastMapData
+            ? lastMapData.tracks.filter(t => t.track_key !== trackKey).map(t => t.track_key)
+            : [];
+        const body = { track_key: trackKey, listened_half: listenedHalf };
+        if (candidateKeys.length > 0) body.candidate_track_keys = candidateKeys;
+        const res = await fetch(`${API_BASE_URL}/dynamic-next`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error(`dynamic-next ${res.status}`);
+        const data = await res.json();
+        dynamicNextCache = { trackKey, listenedHalf, tracks: data.tracks || [] };
+    } catch (e) {
+        console.warn('prefetchDynamicNext failed:', e);
+        dynamicNextCache = null;
+    } finally {
+        dynamicNextFetching = false;
+    }
+}
+
 async function playerDynamicNext() {
     if (!playerCurrentTrack) return;
 
@@ -2684,52 +2719,35 @@ async function playerDynamicNext() {
 
     if (currentTab !== 'map' || !lastMapData) return;
 
-    // 50% 기준: 재생 시작부터 경과 시간 vs 곡 길이
-    let listenedMs = playerPlayStartTime ? (Date.now() - playerPlayStartTime) : 0;
+    const listenedMs = playerPlayStartTime ? (Date.now() - playerPlayStartTime) : 0;
     let durationMs = playerCurrentDuration;
     if (!durationMs && musicKitInstance && musicKitInstance.currentPlaybackDuration) {
         durationMs = musicKitInstance.currentPlaybackDuration * 1000;
     }
-
     const listenedHalf = durationMs ? (listenedMs >= durationMs * 0.5) : false;
+    const trackKey = playerCurrentTrack.track_key;
 
     try {
-        const candidates = lastMapData ? lastMapData.tracks.filter(
-            t => t.track_key !== playerCurrentTrack.track_key && t.embedding
-        ) : [];
-
-        if (candidates.length === 0) return;
-
-        const currentEmb = (lastMapData.tracks.find(t => t.track_key === playerCurrentTrack.track_key) || {}).embedding;
-        if (!currentEmb) return;
-
-        const cosine = (a, b) => {
-            let dot = 0, na = 0, nb = 0;
-            for (let i = 0; i < a.length; i++) { dot += a[i]*b[i]; na += a[i]*a[i]; nb += b[i]*b[i]; }
-            return dot / (Math.sqrt(na) * Math.sqrt(nb));
-        };
-
-        const RETRY_COUNT = 4;
+        // 캐시 hit: 같은 트랙+모드이면 즉시 사용
         let ranked;
-        if (listenedHalf) {
-            // 가장 가까운 순으로 상위 N개
-            ranked = candidates
-                .map(t => ({ t, score: cosine(currentEmb, t.embedding) }))
-                .sort((a, b) => b.score - a.score)
-                .slice(0, RETRY_COUNT)
-                .map(x => x.t);
+        if (dynamicNextCache && dynamicNextCache.trackKey === trackKey && dynamicNextCache.listenedHalf === listenedHalf && dynamicNextCache.tracks.length > 0) {
+            ranked = dynamicNextCache.tracks;
+            dynamicNextCache = null;
         } else {
-            // 전체 candidates 중 cosine 거리 먼 상위 30% → 랜덤 셔플 후 앞 N개
-            const scored = candidates
-                .map(t => ({ t, score: cosine(currentEmb, t.embedding) }))
-                .sort((a, b) => a.score - b.score); // 먼 순
-            const top30 = scored.slice(0, Math.max(RETRY_COUNT, Math.floor(scored.length * 0.3)));
-            // Fisher-Yates 셔플
-            for (let i = top30.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [top30[i], top30[j]] = [top30[j], top30[i]];
-            }
-            ranked = top30.slice(0, RETRY_COUNT).map(x => x.t);
+            // 캐시 miss: 직접 fetch
+            const candidateKeys = lastMapData
+                ? lastMapData.tracks.filter(t => t.track_key !== trackKey).map(t => t.track_key)
+                : [];
+            const body = { track_key: trackKey, listened_half: listenedHalf };
+            if (candidateKeys.length > 0) body.candidate_track_keys = candidateKeys;
+            const res = await fetch(`${API_BASE_URL}/dynamic-next`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) throw new Error(`dynamic-next ${res.status}`);
+            const data = await res.json();
+            ranked = data.tracks || [];
         }
 
         if (ranked.length === 0) return;
@@ -2740,11 +2758,13 @@ async function playerDynamicNext() {
             if (idx >= ranked.length) return;
             const track = ranked[idx++];
             playerMoveCamToTrack(track.track_key, !listenedHalf);
+            // 다음 곡 재생 시작 후 즉시 다음 프리패치
             if (musicKitInstance && musicKitInstance.isAuthorized) {
                 playWithAppleMusic(track, tryNext);
             } else {
                 window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(track.title + ' ' + track.artist)}`, '_blank');
             }
+            prefetchDynamicNext(track.track_key, true);
         }
         tryNext();
     } catch (e) {
