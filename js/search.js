@@ -130,6 +130,9 @@ async function searchByKeyword(retryCount = 0) {
             track: r.track_name || r.track || 'Unknown'
         }));
 
+        // 키워드 결과 저장 (트랜스포머 세션 컨텍스트용)
+        window.keywordSearchTracks = tracks;
+
         // 검색창 닫기
         document.getElementById('searchResults').innerHTML = '';
         document.getElementById('searchInput').value = '';

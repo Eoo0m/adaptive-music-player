@@ -25,6 +25,18 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
 
     console.log('🎵 Loading recommendations from track:', track.track_key);
 
+    // 키워드 검색 컨텍스트가 있으면 세션에 포함 (최대 8개)
+    if (window.keywordSearchTracks && window.keywordSearchTracks.length > 0) {
+        const contextKeys = window.keywordSearchTracks
+            .filter(t => t.track_key && t.track_key !== track.track_key)
+            .slice(0, 8)
+            .map(t => t.track_key);
+        clickedTracks = [];
+        contextKeys.forEach(k => addClickedTrack(k));
+        window.keywordSearchTracks = null;
+        console.log(`🔑 Keyword context injected: ${contextKeys.length} tracks`);
+    }
+
     // 클릭한 트랙을 히스토리에 추가
     addClickedTrack(track.track_key);
 
