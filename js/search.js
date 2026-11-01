@@ -195,31 +195,73 @@ function displaySearchResults(results, type) {
 
     if (typeof setGuideText === 'function') setGuideText('앨범 커버를 클릭해 추천을 받고, 더블클릭해 바로 재생해보세요');
 
-    // 검색 결과 후보 저장
-    window.searchCandidateKeys = results.slice(0, 10).map(r => r.track_key).filter(Boolean);
+    const keyword = document.getElementById('searchInput').value.trim();
+    window.searchResultsData = [];
+    window.searchCandidateKeys = results.slice(0, 20).map(r => r.track_key).filter(Boolean);
 
-    let html = '<div class="recommendation-list">';
+    div.innerHTML = '';
+
+    // 키워드 검색 항목 (트랙 모드에서도 상단에 표시)
+    if (keyword) {
+        const keywordRow = document.createElement('div');
+        keywordRow.className = 'search-result-row search-keyword-row';
+        keywordRow.innerHTML = `
+            <div class="search-result-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <div class="search-result-info">
+                <div class="search-result-title">'${keyword}' 키워드 검색</div>
+                <div class="search-result-sub">분위기/감성으로 찾기</div>
+            </div>
+            <div class="search-result-arrow">›</div>
+        `;
+        keywordRow.onclick = () => {
+            const prevMode = searchMode;
+            searchMode = 'keyword';
+            document.getElementById('modeToggleBtn').textContent = '키워드';
+            searchByKeyword();
+            searchMode = prevMode;
+        };
+        div.appendChild(keywordRow);
+    }
+
+    // 트랙 결과 리스트
     results.slice(0, 10).forEach((r, index) => {
-        const coverImageSrc = r.cover_image_url || '';
-        const trackName = type === 'keyword' ? (r.track_name || 'Unknown') : (r.track || 'Unknown');
-        const artistName = r.artist || 'Unknown';
-        const albumName = r.album || 'Unknown';
-
-        // Store track data in a global array to avoid JSON escaping issues
-        if (!window.searchResultsData) window.searchResultsData = [];
         window.searchResultsData[index] = r;
+        const trackName = type === 'keyword' ? (r.track_name || r.track || 'Unknown') : (r.track || r.track_name || 'Unknown');
+        const artistName = r.artist || 'Unknown';
+        const coverSrc = r.cover_image_url || '';
+        const isFav = (lastFavorites || []).some(f => f.track_key === r.track_key);
 
-        html += `
-      <div class="recommendation-item" onclick="selectTrack(window.searchResultsData[${index}])">
-        <img class="rec-album-cover" src="${coverImageSrc}" alt="" style="${!coverImageSrc ? 'display:none;' : ''}">
-        <div class="rec-info">
-          <div class="rec-title">${trackName}</div>
-          <div class="rec-artist">${artistName} - ${albumName}</div>
-        </div>
-      </div>`;
+        const row = document.createElement('div');
+        row.className = 'search-result-row';
+        row.innerHTML = `
+            <img class="search-result-cover" src="${coverSrc}" alt="" ${!coverSrc ? 'style="display:none"' : ''}>
+            ${!coverSrc ? '<div class="search-result-cover search-result-cover-placeholder"></div>' : ''}
+            <div class="search-result-info">
+                <div class="search-result-title">${trackName}</div>
+                <div class="search-result-sub">${artistName}</div>
+            </div>
+            <button class="search-result-heart ${isFav ? 'favorited' : ''}" data-idx="${index}" onclick="event.stopPropagation(); toggleFavoriteFromSearch(${index}, this)">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
+            <button class="search-result-play" onclick="event.stopPropagation(); openTrackOnYouTube(window.searchResultsData[${index}])">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+            </button>
+        `;
+        row.onclick = () => selectTrack(window.searchResultsData[index]);
+        div.appendChild(row);
     });
-    html += '</div>';
-    div.innerHTML = html;
+}
+
+function toggleFavoriteFromSearch(index, btn) {
+    const track = window.searchResultsData[index];
+    if (!track) return;
+    const svg = btn.querySelector('svg');
+    const isFav = btn.classList.contains('favorited');
+    btn.classList.toggle('favorited');
+    if (svg) svg.setAttribute('fill', isFav ? 'none' : 'currentColor');
+    toggleFavorite(track, btn);
 }
 
 // ===== Track Selection =====

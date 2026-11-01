@@ -1858,6 +1858,103 @@ body > .loading-indicator {
     text-align: left
 }
 
+/* ===== Search Result Rows (지도 탭 스타일) ===== */
+#searchResults {
+    margin-top: 8px;
+    max-height: 360px;
+    overflow-y: auto;
+    text-align: left;
+}
+.search-result-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s;
+}
+.search-result-row:hover {
+    background: rgba(255,255,255,.08);
+}
+.search-result-cover {
+    width: 44px;
+    height: 44px;
+    border-radius: 5px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.search-result-cover-placeholder {
+    background: rgba(255,255,255,.1);
+    flex-shrink: 0;
+}
+.search-result-info {
+    flex: 1;
+    min-width: 0;
+}
+.search-result-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.search-result-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,.5);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.search-result-heart,
+.search-result-play {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,.5);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    transition: color .15s, background .15s;
+}
+.search-result-heart:hover,
+.search-result-play:hover {
+    color: #fff;
+    background: rgba(255,255,255,.1);
+}
+.search-result-heart.favorited {
+    color: #1db954;
+}
+.search-result-play:hover {
+    color: #1db954;
+}
+/* 키워드 검색 행 */
+.search-keyword-row {
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    margin-bottom: 4px;
+    padding-bottom: 10px;
+}
+.search-result-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 5px;
+    background: rgba(29,185,84,.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1db954;
+    flex-shrink: 0;
+}
+.search-result-arrow {
+    font-size: 20px;
+    color: rgba(255,255,255,.3);
+    flex-shrink: 0;
+}
+
 .recommendation-item {
     background: rgba(255, 255, 255, .1);
     margin: 10px 0;
