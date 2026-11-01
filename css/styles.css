@@ -2171,7 +2171,7 @@ body > .loading-indicator {
 
 .map-search-results:not(:empty) {
     overflow-y: auto;
-    max-height: 40vh;
+    max-height: calc(100vh - 80px);
     display: flex;
     flex-direction: column;
     gap: 2px;
