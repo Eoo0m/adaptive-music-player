@@ -1642,6 +1642,9 @@ body {
     letter-spacing: .2px;
     transition: opacity .4s ease;
 }
+.search-interface.mini .search-guide-text {
+    display: none;
+}
 
 /* ===== Default Track Scrolling Rows ===== */
 .default-tracks-wrapper {
