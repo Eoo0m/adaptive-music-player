@@ -797,17 +797,13 @@ function createDust() {
     setTimeout(() => d.remove(), 12000);
 }
 
-// ===== Guide Text Rotation =====
-(function() {
-    const slots = document.querySelectorAll('#searchGuideText .guide-slot');
-    if (slots.length < 2) return;
-    let cur = 0;
-    setInterval(() => {
-        slots[cur].classList.remove('active');
-        cur = (cur + 1) % slots.length;
-        slots[cur].classList.add('active');
-    }, 10000);
-})();
+// ===== Guide Text =====
+function setGuideText(text) {
+    const el = document.getElementById('searchGuideText');
+    if (!el) return;
+    el.style.opacity = '0';
+    setTimeout(() => { el.textContent = text; el.style.opacity = '1'; }, 400);
+}
 
 // ===== Event Listeners =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -1326,31 +1322,66 @@ function renderPlaylistBuilder() {
 // ===== Initialization =====
 
 // 페이지 로드 시 인증 확인 후 화면 결정
+function makeScrollingRow(tracks, direction) {
+    // 아이템 너비 + gap 기준으로 스크롤 속도 계산 (px/s = 60)
+    const ITEM_W = 260; // 대략적 아이템 너비
+    const GAP = 12;
+    const totalW = tracks.length * (ITEM_W + GAP);
+    const duration = totalW / 55; // 초당 55px
+
+    const row = document.createElement('div');
+    row.className = 'default-track-row';
+
+    const track = document.createElement('div');
+    track.className = `default-track-belt${direction === 'rtl' ? ' rtl' : ''}`;
+    track.style.animationDuration = `${duration}s`;
+
+    // 2벌 복제해서 seamless loop
+    for (let copy = 0; copy < 2; copy++) {
+        tracks.forEach(t => {
+            const item = document.createElement('div');
+            item.className = 'recommendation-item default-track-item';
+            const img = document.createElement('img');
+            img.className = 'rec-album-cover';
+            img.src = t.cover_image_url || '';
+            img.alt = '';
+            const info = document.createElement('div');
+            info.className = 'rec-info';
+            info.innerHTML = `<div class="rec-title">${t.title || ''}</div><div class="rec-artist">${t.artist || ''}</div>`;
+            item.appendChild(img);
+            item.appendChild(info);
+            item.onclick = () => selectTrack(t);
+            track.appendChild(item);
+        });
+    }
+
+    row.appendChild(track);
+    return row;
+}
+
 async function loadDefaultTracks() {
     const container = document.getElementById('searchResults');
-    if (!container || container.innerHTML.trim()) return; // 이미 검색 결과 있으면 스킵
+    if (!container || container.innerHTML.trim()) return;
 
     try {
         let tracks;
         const favs = lastFavorites && lastFavorites.length > 0 ? lastFavorites : null;
 
         if (favs) {
-            // 찜한 곡 중 랜덤 1개 기준으로 유사곡 20개
             const seed = favs[Math.floor(Math.random() * favs.length)];
             const res = await fetch(`${API_BASE_URL}/find-similar-tracks`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ track_key: seed.track_key, num_results: 20 })
+                body: JSON.stringify({ track_key: seed.track_key, num_results: 45 })
             });
             if (!res.ok) throw new Error();
             const data = await res.json();
             tracks = (data.results || []).map(t => ({
                 track_key: t.track_key, title: t.title, artist: t.artist,
-                album: t.album, cover_image_url: t.cover_image_url,
-                apple_music_id: t.apple_music_id, playlist_count: t.playlist_count
+                cover_image_url: t.cover_image_url, apple_music_id: t.apple_music_id,
+                playlist_count: t.playlist_count
             }));
         } else {
-            // 찜 없으면 인기곡 200개 중 랜덤 20개
             const res = await fetch(`${API_BASE_URL}/top-tracks?limit=200`);
             if (!res.ok) throw new Error();
             const data = await res.json();
@@ -1359,24 +1390,25 @@ async function loadDefaultTracks() {
                 const j = Math.floor(Math.random() * (i + 1));
                 [all[i], all[j]] = [all[j], all[i]];
             }
-            tracks = all.slice(0, 20);
+            tracks = all.slice(0, 45);
         }
 
         if (!tracks || tracks.length === 0 || container.innerHTML.trim()) return;
 
-        const grid = document.createElement('div');
-        grid.className = 'track-grid';
         setCurrentCandidates(tracks);
-        const favSet = new Set((lastFavorites || []).map(f => f.track_key));
-        tracks.forEach(track => {
-            const div = createTrackCard(track, false, () => selectTrack(track), {
-                favorited: favSet.has(track.track_key),
-                candidateKeys: tracks.map(t => t.track_key)
-            });
-            grid.appendChild(div);
+
+        // 15개씩 3행, 방향 교대
+        const rows = [tracks.slice(0, 15), tracks.slice(15, 30), tracks.slice(30, 45)];
+        const dirs = ['ltr', 'rtl', 'ltr'];
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'default-tracks-wrapper';
+        rows.forEach((rowTracks, i) => {
+            if (rowTracks.length > 0)
+                wrapper.appendChild(makeScrollingRow(rowTracks, dirs[i]));
         });
-        // 아직 사용자가 검색 안 했으면 표시
-        if (!container.innerHTML.trim()) container.appendChild(grid);
+
+        if (!container.innerHTML.trim()) container.appendChild(wrapper);
     } catch (e) {
         // 실패 시 조용히 무시
     }

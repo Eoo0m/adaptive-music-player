@@ -1636,22 +1636,70 @@ body {
 }
 .search-guide-text {
     text-align: center;
+    color: rgba(255,255,255,.75);
     font-size: 14px;
     margin-bottom: 20px;
     letter-spacing: .2px;
-    position: relative;
-    height: 20px;
+    transition: opacity .4s ease;
 }
-.search-guide-text .guide-slot {
-    position: absolute;
-    left: 0; right: 0;
-    color: rgba(255,255,255,.75);
-    opacity: 0;
-    transition: opacity .6s ease;
-    white-space: nowrap;
+
+/* ===== Default Track Scrolling Rows ===== */
+.default-tracks-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+    margin-top: 8px;
 }
-.search-guide-text .guide-slot.active {
-    opacity: 1;
+
+.default-track-row {
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+}
+
+.default-track-belt {
+    display: flex;
+    gap: 10px;
+    width: max-content;
+    animation: scroll-ltr linear infinite;
+}
+
+.default-track-belt.rtl {
+    animation-name: scroll-rtl;
+}
+
+@keyframes scroll-ltr {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+
+@keyframes scroll-rtl {
+    from { transform: translateX(-50%); }
+    to   { transform: translateX(0); }
+}
+
+.default-track-item {
+    margin: 0 !important;
+    min-width: 220px;
+    max-width: 220px;
+    flex-shrink: 0;
+    transition: background .2s, transform .2s, box-shadow .2s;
+}
+
+.default-track-item:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 12px rgba(255,255,255,.08);
+}
+
+/* 반짝임 shimmer */
+.default-track-item .rec-album-cover {
+    animation: cover-shimmer 3s ease-in-out infinite;
+}
+
+@keyframes cover-shimmer {
+    0%, 100% { box-shadow: 0 0 0px rgba(255,255,255,0); }
+    50%       { box-shadow: 0 0 8px rgba(255,255,255,.18); }
 }
 
 .loading-indicator {

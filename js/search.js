@@ -193,6 +193,8 @@ function displaySearchResults(results, type) {
         return;
     }
 
+    if (typeof setGuideText === 'function') setGuideText('앨범 커버를 클릭해 추천을 받고, 더블클릭해 바로 재생해보세요');
+
     // 검색 결과 후보 저장
     window.searchCandidateKeys = results.slice(0, 10).map(r => r.track_key).filter(Boolean);
 
@@ -235,6 +237,7 @@ async function selectTrack(trackData) {
 
     document.getElementById('searchResults').innerHTML = '';
     document.getElementById('searchInput').value = '';
+    if (typeof setGuideText === 'function') setGuideText('마음에 드는 곡을 저장하고, 취향지도를 만들어보세요');
 
     await showRecommendations(trackData);
 
