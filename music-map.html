@@ -905,10 +905,6 @@ window.addEventListener('mouseup', e => {
   const moved = Math.abs(e.clientX - dragStart.x) > 4 || Math.abs(e.clientY - dragStart.y) > 4;
   isDragging = false;
   wrap.classList.remove('grabbing');
-  if (!moved) {
-    const track = trackAt(e.clientX, e.clientY);
-    if (track) centerOn(track);
-  }
 });
 
 // 휠 줌
@@ -979,8 +975,7 @@ wrap.addEventListener('touchend', e => {
     const t = e.changedTouches[0];
     const dx = t.clientX - touchStartPos.x, dy = t.clientY - touchStartPos.y;
     if (Math.sqrt(dx*dx + dy*dy) < 10) {
-      const track = trackAt(t.clientX, t.clientY);
-      if (track) centerOn(track);
+      trackAt(t.clientX, t.clientY); // 탭 감지만
     }
   }
   touchStartPos = null;
