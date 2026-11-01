@@ -992,13 +992,12 @@ body {
     gap: 15px;
     pointer-events: none;
     max-width: 90vw;
-    max-height: 85vh;
+    overflow-y: auto;
 }
 
 .track-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    grid-template-rows: repeat(4, 1fr);
     gap: 16px;
 }
 
