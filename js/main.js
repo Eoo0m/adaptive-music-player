@@ -822,12 +822,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 검색창 바깥쪽 클릭 시 검색결과 닫기
+    // 검색창/결과 바깥쪽 클릭 시 검색결과 닫기
     document.addEventListener('click', (e) => {
-        const searchInterface = document.getElementById('initialSongInput');
-        if (!searchInterface.classList.contains('hidden') &&
-            !searchInterface.contains(e.target)) {
-            document.getElementById('searchResults').innerHTML = '';
+        const searchResults = document.getElementById('searchResults');
+        if (!searchResults || !searchResults.children.length) return;
+        const searchInput = document.getElementById('searchInput');
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.innerHTML = '';
         }
     });
 });
