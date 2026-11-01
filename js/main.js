@@ -1397,9 +1397,6 @@ async function loadDefaultTracks() {
 
         if (container.innerHTML.trim()) return;
 
-        // #searchResults: 홈피드 20개 리스트
-        renderHomeFeed(feedTracks, container);
-
         // #trackInfo: top10 + 홈피드10 그리드 (20개)
         const trackInfo = document.getElementById('trackInfo');
         if (trackInfo && !trackInfo.innerHTML.trim()) {
