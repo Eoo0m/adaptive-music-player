@@ -144,20 +144,10 @@ async function searchByKeyword(retryCount = 0) {
 function displaySearchResults(results, type) {
     const div = document.getElementById('searchResults');
 
-    if (!results || !Array.isArray(results) || results.length === 0) {
-        div.innerHTML = '<div class="error-message">검색 결과가 없습니다.</div>';
-        return;
-    }
-
-    if (typeof setGuideText === 'function') setGuideText('앨범 커버를 클릭해 추천을 받고, 더블클릭해 바로 재생해보세요');
-
     const keyword = document.getElementById('searchInput').value.trim();
-    window.searchResultsData = [];
-    window.searchCandidateKeys = results.slice(0, 20).map(r => r.track_key).filter(Boolean);
-
     div.innerHTML = '';
 
-    // 키워드 검색 항목 (트랙 모드에서도 상단에 표시)
+    // 키워드 검색 항목 — 항상 상단에 표시
     if (keyword) {
         const keywordRow = document.createElement('div');
         keywordRow.className = 'search-result-row search-keyword-row';
@@ -176,6 +166,12 @@ function displaySearchResults(results, type) {
         };
         div.appendChild(keywordRow);
     }
+
+    if (!results || !Array.isArray(results) || results.length === 0) return;
+
+    if (typeof setGuideText === 'function') setGuideText('앨범 커버를 클릭해 추천을 받고, 더블클릭해 바로 재생해보세요');
+    window.searchResultsData = [];
+    window.searchCandidateKeys = results.slice(0, 20).map(r => r.track_key).filter(Boolean);
 
     // 트랙 결과 리스트
     results.slice(0, 10).forEach((r, index) => {
