@@ -69,8 +69,12 @@ async function playWithAppleMusic(track) {
             window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(getTrackTitle(track) + ' ' + getTrackArtist(track))}`, '_blank');
         }
     } catch (e) {
-        console.error('Apple Music playback failed:', e);
-        window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(getTrackTitle(track) + ' ' + getTrackArtist(track))}`, '_blank');
+        const msg = e?.message || String(e);
+        if (msg.includes('CONTENT_RESTRICTED')) {
+            console.warn('Apple Music: 지역 제한 트랙, 스킵:', track.title);
+        } else {
+            console.error('Apple Music playback failed:', e);
+        }
     }
 }
 
@@ -2375,20 +2379,14 @@ function updatePlayerWidget(track, isPlaying) {
         });
         navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
         navigator.mediaSession.setActionHandler('play', () => {
-            console.log('🎧 MediaSession: play');
             if (musicKitInstance) musicKitInstance.play();
             else playerTogglePlayPause();
         });
         navigator.mediaSession.setActionHandler('pause', () => {
-            console.log('🎧 MediaSession: pause');
             if (musicKitInstance) musicKitInstance.pause();
             else playerTogglePlayPause();
         });
-        navigator.mediaSession.setActionHandler('nexttrack', () => {
-            console.log('🎧 MediaSession: nexttrack');
-            playerDynamicNext();
-        });
-        console.log('🎧 MediaSession handlers registered, playbackState:', navigator.mediaSession.playbackState);
+        navigator.mediaSession.setActionHandler('nexttrack', () => playerDynamicNext());
     }
     if (isPlaying) {
         playerPlayStartTime = Date.now();
