@@ -637,6 +637,8 @@ function openTrackOnYouTube(track, candidateKeys = currentCandidateKeys, keepQue
         currentPlaylistIndex = -1;
     }
     logAction('play', { selected_track_key: track.track_key, candidate_track_keys: candidateKeys });
+    // 지도 탭이면 해당 트랙으로 카메라 포커싱
+    if (currentTab === 'map') playerMoveCamToTrack(track.track_key);
     const loginType = localStorage.getItem('login_type');
     if (loginType === 'apple') {
         playWithAppleMusic(track);
