@@ -1606,11 +1606,6 @@ body {
     font-size: 14px;
     margin-bottom: 20px;
     letter-spacing: .2px;
-    animation: guideFloat 3s ease-in-out infinite;
-}
-@keyframes guideFloat {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
 }
 
 .loading-indicator {
