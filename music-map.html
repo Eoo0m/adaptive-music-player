@@ -884,7 +884,7 @@ wrap.addEventListener('mousedown', e => {
   wrap.classList.add('grabbing');
 });
 
-window.addEventListener('mousemove', e => {
+wrap.addEventListener('mousemove', e => {
   if (!mapData) return;
   if (isDragging) {
     cam.tx = camStart.x + (e.clientX - dragStart.x);
@@ -902,9 +902,15 @@ window.addEventListener('mousemove', e => {
 });
 
 window.addEventListener('mouseup', e => {
-  const moved = Math.abs(e.clientX - dragStart.x) > 4 || Math.abs(e.clientY - dragStart.y) > 4;
   isDragging = false;
   wrap.classList.remove('grabbing');
+});
+
+wrap.addEventListener('mouseleave', () => {
+  isDragging = false;
+  wrap.classList.remove('grabbing');
+  hoveredTrack = null;
+  hideTooltip();
 });
 
 // 휠 줌
