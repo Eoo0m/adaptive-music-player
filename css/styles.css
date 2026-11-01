@@ -1602,10 +1602,15 @@ body {
 }
 .search-guide-text {
     text-align: center;
-    color: rgba(255,255,255,.35);
-    font-size: 13px;
-    margin-bottom: 16px;
+    color: rgba(255,255,255,.75);
+    font-size: 14px;
+    margin-bottom: 20px;
     letter-spacing: .2px;
+    animation: guideFloat 3s ease-in-out infinite;
+}
+@keyframes guideFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
 }
 
 .loading-indicator {
