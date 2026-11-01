@@ -2657,9 +2657,9 @@ function playerMoveCamToTrack(trackKey, dramatic = false) {
     const target = tracks.find(t => t.track_key === trackKey);
     if (!target) return;
 
-    const COVER = 140, GAP = 50;
+    const COVER = 140, GAP = 50, LABEL_H = 42;
     const STEP = COVER + GAP;
-    const VSTEP = STEP * 0.866;
+    const VSTEP = COVER + LABEL_H + GAP;
 
     const maxCol = Math.max(...tracks.map(t => t.grid_col ?? t.x ?? 0));
     const maxRow = Math.max(...tracks.map(t => t.grid_row ?? t.y ?? 0));
