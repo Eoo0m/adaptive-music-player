@@ -2719,13 +2719,17 @@ async function playerDynamicNext() {
                 .slice(0, RETRY_COUNT)
                 .map(x => x.t);
         } else {
-            // playlist_count 상위 200개 중 가장 먼 순으로 상위 N개
-            const pool200 = [...candidates].sort((a, b) => b.playlist_count - a.playlist_count).slice(0, 200);
-            ranked = pool200
+            // 전체 candidates 중 cosine 거리 먼 상위 30% → 랜덤 셔플 후 앞 N개
+            const scored = candidates
                 .map(t => ({ t, score: cosine(currentEmb, t.embedding) }))
-                .sort((a, b) => a.score - b.score)
-                .slice(0, RETRY_COUNT)
-                .map(x => x.t);
+                .sort((a, b) => a.score - b.score); // 먼 순
+            const top30 = scored.slice(0, Math.max(RETRY_COUNT, Math.floor(scored.length * 0.3)));
+            // Fisher-Yates 셔플
+            for (let i = top30.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [top30[i], top30[j]] = [top30[j], top30[i]];
+            }
+            ranked = top30.slice(0, RETRY_COUNT).map(x => x.t);
         }
 
         if (ranked.length === 0) return;
