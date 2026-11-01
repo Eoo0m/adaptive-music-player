@@ -797,6 +797,18 @@ function createDust() {
     setTimeout(() => d.remove(), 12000);
 }
 
+// ===== Guide Text Rotation =====
+(function() {
+    const slots = document.querySelectorAll('#searchGuideText .guide-slot');
+    if (slots.length < 2) return;
+    let cur = 0;
+    setInterval(() => {
+        slots[cur].classList.remove('active');
+        cur = (cur + 1) % slots.length;
+        slots[cur].classList.add('active');
+    }, 10000);
+})();
+
 // ===== Event Listeners =====
 document.addEventListener('DOMContentLoaded', () => {
     // 스페이스바 재생/일시정지

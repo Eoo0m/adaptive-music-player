@@ -150,7 +150,10 @@
 
     <div class="search-interface hidden" id="initialSongInput">
         <div class="search-section">
-            <p class="search-guide-text">마음에 드는 곡을 저장하고, 취향지도를 만들어보세요</p>
+            <div class="search-guide-text" id="searchGuideText">
+                <span class="guide-slot active">마음에 드는 곡을 저장하고, 취향지도를 만들어보세요</span>
+                <span class="guide-slot">앨범 커버를 클릭해 추천을 받고, 더블클릭해 바로 재생해보세요</span>
+            </div>
             <div class="search-row">
                 <button class="mode-toggle-btn" id="modeToggleBtn" onclick="toggleSearchMode()">트랙</button>
                 <input type="text" class="search-input" id="searchInput"
