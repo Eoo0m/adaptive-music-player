@@ -68,8 +68,8 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
             return true;
         });
 
-        // 플레이리스트 구성: 클릭한 트랙(1) + 추천(14) = 15곡
-        const displayTracks = [track, ...uniqueTracks.slice(0, 14)];
+        // 플레이리스트 구성: 클릭한 트랙(1) + 추천(23) = 24곡
+        const displayTracks = [track, ...uniqueTracks.slice(0, 23)];
         shownRecommendationKeys = displayTracks.slice(1).map(t => t.track_key).filter(Boolean);
 
         console.log(`📝 Display: ${displayTracks.length} tracks (1 selected + ${displayTracks.length - 1} recommendations)`);
@@ -102,8 +102,8 @@ function updateTrackDisplayOnly(tracks, currentIndex) {
     trackGrid.className = `track-grid ${recommendationViewMode === 'list' ? 'track-list' : ''}`;
     trackInfoContainer.appendChild(trackGrid);
 
-    // 5개씩 3줄 = 총 15개 트랙 표시
-    const endIdx = Math.min(tracks.length, currentIndex + 15);
+    // 6개씩 4줄 = 총 24개 트랙 표시
+    const endIdx = Math.min(tracks.length, currentIndex + 24);
 
     // 순서대로 표시 (섞지 않음)
     const tracksToDisplay = [];
