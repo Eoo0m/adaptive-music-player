@@ -1820,14 +1820,20 @@ body > .loading-indicator {
 
 /* ===== Search Result Rows (지도 탭 스타일) ===== */
 #searchResults {
-    position: relative;
-    z-index: 200;
-    margin-top: 4px;
+    position: fixed;
+    top: 56px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 600px;
+    z-index: 500;
     max-height: 50vh;
     overflow-y: auto;
     text-align: left;
-    background: rgba(7, 8, 15, .98);
-    border-radius: 10px;
+    background: #0a0b12;
+    border-radius: 0 0 10px 10px;
+    border: 1px solid rgba(255,255,255,.08);
+    border-top: none;
     padding: 4px 0;
 }
 .search-result-row {
