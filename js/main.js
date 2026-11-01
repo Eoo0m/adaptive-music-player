@@ -59,6 +59,7 @@ async function initMusicKit() {
         musicKitInstance.addEventListener('playbackStateDidChange', ({ state }) => {
             playerIsPlaying = (state === 2);
             if (playerIsPlaying && !playerPlayStartTime) playerPlayStartTime = Date.now();
+            if (state === 5) playerDynamicNext(); // 재생 완료 → 다음 곡 (가까운 곡, listenedHalf=true)
         });
     } catch (e) {
         console.warn('MusicKit init failed:', e);
