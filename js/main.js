@@ -65,12 +65,12 @@ async function initMusicKit() {
     }
 }
 
-async function playWithAppleMusic(track) {
+// onFail: 재생 실패 시 호출할 콜백 (다음 후보 시도용)
+async function playWithAppleMusic(track, onFail) {
     try {
         if (!musicKitInstance) await initMusicKit();
         if (!musicKitInstance) throw new Error('MusicKit unavailable');
 
-        // 유저 인증 (Apple Music 구독자 확인)
         if (!musicKitInstance.isAuthorized) {
             await musicKitInstance.authorize();
         }
@@ -80,15 +80,18 @@ async function playWithAppleMusic(track) {
             await musicKitInstance.setQueue({ songs: [track.apple_music_id], startPlaying: true });
             updatePlayerWidget(track, true);
         } else {
-            // apple_music_id 없으면 YouTube fallback
+            // apple_music_id 없으면 실패로 처리
+            if (onFail) { onFail(); return; }
             window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(getTrackTitle(track) + ' ' + getTrackArtist(track))}`, '_blank');
         }
     } catch (e) {
         const msg = e?.message || String(e);
-        if (msg.includes('CONTENT_RESTRICTED')) {
-            console.warn('Apple Music: 지역 제한 트랙, 스킵:', track.title);
+        if (msg.includes('CONTENT_RESTRICTED') || msg.includes('NOT_FOUND') || msg.includes('RESOURCE_NOT_FOUND')) {
+            console.warn('Apple Music: 재생 불가 트랙, 다음 후보 시도:', track.title);
+            if (onFail) onFail();
         } else {
             console.error('Apple Music playback failed:', e);
+            if (onFail) onFail();
         }
     }
 }
@@ -2599,27 +2602,40 @@ async function playerDynamicNext() {
             return dot / (Math.sqrt(na) * Math.sqrt(nb));
         };
 
-        let nextTrack = null;
+        const RETRY_COUNT = 4;
+        let ranked;
         if (listenedHalf) {
-            // 가장 가까운 트랙
-            let best = -Infinity;
-            for (const t of candidates) {
-                const score = cosine(currentEmb, t.embedding);
-                if (score > best) { best = score; nextTrack = t; }
-            }
+            // 가장 가까운 순으로 상위 N개
+            ranked = candidates
+                .map(t => ({ t, score: cosine(currentEmb, t.embedding) }))
+                .sort((a, b) => b.score - a.score)
+                .slice(0, RETRY_COUNT)
+                .map(x => x.t);
         } else {
-            // playlist_count 상위 200개 중 가장 먼 트랙
+            // playlist_count 상위 200개 중 가장 먼 순으로 상위 N개
             const pool200 = [...candidates].sort((a, b) => b.playlist_count - a.playlist_count).slice(0, 200);
-            let best = Infinity;
-            for (const t of pool200) {
-                const score = cosine(currentEmb, t.embedding);
-                if (score < best) { best = score; nextTrack = t; }
-            }
+            ranked = pool200
+                .map(t => ({ t, score: cosine(currentEmb, t.embedding) }))
+                .sort((a, b) => a.score - b.score)
+                .slice(0, RETRY_COUNT)
+                .map(x => x.t);
         }
 
-        if (!nextTrack) return;
-        playerMoveCamToTrack(nextTrack.track_key, !listenedHalf);
-        openTrackOnYouTube(nextTrack);
+        if (ranked.length === 0) return;
+
+        // 순서대로 재시도
+        let idx = 0;
+        function tryNext() {
+            if (idx >= ranked.length) return;
+            const track = ranked[idx++];
+            playerMoveCamToTrack(track.track_key, !listenedHalf);
+            if (musicKitInstance && musicKitInstance.isAuthorized) {
+                playWithAppleMusic(track, tryNext);
+            } else {
+                window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(track.title + ' ' + track.artist)}`, '_blank');
+            }
+        }
+        tryNext();
     } catch (e) {
         console.error('dynamic-next failed:', e);
     }
