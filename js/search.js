@@ -231,7 +231,7 @@ async function selectTrack(trackData) {
 
     await showRecommendations(trackData);
 
-    const searchInterface = document.getElementById('map-search-overlay');
+    const searchInterface = document.getElementById('searchOverlay');
     searchInterface.classList.add('visible');
 
     const trackInfo = document.getElementById('trackInfo');

@@ -99,7 +99,7 @@ async function playWithAppleMusic(track, onFail) {
 
 function continueAsGuest() {
     document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('map-search-overlay').classList.remove('hidden');
+    document.getElementById('searchOverlay').classList.add('visible');
     document.getElementById('sideTab').classList.remove('hidden');
     document.getElementById('bottomTab').classList.remove('hidden');
     loadDefaultTracks();
@@ -134,7 +134,7 @@ function switchTab(tab) {
         if (el) el.classList.toggle('active', id === btMap[tab]);
     });
 
-    const searchInterface = document.getElementById('map-search-overlay');
+    const searchInterface = document.getElementById('searchOverlay');
     const favoritesView = document.getElementById('favoritesView');
     const homeFeedView = document.getElementById('homeFeedView');
     const mapView = document.getElementById('mapView');
@@ -1413,7 +1413,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (currentUser) {
         // 로그인 상태 → 바로 검색 화면
         document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('map-search-overlay').classList.remove('hidden');
+        document.getElementById('searchOverlay').classList.add('visible');
         document.getElementById('sideTab').classList.remove('hidden');
         document.getElementById('bottomTab').classList.remove('hidden');
         loadFavorites().then(() => loadDefaultTracks()); // 찜 로드 후 기본 트랙 표시
