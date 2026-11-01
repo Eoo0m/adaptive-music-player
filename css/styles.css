@@ -85,6 +85,37 @@ body {
 }
 
 /* ===== Side Tab ===== */
+/* ===== Apple Music 연동 버튼 ===== */
+.apple-music-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 0, 0, .5);
+    border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: 20px;
+    padding: 7px 14px 7px 10px;
+    color: rgba(255, 255, 255, .45);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: color .2s, border-color .2s, background .2s;
+    font-family: inherit;
+}
+.apple-music-btn:hover {
+    color: rgba(255, 255, 255, .8);
+    border-color: rgba(255, 255, 255, .3);
+}
+.apple-music-btn.linked {
+    color: #fff;
+    border-color: rgba(255, 255, 255, .4);
+    background: rgba(255, 255, 255, .08);
+}
+
 .side-tab {
     position: fixed;
     left: 20px;

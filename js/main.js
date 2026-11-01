@@ -20,6 +20,24 @@ function loginWithApple() {
 // ===== MusicKit =====
 let musicKitInstance = null;
 
+function updateAppleMusicBtn() {
+    const btn = document.getElementById('appleMusicBtn');
+    const label = document.getElementById('appleMusicBtnLabel');
+    if (!btn) return;
+    const linked = !!(musicKitInstance && musicKitInstance.isAuthorized);
+    btn.classList.toggle('linked', linked);
+    if (label) label.textContent = linked ? 'Apple Music 연동됨' : 'Apple Music';
+}
+
+async function toggleAppleMusicLink() {
+    if (musicKitInstance && musicKitInstance.isAuthorized) return; // 이미 연동
+    if (!window.MusicKit) {
+        document.addEventListener('musickitloaded', () => initMusicKit(), { once: true });
+        return;
+    }
+    await initMusicKit();
+}
+
 async function initMusicKit() {
     try {
         const res = await fetch(`${API_BASE_URL}/auth/apple-music/token`);
@@ -34,16 +52,13 @@ async function initMusicKit() {
         if (!musicKitInstance.isAuthorized) {
             await musicKitInstance.authorize();
         }
+        if (musicKitInstance.isAuthorized) {
+            localStorage.setItem('apple_music_linked', '1');
+        }
+        updateAppleMusicBtn();
         musicKitInstance.addEventListener('playbackStateDidChange', ({ state }) => {
-            // state 2 = playing, others = paused/stopped
             playerIsPlaying = (state === 2);
             if (playerIsPlaying && !playerPlayStartTime) playerPlayStartTime = Date.now();
-            const playIcon = document.getElementById('playerPlayIcon');
-            const pauseIcon = document.getElementById('playerPauseIcon');
-            if (playIcon) playIcon.style.display = playerIsPlaying ? 'none' : 'block';
-            if (pauseIcon) pauseIcon.style.display = playerIsPlaying ? 'block' : 'none';
-            playerWidgetBump(playerIsPlaying ? 'bump' : 'bump');
-            playerWidgetSetPulse(playerIsPlaying);
         });
     } catch (e) {
         console.warn('MusicKit init failed:', e);
@@ -639,14 +654,9 @@ function openTrackOnYouTube(track, candidateKeys = currentCandidateKeys, keepQue
     logAction('play', { selected_track_key: track.track_key, candidate_track_keys: candidateKeys });
     // 지도 탭이면 해당 트랙으로 카메라 포커싱
     if (currentTab === 'map') playerMoveCamToTrack(track.track_key);
-    const loginType = localStorage.getItem('login_type');
-    if (loginType === 'apple') {
+    if (musicKitInstance && musicKitInstance.isAuthorized) {
         playWithAppleMusic(track);
-    } else if (loginType === 'spotify') {
-        updatePlayerWidget(track, false);
-        window.open(`https://open.spotify.com/track/${track.track_key}`, '_blank');
     } else {
-        updatePlayerWidget(track, false);
         window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(track.title + ' ' + track.artist)}`, '_blank');
     }
 }
@@ -1299,6 +1309,7 @@ function renderPlaylistBuilder() {
 
 // 페이지 로드 시 인증 확인 후 화면 결정
 document.addEventListener('DOMContentLoaded', async () => {
+    updateAppleMusicBtn();
     await checkAuth();
     if (currentUser) {
         // 로그인 상태 → 바로 검색 화면
@@ -1307,8 +1318,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('sideTab').classList.remove('hidden');
         document.getElementById('bottomTab').classList.remove('hidden');
         loadFavorites(); // 찜 목록은 하트 표시용으로 백그라운드 로드
-        // Apple 로그인 유저면 MusicKit 미리 초기화
-        if (localStorage.getItem('login_type') === 'apple') {
+        // Apple Music 이전 연동 이력 있으면 자동 재연동
+        if (localStorage.getItem('apple_music_linked') === '1') {
             if (window.MusicKit) {
                 initMusicKit();
             } else {
