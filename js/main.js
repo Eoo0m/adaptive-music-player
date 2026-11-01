@@ -810,7 +810,13 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(searchDebounce);
         const q = searchInputEl.value.trim();
         if (!q) {
-            document.getElementById('searchResults').innerHTML = '';
+            const container = document.getElementById('searchResults');
+            if (_homeFeedCache) {
+                renderHomeFeed(_homeFeedCache.tracks || [], container);
+            } else {
+                container.innerHTML = '';
+                loadDefaultTracks();
+            }
             return;
         }
         searchDebounce = setTimeout(() => doSearch(), 280);
@@ -1352,59 +1358,70 @@ function makeScrollingRow(tracks, direction) {
     return row;
 }
 
+// 홈피드 캐시
+let _homeFeedCache = null;
+
 async function loadDefaultTracks() {
     const container = document.getElementById('searchResults');
     if (!container || container.innerHTML.trim()) return;
 
     try {
-        let tracks;
-        const favs = lastFavorites && lastFavorites.length > 0 ? lastFavorites : null;
-
-        if (favs) {
-            const seed = favs[Math.floor(Math.random() * favs.length)];
-            const res = await fetch(`${API_BASE_URL}/find-similar-tracks`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ track_key: seed.track_key, num_results: 45 })
-            });
+        let data = _homeFeedCache;
+        if (!data) {
+            const res = await fetch(`${API_BASE_URL}/home-feed-v2`);
             if (!res.ok) throw new Error();
-            const data = await res.json();
-            tracks = (data.results || []).map(t => ({
-                track_key: t.track_key, title: t.title, artist: t.artist,
-                cover_image_url: t.cover_image_url, apple_music_id: t.apple_music_id,
-                playlist_count: t.playlist_count
-            }));
-        } else {
-            const res = await fetch(`${API_BASE_URL}/top-tracks?limit=200`);
-            if (!res.ok) throw new Error();
-            const data = await res.json();
-            const all = data.tracks || [];
-            for (let i = all.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [all[i], all[j]] = [all[j], all[i]];
-            }
-            tracks = all.slice(0, 45);
+            data = await res.json();
+            _homeFeedCache = data;
         }
 
-        if (!tracks || tracks.length === 0 || container.innerHTML.trim()) return;
+        const tracks = data.tracks || [];
+        if (!tracks.length || container.innerHTML.trim()) return;
 
         setCurrentCandidates(tracks);
-
-        // 15개씩 3행, 방향 교대
-        const rows = [tracks.slice(0, 15), tracks.slice(15, 30), tracks.slice(30, 45)];
-        const dirs = ['ltr', 'rtl', 'ltr'];
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'default-tracks-wrapper';
-        rows.forEach((rowTracks, i) => {
-            if (rowTracks.length > 0)
-                wrapper.appendChild(makeScrollingRow(rowTracks, dirs[i]));
-        });
-
-        if (!container.innerHTML.trim()) container.appendChild(wrapper);
+        renderHomeFeed(tracks, container);
     } catch (e) {
         // 실패 시 조용히 무시
     }
+}
+
+function renderHomeFeed(tracks, container) {
+    container.innerHTML = '';
+    const isFavMap = new Map((lastFavorites || []).map(f => [f.track_key, true]));
+
+    tracks.forEach((r) => {
+        const coverSrc = r.cover_image_url || '';
+        const isFav = isFavMap.has(r.track_key);
+
+        const row = document.createElement('div');
+        row.className = 'search-result-row';
+        row.innerHTML = `
+            ${coverSrc
+                ? `<img class="search-result-cover" src="${coverSrc}" alt="">`
+                : `<div class="search-result-cover search-result-cover-placeholder"></div>`}
+            <div class="search-result-info">
+                <div class="search-result-title">${r.title || ''}</div>
+                <div class="search-result-sub">${r.artist || ''}</div>
+            </div>
+            <button class="search-result-heart ${isFav ? 'favorited' : ''}" onclick="event.stopPropagation(); toggleFavoriteFromHomeFeed('${r.track_key}', this)">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
+            <button class="search-result-play" onclick="event.stopPropagation(); openTrackOnYouTube(${JSON.stringify(r)})">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+            </button>
+        `;
+        row.onclick = () => selectTrack(r);
+        container.appendChild(row);
+    });
+}
+
+function toggleFavoriteFromHomeFeed(trackKey, btn) {
+    const track = (_homeFeedCache?.tracks || []).find(t => t.track_key === trackKey);
+    if (!track) return;
+    const svg = btn.querySelector('svg');
+    const isFav = btn.classList.contains('favorited');
+    btn.classList.toggle('favorited');
+    if (svg) svg.setAttribute('fill', isFav ? 'none' : 'currentColor');
+    toggleFavorite(track, btn);
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
