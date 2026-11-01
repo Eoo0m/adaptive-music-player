@@ -1809,7 +1809,7 @@ body > .loading-indicator {
     transform: translateX(-50%);
     width: 80%;
     max-width: 600px;
-    max-height: calc(100vh - 80px);
+    max-height: 40vh;
     overflow-y: auto;
     text-align: left;
     background: rgba(7, 8, 15, 0.96);
@@ -2046,7 +2046,7 @@ body > .loading-indicator {
         max-width: 100%;
         left: 0;
         transform: none;
-        max-height: calc(100vh - 80px - 64px - env(safe-area-inset-bottom));
+        max-height: 40vh;
         border-radius: 0;
     }
 
