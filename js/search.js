@@ -216,11 +216,7 @@ function displaySearchResults(results, type) {
             <div class="search-result-arrow">›</div>
         `;
         keywordRow.onclick = () => {
-            const prevMode = searchMode;
-            searchMode = 'keyword';
-            document.getElementById('modeToggleBtn').textContent = '키워드';
             searchByKeyword();
-            searchMode = prevMode;
         };
         div.appendChild(keywordRow);
     }

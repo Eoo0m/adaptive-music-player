@@ -583,7 +583,7 @@ function onClickOrDblClick(element, onSingle, onDouble) {
 
 // ===== Global Variables =====
 let currentTrackIndex = 0;        // 현재 선택된 트랙 인덱스
-let searchMode = 'track';         // 검색 모드: 'track' or 'keyword'
+const searchMode = 'track';       // 항상 트랙 검색 모드
 const recommendationViewMode = 'grid';
 let lastRecommendationTracks = [];
 let lastRecommendationIndex = 0;
@@ -615,25 +615,6 @@ function generateSessionId() {
 let sessionId = generateSessionId(); // 페이지 로드 시 세션 ID 생성
 console.log('🎵 Session initialized:', sessionId);
 
-// ===== Search Mode Toggle =====
-function toggleSearchMode() {
-    const btn = document.getElementById('modeToggleBtn');
-    const searchInput = document.getElementById('searchInput');
-
-    if (searchMode === 'track') {
-        searchMode = 'keyword';
-        btn.textContent = '키워드';
-        searchInput.placeholder = '키워드를 입력하세요 (예: 공부할 때 듣는 재즈, 드라이브 팝송)';
-    } else {
-        searchMode = 'track';
-        btn.textContent = '트랙';
-        searchInput.placeholder = '노래 제목을 입력하세요 (예: Shape of You, Ed Sheeran)';
-    }
-
-    // 검색 결과 초기화
-    document.getElementById('searchResults').innerHTML = '';
-    searchInput.focus();
-}
 
 // ===== Action Log =====
 // 현재 화면에 표시된 트랙 키 목록 (후보 추적용)
@@ -822,20 +803,31 @@ document.addEventListener('DOMContentLoaded', () => {
         navigator.mediaSession.setActionHandler('nexttrack', () => playerDynamicNext());
     }
 
-    // 엔터로 검색
-    document.getElementById('searchInput').addEventListener('keypress', e => {
-        if (e.key === 'Enter') doSearch();
+    // 입력 시 debounce 검색 (엔터도 즉시 검색)
+    let searchDebounce = null;
+    const searchInputEl = document.getElementById('searchInput');
+    searchInputEl.addEventListener('input', () => {
+        clearTimeout(searchDebounce);
+        const q = searchInputEl.value.trim();
+        if (!q) {
+            document.getElementById('searchResults').innerHTML = '';
+            return;
+        }
+        searchDebounce = setTimeout(() => doSearch(), 280);
+    });
+    searchInputEl.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            clearTimeout(searchDebounce);
+            if (searchInputEl.value.trim()) doSearch();
+        }
     });
 
-    // 검색창 바깥쪽 클릭 시 검색결과만 닫기 (검색창은 항상 유지)
+    // 검색창 바깥쪽 클릭 시 검색결과 닫기
     document.addEventListener('click', (e) => {
         const searchInterface = document.getElementById('initialSongInput');
-        const searchResults = document.getElementById('searchResults');
-
-        // 미니 모드일 때 검색창 바깥 클릭하면 검색결과만 닫기
-        if (searchInterface.classList.contains('mini') &&
+        if (!searchInterface.classList.contains('hidden') &&
             !searchInterface.contains(e.target)) {
-            searchResults.innerHTML = '';
+            document.getElementById('searchResults').innerHTML = '';
         }
     });
 });
