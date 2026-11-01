@@ -2374,10 +2374,19 @@ function updatePlayerWidget(track, isPlaying) {
             artwork: track.cover_image_url ? [{ src: track.cover_image_url, sizes: '512x512', type: 'image/jpeg' }] : [],
         });
         navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
-        // MusicKit이 세션을 가져간 후 덮어쓰기 위해 매번 재등록
-        navigator.mediaSession.setActionHandler('nexttrack', () => playerDynamicNext());
-        navigator.mediaSession.setActionHandler('play', () => playerTogglePlayPause());
-        navigator.mediaSession.setActionHandler('pause', () => playerTogglePlayPause());
+        navigator.mediaSession.setActionHandler('nexttrack', () => {
+            console.log('🎧 Media Session: nexttrack fired');
+            playerDynamicNext();
+        });
+        navigator.mediaSession.setActionHandler('play', () => {
+            console.log('🎧 Media Session: play fired');
+            playerTogglePlayPause();
+        });
+        navigator.mediaSession.setActionHandler('pause', () => {
+            console.log('🎧 Media Session: pause fired');
+            playerTogglePlayPause();
+        });
+        console.log('🎧 Media Session handlers registered, state:', navigator.mediaSession.playbackState);
     }
     if (isPlaying) {
         playerPlayStartTime = Date.now();
