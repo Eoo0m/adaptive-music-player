@@ -1548,7 +1548,6 @@ body {
 }
 
 .search-interface.mini .search-section {
-    margin-bottom: 0;
     padding: 14px 16px;
 }
 
@@ -1572,19 +1571,7 @@ body {
     display: none;
 }
 
-.search-interface.mini #searchResults {
-    position: fixed;
-    top: 56px;
-    left: 0;
-    right: 0;
-    background: rgba(7, 8, 15, .96);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, .08);
-    padding: 0 16px 16px;
-    max-height: calc(100vh - 56px);
-    overflow-y: auto;
-    z-index: 200;
-}
+
 
 .search-interface.mini .recommendation-item {
     padding: 10px;
@@ -1613,14 +1600,12 @@ body {
     margin-bottom: 0;
 }
 .search-guide-text {
-    text-align: center;
-    color: rgba(255,255,255,.75);
-    font-size: 14px;
-    margin-top: 12px;
-    margin-bottom: 0;
-    min-height: 20px;
-    letter-spacing: .2px;
-    transition: opacity .4s ease;
+    text-align: left;
+    color: rgba(255,255,255,.45);
+    font-size: 12px;
+    margin-top: 6px;
+    min-height: 18px;
+    padding: 0 2px;
 }
 .search-interface.mini .search-guide-text {
     display: none;
@@ -1796,10 +1781,12 @@ body > .loading-indicator {
 
 /* ===== Search Result Rows (지도 탭 스타일) ===== */
 #searchResults {
-    margin-top: 8px;
-    max-height: 360px;
     overflow-y: auto;
-    text-align: left;
+    max-height: calc(100vh - 70px);
+    padding: 0 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 .search-result-row {
     display: flex;
