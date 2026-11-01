@@ -1319,6 +1319,94 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
+// ===== Map Rebuild Animation =====
+function showMapRebuildAnimation(coverUrls) {
+    const overlay = document.createElement('div');
+    overlay.className = 'map-rebuild-overlay';
+
+    const msg = document.createElement('div');
+    msg.className = 'map-rebuild-msg';
+    msg.textContent = '취향 지도를 다시 그리는 중...';
+    overlay.appendChild(msg);
+    document.body.appendChild(overlay);
+
+    setTimeout(() => { msg.style.opacity = '1'; }, 100);
+
+    const W = window.innerWidth, H = window.innerHeight;
+    const SIZE = Math.min(W, H) * 0.13;
+    const urls = coverUrls.length > 0 ? coverUrls : [];
+    const timers = [];
+    let finished = false;
+
+    function spawnCover() {
+        if (finished) return;
+        const url = urls[Math.floor(Math.random() * urls.length)];
+        if (!url) return;
+
+        const img = document.createElement('img');
+        img.className = 'map-rebuild-cover';
+        const sz = SIZE * (0.7 + Math.random() * 0.6);
+        img.style.width = sz + 'px';
+        img.style.height = sz + 'px';
+
+        // 화면 가장자리 4면 중 하나에서 시작
+        const side = Math.floor(Math.random() * 4);
+        let startX, startY, endX, endY;
+        if (side === 0) { // 왼쪽
+            startX = -sz; startY = Math.random() * H;
+            endX = W * (0.3 + Math.random() * 0.6); endY = Math.random() * H;
+        } else if (side === 1) { // 오른쪽
+            startX = W + sz; startY = Math.random() * H;
+            endX = W * (0.05 + Math.random() * 0.5); endY = Math.random() * H;
+        } else if (side === 2) { // 위
+            startX = Math.random() * W; startY = -sz;
+            endX = Math.random() * W; endY = H * (0.3 + Math.random() * 0.5);
+        } else { // 아래
+            startX = Math.random() * W; startY = H + sz;
+            endX = Math.random() * W; endY = H * (0.05 + Math.random() * 0.5);
+        }
+
+        img.style.left = startX + 'px';
+        img.style.top = startY + 'px';
+        img.style.opacity = '0';
+        img.src = url;
+        overlay.appendChild(img);
+
+        const duration = 900 + Math.random() * 600;
+        let start = null;
+
+        function step(ts) {
+            if (!start) start = ts;
+            const p = Math.min((ts - start) / duration, 1);
+            const ease = p < 0.5 ? 2*p*p : -1+(4-2*p)*p;
+            const x = startX + (endX - startX) * ease;
+            const y = startY + (endY - startY) * ease;
+            const alpha = p < 0.15 ? p/0.15 : p > 0.75 ? (1-p)/0.25 : 1;
+            img.style.transform = `translate(${x - startX}px, ${y - startY}px) rotate(${(p*15 - 7) * (side % 2 === 0 ? 1 : -1)}deg)`;
+            img.style.opacity = (alpha * 0.85).toFixed(2);
+            if (p < 1 && !finished) requestAnimationFrame(step);
+            else img.remove();
+        }
+        requestAnimationFrame(step);
+    }
+
+    // 일정 간격으로 계속 스폰
+    spawnCover();
+    const t1 = setInterval(spawnCover, 150);
+    timers.push(t1);
+
+    return {
+        finish() {
+            finished = true;
+            timers.forEach(clearInterval);
+            msg.style.opacity = '0';
+            overlay.style.transition = 'opacity .4s';
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 400);
+        }
+    };
+}
+
 // ===== Map Intro =====
 
 function showMapIntro() {
@@ -2191,21 +2279,28 @@ function renderMusicMap(canvas, tracks) {
 
         refreshBtn && refreshBtn.addEventListener('click', async () => {
             if (!authToken) { alert('로그인이 필요합니다.'); return; }
-            refreshBtn.classList.add('spinning');
+            refreshBtn.classList.add('loading');
             lastMapData = null;
             mapPrefetchPromise = null;
+
+            // 앨범커버 날아다니는 애니메이션
+            const covers = (lastFavorites || []).map(f => f.cover_image_url).filter(Boolean);
+            const anim = showMapRebuildAnimation(covers);
+
             try {
                 const canvas = document.getElementById('mapCanvas');
                 const data = await fetchMusicMapData();
-                if (!data) { alert('찜한 곡이 없습니다.'); return; }
+                anim.finish();
+                if (!data) return;
                 lastMapData = data;
                 const favKeys = new Set((lastFavorites || []).map(f => f.track_key));
                 data.tracks.forEach(t => { t.is_favorite = favKeys.has(t.track_key); });
                 if (canvas) renderMusicMap(canvas, data.tracks);
             } catch(e) {
-                alert('지도 새로고침 실패: ' + e.message);
+                anim.finish();
+                console.error('지도 새로고침 실패:', e);
             } finally {
-                refreshBtn.classList.remove('spinning');
+                refreshBtn.classList.remove('loading');
             }
         });
     });

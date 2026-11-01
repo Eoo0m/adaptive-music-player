@@ -1953,8 +1953,35 @@ body > .loading-indicator {
     line-height: 1;
 }
 .map-refresh-btn:hover { background: rgba(29,185,84,.15); color: #1db954; }
-.map-refresh-btn.spinning { animation: spin .6s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.map-refresh-btn.loading { opacity: .5; pointer-events: none; }
+
+/* 지도 새로고침 앨범커버 애니메이션 오버레이 */
+.map-rebuild-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    pointer-events: none;
+    overflow: hidden;
+}
+.map-rebuild-cover {
+    position: absolute;
+    border-radius: 10px;
+    object-fit: cover;
+    will-change: transform, opacity;
+}
+.map-rebuild-msg {
+    position: absolute;
+    bottom: 48px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,255,255,.7);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: .3px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .4s;
+}
 
 .map-search-status {
     font-size: 12px;
