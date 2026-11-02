@@ -217,7 +217,7 @@ async function loadFavorites() {
     }
 }
 
-function _makeHScrollSection(title, tracks, onClickTrack) {
+function _makeHScrollSection(title, tracks, onClickTrack, rows = 1) {
     const section = document.createElement('div');
     section.className = 'fav-section';
 
@@ -235,7 +235,7 @@ function _makeHScrollSection(title, tracks, onClickTrack) {
     }
 
     const scroll = document.createElement('div');
-    scroll.className = 'fav-hscroll';
+    scroll.className = `fav-hscroll${rows === 2 ? ' fav-hscroll-2row' : ''}`;
 
     tracks.forEach(t => {
         const item = document.createElement('div');
@@ -271,7 +271,7 @@ function _makePlSection(savedPlaylists) {
 
     const header = document.createElement('div');
     header.className = 'fav-section-title';
-    header.textContent = '저장된 PL';
+    header.textContent = '플레이리스트';
     section.appendChild(header);
 
     if (!savedPlaylists || savedPlaylists.length === 0) {
@@ -387,8 +387,8 @@ function renderFavorites(favorites, savedPlaylists = [], recentTracks = []) {
     // 1. 최근 재생
     container.appendChild(_makeHScrollSection('최근 재생', recentTracks, onClickTrack));
 
-    // 2. 저장된 곡
-    container.appendChild(_makeHScrollSection('저장된 곡', favorites.map(f => ({ ...f, title: f.title || f.track_name })), onClickTrack));
+    // 2. 저장된 곡 (2줄)
+    container.appendChild(_makeHScrollSection('저장된 곡', favorites.map(f => ({ ...f, title: f.title || f.track_name })), onClickTrack, 2));
 
     // 3. 저장된 PL
     container.appendChild(_makePlSection(savedPlaylists));
