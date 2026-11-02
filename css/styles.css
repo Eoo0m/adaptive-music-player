@@ -274,8 +274,76 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     overflow-y: auto;
+}
+
+.fav-section {
+    width: 100%;
+}
+
+.fav-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+    padding-left: 2px;
+}
+
+.fav-section-empty {
+    font-size: 13px;
+    color: rgba(255,255,255,.35);
+    padding: 8px 2px;
+}
+
+.fav-hscroll {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+}
+.fav-hscroll::-webkit-scrollbar { display: none; }
+
+.fav-hscroll-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    width: 80px;
+}
+
+.fav-hscroll-cover {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #1a1a24;
+}
+
+.fav-hscroll-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: #fff;
+    margin-top: 6px;
+    width: 80px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+
+.fav-hscroll-artist {
+    font-size: 10px;
+    color: rgba(255,255,255,.45);
+    width: 80px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    margin-top: 2px;
 }
 
 .fav-profile-card {

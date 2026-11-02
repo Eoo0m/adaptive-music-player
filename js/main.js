@@ -151,11 +151,7 @@ function switchTab(tab) {
         trackInfo.classList.remove('hidden');
     } else if (tab === 'favorites') {
         favoritesView.classList.remove('hidden');
-        if (lastFavorites.length > 0) {
-            renderFavorites(lastFavorites, lastSavedPlaylists);
-        } else {
-            loadFavorites();
-        }
+        loadFavorites();
     } else if (tab === 'home') {
         homeFeedView.classList.remove('hidden');
         renderPlaylistBuilder();
@@ -175,7 +171,6 @@ function switchTab(tab) {
 }
 
 async function loadFavorites() {
-    const list = document.getElementById('favoritesList');
     const profileCard = document.getElementById('favProfileCard');
 
     // 프로필 카드 업데이트
@@ -187,195 +182,216 @@ async function loadFavorites() {
         profileCard.classList.add('hidden');
     }
 
-    if (!authToken) {
-        list.innerHTML = '<div class="favorites-empty">로그인 후 이용할 수 있습니다.</div>';
-        return;
-    }
-
-    list.innerHTML = '<div class="favorites-empty">불러오는 중...</div>';
-
     try {
-        const [favRes, plRes] = await Promise.all([
-            fetch(`${API_BASE_URL}/favorites`, { headers: getAuthHeaders() }),
+        const requests = [
+            fetch(`${API_BASE_URL}/recent-plays`, { headers: getAuthHeaders() }),
             fetch(`${API_BASE_URL}/playlist-builder/my-playlists`, { headers: getAuthHeaders() }),
-        ]);
-        if (!favRes.ok) throw new Error('Failed to load favorites');
+        ];
+        if (authToken) {
+            requests.push(fetch(`${API_BASE_URL}/favorites`, { headers: getAuthHeaders() }));
+        }
 
-        const favData = await favRes.json();
-        lastFavorites = favData.favorites || [];
+        const [recentRes, plRes, favRes] = await Promise.all(requests);
 
+        let recentTracks = [];
+        if (recentRes.ok) {
+            const d = await recentRes.json();
+            recentTracks = d.tracks || [];
+        }
+
+        lastFavorites = [];
+        if (favRes && favRes.ok) {
+            const favData = await favRes.json();
+            lastFavorites = favData.favorites || [];
+        }
+
+        lastSavedPlaylists = [];
         if (plRes.ok) {
             const plData = await plRes.json();
             lastSavedPlaylists = plData.playlists || [];
         }
 
-        renderFavorites(lastFavorites, lastSavedPlaylists);
+        renderFavorites(lastFavorites, lastSavedPlaylists, recentTracks);
     } catch (e) {
         console.error('Load favorites error:', e);
-        list.innerHTML = '<div class="favorites-empty">찜 목록을 불러올 수 없습니다.</div>';
     }
 }
 
-function renderFavorites(favorites, savedPlaylists = []) {
-    const container = document.getElementById('favoritesView');
-    // 기존 동적으로 추가된 플레이리스트 섹션 제거
-    const existing = container.querySelector('.fav-playlists-section');
-    if (existing) existing.remove();
+function _makeHScrollSection(title, tracks, onClickTrack) {
+    const section = document.createElement('div');
+    section.className = 'fav-section';
 
-    // 저장된 플레이리스트 → fav-songs-card 위에 별도 카드로 삽입
-    if (savedPlaylists.length > 0) {
-        const plSection = document.createElement('div');
-        plSection.className = 'fav-playlists-section';
+    const header = document.createElement('div');
+    header.className = 'fav-section-title';
+    header.textContent = title;
+    section.appendChild(header);
 
-        savedPlaylists.forEach((pl) => {
-            const plTracks = (pl.tracks || []).map(t => ({
-                track_key: t.track_key,
-                title: t.track_name || t.title,
-                artist: t.artist,
-                album: t.album,
-                cover_image_url: t.cover_image_url,
-                apple_music_id: t.apple_music_id,
-            }));
-
-            // 행 전체 = 스와이프 컨테이너
-            const row = document.createElement('div');
-            row.style.cssText = 'position:relative;width:100%;max-width:900px;height:80px;overflow:hidden;border-radius:12px;border:1px solid rgba(255,255,255,.08);margin-bottom:0;';
-
-            // 삭제 버튼 (오른쪽에 고정, 스와이프 전엔 숨김)
-            const deleteBtn = document.createElement('div');
-            deleteBtn.style.cssText = 'position:absolute;top:0;right:0;bottom:0;width:80px;background:#e53935;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .15s;';
-            deleteBtn.textContent = '삭제';
-            deleteBtn.onclick = async () => {
-                try {
-                    await fetch(`${API_BASE_URL}/playlist-builder/playlist/${pl.id}`, { method: 'DELETE', headers: getAuthHeaders() });
-                    row.remove();
-                    lastSavedPlaylists = lastSavedPlaylists.filter(p => p.id !== pl.id);
-                } catch(e) { console.error('플리 삭제 실패', e); }
-            };
-
-            // 카드 (row를 완전히 덮음)
-            const card = document.createElement('div');
-            card.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;gap:16px;padding:0 18px;background:rgba(255,255,255,.06);border-radius:12px;cursor:pointer;transition:transform .25s ease;box-sizing:border-box;';
-
-            // 앨범 커버 스택
-            const stackWrap = document.createElement('div');
-            stackWrap.style.cssText = 'position:relative;height:52px;flex-shrink:0;';
-            const previewTracks = (pl.tracks || []).slice(0, 4);
-            const total = previewTracks.length;
-            previewTracks.forEach((t, i) => {
-                const img = document.createElement('img');
-                img.src = t.cover_image_url || '';
-                img.style.cssText = `position:absolute;left:${i * 20}px;width:48px;height:48px;border-radius:6px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.5);z-index:${total - i};`;
-                img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
-                stackWrap.appendChild(img);
-            });
-            stackWrap.style.width = `${48 + (total - 1) * 20}px`;
-
-            // 텍스트
-            const info = document.createElement('div');
-            info.style.cssText = 'flex:1;min-width:0;';
-            const nameEl = document.createElement('div');
-            nameEl.style.cssText = 'font-size:15px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
-            nameEl.textContent = pl.name;
-            const countEl = document.createElement('div');
-            countEl.style.cssText = 'font-size:12px;color:rgba(255,255,255,.45);margin-top:3px;';
-            countEl.textContent = `${(pl.tracks || []).length}곡`;
-            info.appendChild(nameEl);
-            info.appendChild(countEl);
-
-            card.appendChild(stackWrap);
-            card.appendChild(info);
-            row.appendChild(deleteBtn);
-            row.appendChild(card);
-
-            // 스와이프 & 클릭
-            let startX = 0, startY = 0, moved = false, opened = false;
-
-            const swipeStart = (x, y) => { startX = x; startY = y; moved = false; };
-            const showDelete = (show) => {
-                deleteBtn.style.opacity = show ? '1' : '0';
-                deleteBtn.style.pointerEvents = show ? 'auto' : 'none';
-            };
-            const swipeMove = (x) => {
-                const dx = startX - x;
-                if (Math.abs(dx) > 5) moved = true;
-                const base = opened ? 80 : 0;
-                const val = Math.max(0, Math.min(80, base + dx));
-                card.style.transition = 'none';
-                card.style.transform = `translateX(-${val}px)`;
-                if (val > 0) showDelete(true);
-            };
-            const swipeEnd = (x) => {
-                const dx = startX - x;
-                card.style.transition = 'transform .25s ease';
-                if (!opened && dx > 40) { card.style.transform = 'translateX(-80px)'; opened = true; showDelete(true); }
-                else if (opened && dx < -20) { card.style.transform = 'translateX(0)'; opened = false; showDelete(false); }
-                else {
-                    card.style.transform = opened ? 'translateX(-80px)' : 'translateX(0)';
-                    showDelete(opened);
-                }
-                // 클릭 (이동 없으면 재생)
-                if (!moved) {
-                    if (opened) { card.style.transform = 'translateX(0)'; opened = false; showDelete(false); }
-                    else { playPlaylist(plTracks); }
-                }
-            };
-
-            card.addEventListener('mousedown', e => swipeStart(e.clientX, e.clientY));
-            window.addEventListener('mousemove', e => { if (startX && moved !== undefined) swipeMove(e.clientX); });
-            window.addEventListener('mouseup', e => { if (startX) { swipeEnd(e.clientX); startX = 0; } });
-            card.addEventListener('touchstart', e => swipeStart(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
-            card.addEventListener('touchmove', e => swipeMove(e.touches[0].clientX), { passive: true });
-            card.addEventListener('touchend', e => swipeEnd(e.changedTouches[0].clientX));
-
-            plSection.appendChild(row);
-        });
-
-        // fav-songs-card 앞에 삽입
-        const songCard = container.querySelector('.fav-songs-card');
-        container.insertBefore(plSection, songCard);
+    if (!tracks || tracks.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'fav-section-empty';
+        empty.textContent = '없습니다';
+        section.appendChild(empty);
+        return section;
     }
 
-    // 찜한 곡 섹션
-    const list = document.getElementById('favoritesList');
-    list.innerHTML = '';
+    const scroll = document.createElement('div');
+    scroll.className = 'fav-hscroll';
 
-    if (!favorites || favorites.length === 0) {
-        list.className = 'favorites-list';
-        list.innerHTML = '<div class="favorites-empty">찜한 곡이 없습니다.</div>';
-        return;
+    tracks.forEach(t => {
+        const item = document.createElement('div');
+        item.className = 'fav-hscroll-item';
+        item.onclick = () => onClickTrack(t);
+
+        const img = document.createElement('img');
+        img.src = t.cover_image_url || '';
+        img.className = 'fav-hscroll-cover';
+        img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
+
+        const name = document.createElement('div');
+        name.className = 'fav-hscroll-title';
+        name.textContent = t.title || t.track_name || t.track || '';
+
+        const artist = document.createElement('div');
+        artist.className = 'fav-hscroll-artist';
+        artist.textContent = t.artist || '';
+
+        item.appendChild(img);
+        item.appendChild(name);
+        item.appendChild(artist);
+        scroll.appendChild(item);
+    });
+
+    section.appendChild(scroll);
+    return section;
+}
+
+function _makePlSection(savedPlaylists) {
+    const section = document.createElement('div');
+    section.className = 'fav-section';
+
+    const header = document.createElement('div');
+    header.className = 'fav-section-title';
+    header.textContent = '저장된 PL';
+    section.appendChild(header);
+
+    if (!savedPlaylists || savedPlaylists.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'fav-section-empty';
+        empty.textContent = '없습니다';
+        section.appendChild(empty);
+        return section;
     }
 
-    setCurrentCandidates(favorites);
-    list.className = `favorites-list ${recommendationViewMode === 'list' ? 'track-list compact-track-list' : ''}`;
+    savedPlaylists.forEach((pl) => {
+        const plTracks = (pl.tracks || []).map(t => ({
+            track_key: t.track_key,
+            title: t.track_name || t.title,
+            artist: t.artist,
+            album: t.album,
+            cover_image_url: t.cover_image_url,
+            apple_music_id: t.apple_music_id,
+        }));
 
-    favorites.forEach(fav => {
-        const track = {
-            track_key: fav.track_key,
-            track: fav.title,
-            title: fav.title,
-            artist: fav.artist,
-            album: fav.album,
-            cover_image_url: fav.cover_image_url,
-            playlist_count: fav.playlist_count
+        const row = document.createElement('div');
+        row.style.cssText = 'position:relative;width:100%;max-width:900px;height:72px;overflow:hidden;border-radius:12px;border:1px solid rgba(255,255,255,.08);margin-bottom:8px;';
+
+        const deleteBtn = document.createElement('div');
+        deleteBtn.style.cssText = 'position:absolute;top:0;right:0;bottom:0;width:80px;background:#e53935;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .15s;';
+        deleteBtn.textContent = '삭제';
+        deleteBtn.onclick = async () => {
+            try {
+                await fetch(`${API_BASE_URL}/playlist-builder/playlist/${pl.id}`, { method: 'DELETE', headers: getAuthHeaders() });
+                row.remove();
+                lastSavedPlaylists = lastSavedPlaylists.filter(p => p.id !== pl.id);
+            } catch(e) { console.error('플리 삭제 실패', e); }
         };
 
-        const trackDiv = createTrackCard(track, false, () => {
-            switchTab('search');
-            selectTrack(track);
-        }, {
-            favorited: true,
-            candidateKeys: currentCandidateKeys,
-            onFavoriteChange: (heartBtn) => {
-                if (!heartBtn.classList.contains('favorited')) {
-                    lastFavorites = lastFavorites.filter(item => item.track_key !== fav.track_key);
-                    renderFavorites(lastFavorites, lastSavedPlaylists);
-                }
-            }
-        });
+        const card = document.createElement('div');
+        card.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;gap:14px;padding:0 16px;background:rgba(255,255,255,.06);border-radius:12px;cursor:pointer;transition:transform .25s ease;box-sizing:border-box;';
 
-        list.appendChild(trackDiv);
+        const stackWrap = document.createElement('div');
+        stackWrap.style.cssText = 'position:relative;height:48px;flex-shrink:0;';
+        const previewTracks = (pl.tracks || []).slice(0, 4);
+        const total = previewTracks.length;
+        previewTracks.forEach((t, i) => {
+            const img = document.createElement('img');
+            img.src = t.cover_image_url || '';
+            img.style.cssText = `position:absolute;left:${i * 18}px;width:44px;height:44px;border-radius:6px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.5);z-index:${total - i};`;
+            img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
+            stackWrap.appendChild(img);
+        });
+        stackWrap.style.width = `${44 + (total - 1) * 18}px`;
+
+        const info = document.createElement('div');
+        info.style.cssText = 'flex:1;min-width:0;';
+        const nameEl = document.createElement('div');
+        nameEl.style.cssText = 'font-size:14px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+        nameEl.textContent = pl.name;
+        const countEl = document.createElement('div');
+        countEl.style.cssText = 'font-size:12px;color:rgba(255,255,255,.45);margin-top:2px;';
+        countEl.textContent = `${(pl.tracks || []).length}곡`;
+        info.appendChild(nameEl);
+        info.appendChild(countEl);
+
+        card.appendChild(stackWrap);
+        card.appendChild(info);
+        row.appendChild(deleteBtn);
+        row.appendChild(card);
+
+        let startX = 0, moved = false, opened = false;
+        const showDelete = (show) => { deleteBtn.style.opacity = show ? '1' : '0'; deleteBtn.style.pointerEvents = show ? 'auto' : 'none'; };
+        const swipeStart = (x) => { startX = x; moved = false; };
+        const swipeMove = (x) => {
+            const dx = startX - x;
+            if (Math.abs(dx) > 5) moved = true;
+            const val = Math.max(0, Math.min(80, (opened ? 80 : 0) + dx));
+            card.style.transition = 'none';
+            card.style.transform = `translateX(-${val}px)`;
+            if (val > 0) showDelete(true);
+        };
+        const swipeEnd = (x) => {
+            const dx = startX - x;
+            card.style.transition = 'transform .25s ease';
+            if (!opened && dx > 40) { card.style.transform = 'translateX(-80px)'; opened = true; showDelete(true); }
+            else if (opened && dx < -20) { card.style.transform = 'translateX(0)'; opened = false; showDelete(false); }
+            else { card.style.transform = opened ? 'translateX(-80px)' : 'translateX(0)'; showDelete(opened); }
+            if (!moved) {
+                if (opened) { card.style.transform = 'translateX(0)'; opened = false; showDelete(false); }
+                else { playPlaylist(plTracks); }
+            }
+        };
+        card.addEventListener('mousedown', e => swipeStart(e.clientX));
+        window.addEventListener('mousemove', e => { if (startX) swipeMove(e.clientX); });
+        window.addEventListener('mouseup', e => { if (startX) { swipeEnd(e.clientX); startX = 0; } });
+        card.addEventListener('touchstart', e => swipeStart(e.touches[0].clientX), { passive: true });
+        card.addEventListener('touchmove', e => swipeMove(e.touches[0].clientX), { passive: true });
+        card.addEventListener('touchend', e => swipeEnd(e.changedTouches[0].clientX));
+
+        section.appendChild(row);
     });
+
+    return section;
+}
+
+function renderFavorites(favorites, savedPlaylists = [], recentTracks = []) {
+    const container = document.getElementById('favoritesView');
+    // 기존 동적 섹션 모두 제거
+    container.querySelectorAll('.fav-section, .fav-playlists-section, .fav-songs-card').forEach(el => el.remove());
+
+    const onClickTrack = (t) => {
+        const track = { track_key: t.track_key, track: t.title || t.track_name, title: t.title || t.track_name, artist: t.artist, cover_image_url: t.cover_image_url, apple_music_id: t.apple_music_id };
+        switchTab('search');
+        selectTrack(track);
+    };
+
+    // 1. 최근 재생
+    container.appendChild(_makeHScrollSection('최근 재생', recentTracks, onClickTrack));
+
+    // 2. 저장된 곡
+    container.appendChild(_makeHScrollSection('저장된 곡', favorites.map(f => ({ ...f, title: f.title || f.track_name })), onClickTrack));
+
+    // 3. 저장된 PL
+    container.appendChild(_makePlSection(savedPlaylists));
 }
 
 function openSavedPlaylist(playlistId) {
@@ -632,30 +648,11 @@ function getTrackArtist(track) {
     return track.artist || track.artist_name || 'Unknown Artist';
 }
 
-function saveRecentlyPlayed(track) {
-    try {
-        const key = 'recentlyPlayed';
-        const existing = JSON.parse(localStorage.getItem(key) || '[]');
-        const filtered = existing.filter(t => t.track_key !== track.track_key);
-        const entry = {
-            track_key: track.track_key,
-            title: track.title || track.track || track.track_name || '',
-            artist: track.artist || '',
-            cover_image_url: track.cover_image_url || '',
-            apple_music_id: track.apple_music_id || '',
-            played_at: Date.now(),
-        };
-        filtered.unshift(entry);
-        localStorage.setItem(key, JSON.stringify(filtered.slice(0, 30)));
-    } catch (e) {}
-}
-
 function openTrackOnYouTube(track, candidateKeys = currentCandidateKeys, keepQueue = false) {
     if (!keepQueue) {
         currentPlaylistQueue = null;
         currentPlaylistIndex = -1;
     }
-    saveRecentlyPlayed(track);
     logAction('play', { selected_track_key: track.track_key, candidate_track_keys: candidateKeys });
     // 지도 탭이면 해당 트랙으로 카메라 포커싱
     if (currentTab === 'map') playerMoveCamToTrack(track.track_key);
