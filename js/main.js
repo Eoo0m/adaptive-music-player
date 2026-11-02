@@ -632,11 +632,30 @@ function getTrackArtist(track) {
     return track.artist || track.artist_name || 'Unknown Artist';
 }
 
+function saveRecentlyPlayed(track) {
+    try {
+        const key = 'recentlyPlayed';
+        const existing = JSON.parse(localStorage.getItem(key) || '[]');
+        const filtered = existing.filter(t => t.track_key !== track.track_key);
+        const entry = {
+            track_key: track.track_key,
+            title: track.title || track.track || track.track_name || '',
+            artist: track.artist || '',
+            cover_image_url: track.cover_image_url || '',
+            apple_music_id: track.apple_music_id || '',
+            played_at: Date.now(),
+        };
+        filtered.unshift(entry);
+        localStorage.setItem(key, JSON.stringify(filtered.slice(0, 30)));
+    } catch (e) {}
+}
+
 function openTrackOnYouTube(track, candidateKeys = currentCandidateKeys, keepQueue = false) {
     if (!keepQueue) {
         currentPlaylistQueue = null;
         currentPlaylistIndex = -1;
     }
+    saveRecentlyPlayed(track);
     logAction('play', { selected_track_key: track.track_key, candidate_track_keys: candidateKeys });
     // 지도 탭이면 해당 트랙으로 카메라 포커싱
     if (currentTab === 'map') playerMoveCamToTrack(track.track_key);
