@@ -299,10 +299,13 @@ body {
 .fav-hscroll {
     display: flex;
     flex-direction: row;
+    flex-wrap: nowrap;
     gap: 12px;
     overflow-x: auto;
+    overflow-y: visible;
     padding-bottom: 6px;
     scrollbar-width: none;
+    width: 100%;
 }
 .fav-hscroll::-webkit-scrollbar { display: none; }
 

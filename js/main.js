@@ -1412,6 +1412,7 @@ async function loadDefaultTracks() {
         }
 
         if (container.innerHTML.trim()) return;
+        if (currentTab !== 'search') return;
 
         // #trackInfo: top10 + 홈피드10 그리드 (20개)
         const trackInfo = document.getElementById('trackInfo');
