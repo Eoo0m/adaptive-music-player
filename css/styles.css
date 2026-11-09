@@ -1967,11 +1967,30 @@ body > .loading-indicator {
 .search-result-play:hover {
     color: #1db954;
 }
-/* 키워드 검색 행 */
-.search-keyword-row {
-    border-bottom: 1px solid rgba(255,255,255,.08);
-    margin-bottom: 4px;
-    padding-bottom: 10px;
+/* 섹션 라벨 */
+.search-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,.4);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    padding: 8px 10px 4px;
+}
+/* 무드 그리드 버튼 */
+.search-mood-grid-btn {
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    margin-bottom: 2px;
+}
+.search-mood-grid-btn .search-result-icon {
+    background: rgba(147,51,234,.18);
+    color: #a855f7;
+}
+/* 로딩 */
+.search-result-loading {
+    font-size: 13px;
+    color: rgba(255,255,255,.4);
+    text-align: center;
+    padding: 14px;
 }
 .search-result-icon {
     width: 44px;

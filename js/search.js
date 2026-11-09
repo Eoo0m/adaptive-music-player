@@ -14,14 +14,144 @@ function hideLoadingIndicator() {}
 // ===== Unified Search =====
 async function doSearch() {
     const query = document.getElementById('searchInput').value.trim();
-    if (query) {
-        logAction('search', { search_query: query, search_mode: searchMode });
+    if (!query) return;
+    logAction('search', { search_query: query, search_mode: 'smart' });
+    await smartSearch(query);
+}
+
+async function smartSearch(query, retryCount = 0) {
+    const div = document.getElementById('searchResults');
+    div.innerHTML = '<div class="search-result-loading">검색 중...</div>';
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/smart-search`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query, entity_limit: 10, mood_top_k: 24, mood_candidates: 100 }),
+            signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            if (retryCount < 2) {
+                await new Promise(r => setTimeout(r, Math.pow(2, retryCount) * 1000));
+                return smartSearch(query, retryCount + 1);
+            }
+            div.innerHTML = '<div class="error-message">검색 실패. 다시 시도해주세요.</div>';
+            return;
+        }
+
+        const data = await response.json();
+        displaySmartSearchResults(data);
+
+    } catch (e) {
+        clearTimeout(timeoutId);
+        if (retryCount < 2) {
+            await new Promise(r => setTimeout(r, Math.pow(2, retryCount) * 1000));
+            return smartSearch(query, retryCount + 1);
+        }
+        div.innerHTML = '<div class="error-message">검색 중 오류가 발생했습니다.</div>';
     }
-    if (searchMode === 'track') {
-        await searchByTrack();
-    } else {
-        await searchByKeyword();
+}
+
+function displaySmartSearchResults(data) {
+    const div = document.getElementById('searchResults');
+    div.innerHTML = '';
+
+    const entityResults = data.entity_results || [];
+    const moodResults = data.mood_results || [];
+
+    window.searchResultsData = [];
+    let globalIndex = 0;
+
+    const makeRow = (r, index) => {
+        const trackName = r.track || r.track_name || 'Unknown';
+        const artistName = r.artist || '';
+        const coverSrc = r.cover_image_url || '';
+        const isFav = (lastFavorites || []).some(f => f.track_key === r.track_key);
+
+        const row = document.createElement('div');
+        row.className = 'search-result-row';
+        row.innerHTML = `
+            <img class="search-result-cover" src="${coverSrc}" alt="" ${!coverSrc ? 'style="display:none"' : ''}>
+            ${!coverSrc ? '<div class="search-result-cover search-result-cover-placeholder"></div>' : ''}
+            <div class="search-result-info">
+                <div class="search-result-title">${trackName}</div>
+                <div class="search-result-sub">${artistName}</div>
+            </div>
+            <button class="search-result-heart ${isFav ? 'favorited' : ''}" data-idx="${index}" onclick="event.stopPropagation(); toggleFavoriteFromSearch(${index}, this)">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
+            <button class="search-result-play" onclick="event.stopPropagation(); openTrackOnYouTube(window.searchResultsData[${index}])">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+            </button>
+        `;
+        row.onclick = () => selectTrack(window.searchResultsData[index]);
+        return row;
+    };
+
+    // 엔티티 섹션
+    if (entityResults.length > 0) {
+        const label = document.createElement('div');
+        label.className = 'search-section-label';
+        label.textContent = '트랙 / 아티스트';
+        div.appendChild(label);
+
+        entityResults.forEach(r => {
+            window.searchResultsData[globalIndex] = { ...r, track: r.track || r.track_name };
+            div.appendChild(makeRow(r, globalIndex));
+            globalIndex++;
+        });
     }
+
+    // 무드 섹션
+    if (moodResults.length > 0) {
+        const label = document.createElement('div');
+        label.className = 'search-section-label';
+        label.textContent = '분위기 / 감성';
+        div.appendChild(label);
+
+        // 무드는 그리드에 표시 (클릭 시 그리드로 이동)
+        const moodBtn = document.createElement('div');
+        moodBtn.className = 'search-result-row search-mood-grid-btn';
+        moodBtn.innerHTML = `
+            <div class="search-result-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            </div>
+            <div class="search-result-info">
+                <div class="search-result-title">'${data.query}' 무드 결과 ${moodResults.length}곡</div>
+                <div class="search-result-sub">클릭해서 추천 그리드로 보기</div>
+            </div>
+            <div class="search-result-arrow">›</div>
+        `;
+        moodBtn.onclick = () => {
+            const tracks = moodResults.map(r => ({ ...r, track: r.track || r.track_name || '' }));
+            document.getElementById('searchResults').innerHTML = '';
+            document.getElementById('searchInput').value = '';
+            updateTrackDisplay(tracks, 0);
+            const si = document.getElementById('initialSongInput');
+            if (si) { si.classList.add('mini'); si.classList.remove('hidden'); }
+            const ti = document.getElementById('trackInfo');
+            if (ti) ti.classList.remove('hidden');
+        };
+        div.appendChild(moodBtn);
+
+        // 무드 결과 개별 행도 표시
+        moodResults.slice(0, 5).forEach(r => {
+            window.searchResultsData[globalIndex] = { ...r, track: r.track || r.track_name };
+            div.appendChild(makeRow(r, globalIndex));
+            globalIndex++;
+        });
+    }
+
+    if (entityResults.length === 0 && moodResults.length === 0) {
+        div.innerHTML = '<div class="search-result-row" style="color:rgba(255,255,255,.4);font-size:13px;justify-content:center;padding:16px;">결과가 없습니다.</div>';
+    }
+
+    window.searchCandidateKeys = [...entityResults, ...moodResults].slice(0, 20).map(r => r.track_key).filter(Boolean);
 }
 
 // ===== Track Search =====
@@ -158,66 +288,9 @@ async function searchByKeyword(retryCount = 0) {
     }
 }
 
-// ===== Display Search Results =====
+// ===== Display Search Results (legacy, 미사용) =====
 function displaySearchResults(results, type) {
-    const div = document.getElementById('searchResults');
-
-    const keyword = document.getElementById('searchInput').value.trim();
-    div.innerHTML = '';
-
-    // 키워드 검색 항목 — 항상 상단에 표시
-    if (keyword) {
-        const keywordRow = document.createElement('div');
-        keywordRow.className = 'search-result-row search-keyword-row';
-        keywordRow.innerHTML = `
-            <div class="search-result-icon">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            </div>
-            <div class="search-result-info">
-                <div class="search-result-title">'${keyword}' 키워드 검색</div>
-                <div class="search-result-sub">분위기/감성으로 찾기</div>
-            </div>
-            <div class="search-result-arrow">›</div>
-        `;
-        keywordRow.onclick = () => {
-            searchByKeyword();
-        };
-        div.appendChild(keywordRow);
-    }
-
-    if (!results || !Array.isArray(results) || results.length === 0) return;
-
-    if (typeof setGuideText === 'function') setGuideText('앨범 커버를 클릭해 추천을 받고, 더블클릭해 바로 재생해보세요');
-    window.searchResultsData = [];
-    window.searchCandidateKeys = results.slice(0, 20).map(r => r.track_key).filter(Boolean);
-
-    // 트랙 결과 리스트
-    results.slice(0, 10).forEach((r, index) => {
-        window.searchResultsData[index] = r;
-        const trackName = type === 'keyword' ? (r.track_name || r.track || 'Unknown') : (r.track || r.track_name || 'Unknown');
-        const artistName = r.artist || 'Unknown';
-        const coverSrc = r.cover_image_url || '';
-        const isFav = (lastFavorites || []).some(f => f.track_key === r.track_key);
-
-        const row = document.createElement('div');
-        row.className = 'search-result-row';
-        row.innerHTML = `
-            <img class="search-result-cover" src="${coverSrc}" alt="" ${!coverSrc ? 'style="display:none"' : ''}>
-            ${!coverSrc ? '<div class="search-result-cover search-result-cover-placeholder"></div>' : ''}
-            <div class="search-result-info">
-                <div class="search-result-title">${trackName}</div>
-                <div class="search-result-sub">${artistName}</div>
-            </div>
-            <button class="search-result-heart ${isFav ? 'favorited' : ''}" data-idx="${index}" onclick="event.stopPropagation(); toggleFavoriteFromSearch(${index}, this)">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            </button>
-            <button class="search-result-play" onclick="event.stopPropagation(); openTrackOnYouTube(window.searchResultsData[${index}])">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-            </button>
-        `;
-        row.onclick = () => selectTrack(window.searchResultsData[index]);
-        div.appendChild(row);
-    });
+    // smartSearch로 대체됨 — 하위 호환용 stub
 }
 
 function toggleFavoriteFromSearch(index, btn) {
