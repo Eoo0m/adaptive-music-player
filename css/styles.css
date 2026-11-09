@@ -1967,14 +1967,11 @@ body > .loading-indicator {
 .search-result-play:hover {
     color: #1db954;
 }
-/* 섹션 라벨 */
-.search-section-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: rgba(255,255,255,.4);
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    padding: 8px 10px 4px;
+/* 무드 구분선 */
+.search-mood-divider {
+    height: 1px;
+    background: rgba(255,255,255,.1);
+    margin: 4px 8px;
 }
 /* 무드 그리드 버튼 */
 .search-mood-grid-btn {
