@@ -102,7 +102,6 @@ function continueAsGuest() {
     document.getElementById('initialSongInput').classList.remove('hidden');
     document.getElementById('sideTab').classList.remove('hidden');
     document.getElementById('bottomTab').classList.remove('hidden');
-    loadDefaultTracks();
 }
 
 // ===== Tab Navigation =====
@@ -151,7 +150,6 @@ function switchTab(tab) {
 
     if (tab === 'search') {
         searchInterface.classList.remove('hidden');
-        trackInfo.classList.remove('hidden');
     } else if (tab === 'favorites') {
         favoritesView.classList.remove('hidden');
         loadFavorites();
@@ -1457,7 +1455,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('initialSongInput').classList.remove('hidden');
         document.getElementById('sideTab').classList.remove('hidden');
         document.getElementById('bottomTab').classList.remove('hidden');
-        loadFavorites().then(() => loadDefaultTracks()); // 찜 로드 후 기본 트랙 표시
+        loadFavorites();
         // Apple Music 이전 연동 이력 있으면 자동 재연동
         if (localStorage.getItem('apple_music_linked') === '1') {
             if (window.MusicKit) {
