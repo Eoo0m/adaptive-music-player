@@ -824,30 +824,6 @@ document.addEventListener('DOMContentLoaded', () => {
         navigator.mediaSession.setActionHandler('nexttrack', () => playerNextSimilar());
     }
 
-    // 입력 시 debounce 검색 (엔터도 즉시 검색)
-    let searchDebounce = null;
-    const searchInputEl = document.getElementById('searchInput');
-    searchInputEl.addEventListener('input', () => {
-        clearTimeout(searchDebounce);
-        const q = searchInputEl.value.trim();
-        if (!q) {
-            const container = document.getElementById('searchResults');
-            if (_homeFeedCache) {
-                renderHomeFeed(_homeFeedCache.tracks || [], container);
-            } else {
-                container.innerHTML = '';
-                loadDefaultTracks();
-            }
-            return;
-        }
-        searchDebounce = setTimeout(() => doSearch(), 280);
-    });
-    searchInputEl.addEventListener('keydown', e => {
-        if (e.key === 'Enter') {
-            clearTimeout(searchDebounce);
-            if (searchInputEl.value.trim()) doSearch();
-        }
-    });
 
     // 검색창/결과 바깥쪽 클릭 시 검색결과 닫기
     document.addEventListener('click', (e) => {
