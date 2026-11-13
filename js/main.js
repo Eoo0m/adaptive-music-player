@@ -2275,13 +2275,13 @@ function renderMusicMap(canvas, tracks) {
                 ctx.restore();
             }
 
-            // 선택된 커버 위에 재생 버튼 오버레이
+            // 현재 재생 중인 커버에 흐릿한 오버레이 + 일시정지 아이콘
             const isSel = selectedItem === item;
             if (isPlaying) {
-                // 현재 재생 중: 흐릿한 오버레이 + 일시정지 아이콘
                 ctx.save(); ctx.translate(sx, sy);
+                ctx.beginPath(); roundRect(ctx, -half, -half, size, size, r); ctx.clip();
                 ctx.fillStyle = 'rgba(0,0,0,0.38)';
-                ctx.beginPath(); roundRect(ctx, -half, -half, size, size, r); ctx.fill();
+                ctx.fillRect(-half, -half, size, size);
                 // 일시정지 두 막대
                 const bw = size * 0.09;
                 const bh = size * 0.32;
@@ -2290,23 +2290,10 @@ function renderMusicMap(canvas, tracks) {
                 ctx.fillRect(-bx - bw, -bh/2, bw, bh);
                 ctx.fillRect( bx,      -bh/2, bw, bh);
                 ctx.restore();
-            } else if (isSel) {
-                ctx.save(); ctx.translate(sx, sy);
-                ctx.fillStyle = 'rgba(0,0,0,0.45)';
-                ctx.beginPath(); roundRect(ctx, -half, -half, size, size, r); ctx.fill();
-                // 재생 삼각형
-                const ps = size * 0.32;
-                ctx.fillStyle = 'rgba(255,255,255,0.95)';
-                ctx.beginPath();
-                ctx.moveTo(-ps*0.4, -ps*0.5);
-                ctx.lineTo(-ps*0.4,  ps*0.5);
-                ctx.lineTo( ps*0.65, 0);
-                ctx.closePath(); ctx.fill();
-                ctx.restore();
             }
 
             // 테두리
-            if (isPlaying || isSeed || isFav || isHov || isSel) {
+            if (isPlaying || isSeed || isFav || isHov) {
                 ctx.save(); ctx.translate(sx,sy);
                 ctx.beginPath(); roundRect(ctx,-half,-half,size,size,r);
                 if (isPlaying) { ctx.strokeStyle='#4fc3f7'; ctx.lineWidth=Math.max(3,size*.07); ctx.shadowColor='#4fc3f7'; ctx.shadowBlur=size*(0.5 + 0.3 * Math.sin(Date.now() / 280)); }
@@ -2405,19 +2392,11 @@ function renderMusicMap(canvas, tracks) {
             velocity={x:0,y:0};
             const item=hitTest(e.clientX,e.clientY);
             if (item) {
-                if (selectedItem === item) {
-                    // 같은 커버 다시 클릭 → 재생
-                    openTrackOnYouTube(item.track);
-                    selectedItem = null;
-                } else {
-                    selectedItem = item;
-                    // 카메라를 해당 트랙 중심으로 부드럽게 이동
-                    cam.tx = lw()/2 - item.px*cam.scale;
-                    cam.ty = lh()/2 - item.py*cam.scale;
-                }
-            } else {
-                selectedItem = null;
+                // 단일 클릭 → 카메라 이동만
+                cam.tx = lw()/2 - item.px*cam.scale;
+                cam.ty = lh()/2 - item.py*cam.scale;
             }
+            selectedItem = null;
             if (window._closeMapSearchIfOpen) window._closeMapSearchIfOpen();
         }
     });

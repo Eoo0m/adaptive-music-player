@@ -162,8 +162,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('searchClearBtn').classList.toggle('hidden', !val);
         if (!val) {
             _hideAutocomplete();
-            if (!_currentSearchQuery) _showSearchHome();
-        } else if (!_currentSearchQuery) {
+            _currentSearchQuery = '';
+            _showSearchHome();
+        } else {
             _triggerAutocomplete(val);
         }
     });
@@ -176,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     input.addEventListener('focus', () => {
         document.getElementById('searchCancelBtn').classList.remove('hidden');
         const val = input.value.trim();
-        if (val && !_currentSearchQuery) _triggerAutocomplete(val);
+        if (val) _triggerAutocomplete(val);
     });
 
     input.addEventListener('blur', () => {
