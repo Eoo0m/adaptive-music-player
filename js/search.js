@@ -130,7 +130,7 @@ function _triggerAutocomplete(q) {
             const data = await res.json();
             // 현재 input 값이 아직 같을 때만 표시
             const current = document.getElementById('searchInput').value.trim();
-            if (current === q) _showAutocomplete(data.suggestions || []);
+            if (current === q && !_currentSearchQuery) _showAutocomplete(data.suggestions || []);
         } catch {}
     }, 250);
 }
@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     input.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { _hideAutocomplete(); doSearch(); }
+        if (e.key === 'Enter') { clearTimeout(_autocompleteTimer); _hideAutocomplete(); doSearch(); }
         if (e.key === 'Escape') _cancelSearch();
     });
 

@@ -2465,14 +2465,14 @@ body > .loading-indicator {
 /* Entity grid — 5열 */
 .search-entity-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(120px, 160px));
     gap: 10px;
 }
 
-/* Mood grid — 5열 */
+/* Mood grid */
 .search-mood-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(120px, 160px));
     gap: 10px;
 }
 
