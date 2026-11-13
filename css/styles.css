@@ -1626,6 +1626,24 @@ body {
     z-index: 100;
 }
 
+/* 검색 홈/결과 스크롤 영역 */
+.search-body {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 600px;
+    bottom: 80px;
+    overflow-y: auto;
+    color: #fff;
+    z-index: 90;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.search-body::-webkit-scrollbar { display: none; }
+.search-body.hidden { display: none; }
+
 /* Mini search bar mode - 동일 위치 유지 */
 .search-interface.mini {
     position: fixed;

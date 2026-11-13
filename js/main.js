@@ -137,12 +137,14 @@ function switchTab(tab) {
     });
 
     const searchInterface = document.getElementById('initialSongInput');
+    const searchBody = document.getElementById('searchBody');
     const favoritesView = document.getElementById('favoritesView');
     const homeFeedView = document.getElementById('homeFeedView');
     const mapView = document.getElementById('mapView');
     const trackInfo = document.getElementById('trackInfo');
 
     searchInterface.classList.add('hidden');
+    if (searchBody) searchBody.classList.add('hidden');
     favoritesView.classList.add('hidden');
     homeFeedView.classList.add('hidden');
     mapView.classList.add('hidden');
@@ -150,6 +152,7 @@ function switchTab(tab) {
 
     if (tab === 'search') {
         searchInterface.classList.remove('hidden');
+        if (searchBody) searchBody.classList.remove('hidden');
     } else if (tab === 'favorites') {
         favoritesView.classList.remove('hidden');
         loadFavorites();
