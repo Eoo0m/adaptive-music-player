@@ -2257,15 +2257,16 @@ function renderMusicMap(canvas, tracks) {
             if (isPlaying) {
                 ctx.save(); ctx.translate(sx, sy);
                 ctx.beginPath(); roundRect(ctx, -half, -half, size, size, r); ctx.clip();
-                ctx.fillStyle = 'rgba(0,0,0,0.38)';
+                ctx.fillStyle = 'rgba(0,0,0,0.42)';
                 ctx.fillRect(-half, -half, size, size);
-                // 일시정지 두 막대
-                const bw = size * 0.09;
-                const bh = size * 0.32;
-                const bx = size * 0.1;
-                ctx.fillStyle = 'rgba(255,255,255,0.92)';
-                ctx.fillRect(-bx - bw, -bh/2, bw, bh);
-                ctx.fillRect( bx,      -bh/2, bw, bh);
+                // 일시정지 두 막대 (둥근 모서리)
+                const bw = size * 0.11;
+                const bh = size * 0.36;
+                const bx = size * 0.12;
+                const br = bw * 0.45;
+                ctx.fillStyle = 'rgba(255,255,255,0.95)';
+                roundRect(ctx, -bx - bw, -bh/2, bw, bh, br); ctx.fill();
+                roundRect(ctx,  bx,      -bh/2, bw, bh, br); ctx.fill();
                 ctx.restore();
             }
 

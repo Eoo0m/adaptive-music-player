@@ -1626,16 +1626,15 @@ body {
     z-index: 100;
 }
 
-/* 검색 홈/결과 스크롤 영역 */
+/* 검색 홈/결과 영역 — 검색창 아래 전체 페이지 */
 .search-body {
     position: fixed;
     top: 70px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80%;
-    max-width: 600px;
-    bottom: 80px;
+    left: 90px; /* 사이드탭 너비 */
+    right: 0;
+    bottom: 0;
     overflow-y: auto;
+    padding: 20px 40px 100px;
     color: #fff;
     z-index: 90;
     -ms-overflow-style: none;

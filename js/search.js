@@ -96,6 +96,7 @@ function _showAutocomplete(suggestions) {
         row.onclick = () => {
             document.getElementById('searchInput').value = s;
             _hideAutocomplete();
+            _currentSearchQuery = s;
             doSearch();
         };
         row.querySelector('.autocomplete-fill').onclick = e => {
@@ -157,7 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
     input.addEventListener('input', () => {
         const val = input.value.trim();
         document.getElementById('searchClearBtn').classList.toggle('hidden', !val);
-        _currentSearchQuery = '';
+        // 검색 결과 표시 중엔 input으로 상태 리셋 안 함
+        if (_currentSearchQuery) return;
         if (!val) {
             _hideAutocomplete();
             _showSearchHome();
