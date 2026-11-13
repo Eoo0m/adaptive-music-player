@@ -809,10 +809,6 @@ function setGuideText(text) {
 
 // ===== Event Listeners =====
 document.addEventListener('DOMContentLoaded', () => {
-    // searchBody를 body 직속으로 이동 (어떤 컨테이너에도 안 묶이게)
-    const searchBody = document.getElementById('searchBody');
-    if (searchBody) document.body.appendChild(searchBody);
-
     // 스페이스바 재생/일시정지
     document.addEventListener('keydown', e => {
         if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {

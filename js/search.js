@@ -139,6 +139,7 @@ function _triggerAutocomplete(q) {
 function _clearSearchInput() {
     document.getElementById('searchInput').value = '';
     document.getElementById('searchClearBtn').classList.add('hidden');
+    _currentSearchQuery = '';
     _hideAutocomplete();
     _showSearchHome();
 }
@@ -156,14 +157,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!input) return;
 
     input.addEventListener('input', () => {
+        if (_currentSearchQuery) return; // 검색 완료 상태에선 무시
         const val = input.value.trim();
         document.getElementById('searchClearBtn').classList.toggle('hidden', !val);
-        _currentSearchQuery = '';
-        // 이전 검색결과 즉시 숨기고 홈으로
-        document.getElementById('searchResults').classList.add('hidden');
-        document.getElementById('searchHome').style.display = '';
         if (!val) {
             _hideAutocomplete();
+            _showSearchHome();
         } else {
             _triggerAutocomplete(val);
         }
@@ -176,8 +175,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     input.addEventListener('focus', () => {
         document.getElementById('searchCancelBtn').classList.remove('hidden');
-        const val = input.value.trim();
-        if (val) _triggerAutocomplete(val);
+        // 검색결과 보는 중이면 자동완성 안 띄움
+        if (!_currentSearchQuery) {
+            const val = input.value.trim();
+            if (val) _triggerAutocomplete(val);
+        }
     });
 
     input.addEventListener('blur', () => {
