@@ -8,11 +8,15 @@ function hideLoadingIndicator() {}
 
 // ===== Search Home / Results Toggle =====
 function _showSearchHome() {
+    const body = document.getElementById('searchBody');
+    if (body) body.classList.remove('hidden');
     document.getElementById('searchHome').style.display = '';
     document.getElementById('searchResults').classList.add('hidden');
 }
 
 function _showSearchResults() {
+    const body = document.getElementById('searchBody');
+    if (body) body.classList.remove('hidden');
     document.getElementById('searchHome').style.display = 'none';
     document.getElementById('searchResults').classList.remove('hidden');
 }
