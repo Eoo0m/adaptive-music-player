@@ -1635,8 +1635,9 @@ body {
     bottom: 0;
     overflow-y: auto;
     padding: 24px 60px 100px;
+    background: #000;
     color: #fff;
-    z-index: 90;
+    z-index: 95;
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
