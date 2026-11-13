@@ -2475,7 +2475,7 @@ body > .loading-indicator {
     display: grid;
     grid-template-rows: 1fr 1fr;
     grid-auto-flow: column;
-    grid-auto-columns: 130px;
+    grid-auto-columns: 160px;
     gap: 10px;
     overflow-x: auto;
     padding-bottom: 6px;
@@ -2484,10 +2484,10 @@ body > .loading-indicator {
 }
 .search-entity-grid::-webkit-scrollbar { display: none; }
 
-/* Mood grid — 3열 vertical */
+/* Mood grid — 5열 vertical */
 .search-mood-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 10px;
 }
 
