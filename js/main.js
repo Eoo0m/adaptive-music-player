@@ -386,8 +386,7 @@ function renderFavorites(favorites, savedPlaylists = [], recentTracks = []) {
 
     const onClickTrack = (t) => {
         const track = { track_key: t.track_key, track: t.title || t.track_name, title: t.title || t.track_name, artist: t.artist, cover_image_url: t.cover_image_url, apple_music_id: t.apple_music_id };
-        switchTab('search');
-        selectTrack(track);
+        openTrackOnYouTube(track);
     };
 
     // 1. 최근 재생
@@ -810,6 +809,10 @@ function setGuideText(text) {
 
 // ===== Event Listeners =====
 document.addEventListener('DOMContentLoaded', () => {
+    // searchBody를 body 직속으로 이동 (어떤 컨테이너에도 안 묶이게)
+    const searchBody = document.getElementById('searchBody');
+    if (searchBody) document.body.appendChild(searchBody);
+
     // 스페이스바 재생/일시정지
     document.addEventListener('keydown', e => {
         if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
@@ -2253,7 +2256,6 @@ function renderMusicMap(canvas, tracks) {
             }
 
             // 현재 재생 중인 커버에 흐릿한 오버레이 + 일시정지 아이콘
-            const isSel = selectedItem === item;
             if (isPlaying) {
                 ctx.save(); ctx.translate(sx, sy);
                 ctx.beginPath(); roundRect(ctx, -half, -half, size, size, r); ctx.clip();
