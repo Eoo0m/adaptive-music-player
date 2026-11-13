@@ -23,13 +23,6 @@ function _getRecentSearches() {
 }
 
 function _saveRecentSearch(query) {
-    if (!authToken) return;
-    fetch(`${API_BASE_URL}/recent-searches`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({ query }),
-    }).catch(() => {});
-    // 로컬에도 저장
     const list = [query, ..._getRecentSearches().filter(q => q !== query)].slice(0, 10);
     localStorage.setItem('recent_searches', JSON.stringify(list));
     _renderRecentSearches();
