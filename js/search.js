@@ -80,16 +80,114 @@ function loadRecentSearchesFromServer() {
         .catch(() => _renderRecentSearches());
 }
 
+// ===== Autocomplete =====
+let _autocompleteTimer = null;
+
+function _showAutocomplete(suggestions) {
+    const el = document.getElementById('searchAutocomplete');
+    if (!el) return;
+    if (!suggestions || suggestions.length === 0) { el.classList.add('hidden'); return; }
+    el.innerHTML = '';
+    suggestions.forEach((s, i) => {
+        const row = document.createElement('div');
+        row.className = 'autocomplete-row';
+        row.innerHTML = `
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span>${s}</span>
+            <svg class="autocomplete-fill" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 17 9 11 15 5"/><line x1="9" y1="11" x2="21" y2="11"/></svg>
+        `;
+        row.onclick = () => {
+            document.getElementById('searchInput').value = s;
+            _hideAutocomplete();
+            doSearch();
+        };
+        row.querySelector('.autocomplete-fill').onclick = e => {
+            e.stopPropagation();
+            document.getElementById('searchInput').value = s;
+            _triggerAutocomplete(s);
+        };
+        if (i > 0) {
+            const div = document.createElement('div');
+            div.className = 'autocomplete-divider';
+            el.appendChild(div);
+        }
+        el.appendChild(row);
+    });
+    el.classList.remove('hidden');
+}
+
+function _hideAutocomplete() {
+    const el = document.getElementById('searchAutocomplete');
+    if (el) el.classList.add('hidden');
+}
+
+function _triggerAutocomplete(q) {
+    clearTimeout(_autocompleteTimer);
+    if (!q.trim()) { _hideAutocomplete(); return; }
+    _autocompleteTimer = setTimeout(async () => {
+        try {
+            const encoded = encodeURIComponent(q);
+            const res = await fetch(`${API_BASE_URL}/search-autocomplete?q=${encoded}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            // 현재 input 값이 아직 같을 때만 표시
+            const current = document.getElementById('searchInput').value.trim();
+            if (current === q) _showAutocomplete(data.suggestions || []);
+        } catch {}
+    }, 250);
+}
+
+// ===== Input 버튼 헬퍼 =====
+function _clearSearchInput() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchClearBtn').classList.add('hidden');
+    _hideAutocomplete();
+    _showSearchHome();
+}
+
+function _cancelSearch() {
+    _clearSearchInput();
+    _currentSearchQuery = '';
+    document.getElementById('searchCancelBtn').classList.add('hidden');
+    document.getElementById('searchInput').blur();
+}
+
 // 검색창 input 이벤트 연결 (DOMContentLoaded 후)
 document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('searchInput');
     if (!input) return;
+
     input.addEventListener('input', () => {
-        if (!input.value.trim()) _showSearchHome();
+        const val = input.value.trim();
+        document.getElementById('searchClearBtn').classList.toggle('hidden', !val);
+        if (!val) {
+            _hideAutocomplete();
+            if (!_currentSearchQuery) _showSearchHome();
+        } else if (!_currentSearchQuery) {
+            _triggerAutocomplete(val);
+        }
     });
+
     input.addEventListener('keydown', e => {
-        if (e.key === 'Enter') doSearch();
+        if (e.key === 'Enter') { _hideAutocomplete(); doSearch(); }
+        if (e.key === 'Escape') _cancelSearch();
     });
+
+    input.addEventListener('focus', () => {
+        document.getElementById('searchCancelBtn').classList.remove('hidden');
+        const val = input.value.trim();
+        if (val && !_currentSearchQuery) _triggerAutocomplete(val);
+    });
+
+    input.addEventListener('blur', () => {
+        setTimeout(() => {
+            _hideAutocomplete();
+            if (!_currentSearchQuery && !input.value.trim()) {
+                document.getElementById('searchCancelBtn').classList.add('hidden');
+            }
+        }, 150);
+    });
+
     _showSearchHome();
     loadRecentSearchesFromServer();
 });
@@ -135,91 +233,87 @@ async function doSearch() {
     }
 }
 
-function _makeTrackRow(r, index) {
+// ===== Track Grid Card =====
+function _makeTrackCard(r) {
     const trackName = r.track || r.track_name || 'Unknown';
     const artistName = r.artist || '';
     const coverSrc = r.cover_image_url || '';
     const isFav = (lastFavorites || []).some(f => f.track_key === r.track_key);
 
-    const row = document.createElement('div');
-    row.className = 'search-result-row';
-    row.innerHTML = `
-        <img class="search-result-cover" src="${coverSrc}" alt="" ${!coverSrc ? 'style="display:none"' : ''}>
-        ${!coverSrc ? '<div class="search-result-cover search-result-cover-placeholder"></div>' : ''}
-        <div class="search-result-info">
-            <div class="search-result-title">${trackName}</div>
-            <div class="search-result-sub">${artistName}</div>
+    const card = document.createElement('div');
+    card.className = 'search-grid-card';
+    card.innerHTML = `
+        <div class="search-grid-cover">
+            ${coverSrc ? `<img src="${coverSrc}" alt="">` : '<div class="search-grid-cover-placeholder"></div>'}
+            <div class="search-grid-gradient"></div>
+            <div class="search-grid-info">
+                <div class="search-grid-title">${trackName}</div>
+                <div class="search-grid-artist">${artistName}</div>
+            </div>
+            <button class="search-grid-heart ${isFav ? 'favorited' : ''}" onclick="event.stopPropagation(); _toggleFavCard(this, '${r.track_key}')">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
         </div>
-        <button class="search-result-heart ${isFav ? 'favorited' : ''}" data-idx="${index}" onclick="event.stopPropagation(); toggleFavoriteFromSearch(${index}, this)">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        </button>
-        <button class="search-result-play" onclick="event.stopPropagation(); openTrackOnYouTube(window.searchResultsData[${index}])">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-        </button>
     `;
-    row.onclick = () => selectTrack(window.searchResultsData[index]);
-    return row;
+    card.onclick = () => selectTrack(r);
+    return card;
+}
+
+function _toggleFavCard(btn, trackKey) {
+    const isFav = btn.classList.contains('favorited');
+    btn.classList.toggle('favorited');
+    const svg = btn.querySelector('svg');
+    if (svg) svg.setAttribute('fill', isFav ? 'none' : 'currentColor');
+    const track = (window.searchResultsData || []).find(t => t.track_key === trackKey) || { track_key: trackKey };
+    toggleFavorite(track, btn);
 }
 
 function _renderEntityResults(entityResults, query) {
     const div = document.getElementById('searchResults');
     div.innerHTML = '';
-    window.searchResultsData = [];
+    window.searchResultsData = entityResults;
 
-    entityResults.forEach((r, i) => {
-        window.searchResultsData[i] = r;
-        div.appendChild(_makeTrackRow(r, i));
-    });
+    if (entityResults.length === 0) return;
+
+    const label = document.createElement('div');
+    label.className = 'search-section-label';
+    label.textContent = '검색 결과';
+    div.appendChild(label);
+
+    // 2행 가로 스크롤 그리드
+    const grid = document.createElement('div');
+    grid.className = 'search-entity-grid';
+    entityResults.forEach(r => grid.appendChild(_makeTrackCard(r)));
+    div.appendChild(grid);
 
     window.searchCandidateKeys = entityResults.map(r => r.track_key).filter(Boolean);
 }
 
 function _appendMoodResults(moodResults, query) {
     const div = document.getElementById('searchResults');
-    const startIndex = window.searchResultsData.length;
 
-    // 구분선
     const divider = document.createElement('div');
-    divider.className = 'search-mood-divider';
+    divider.className = 'search-results-divider';
     div.appendChild(divider);
 
-    // 무드 그리드 버튼
-    const moodBtn = document.createElement('div');
-    moodBtn.className = 'search-result-row search-mood-grid-btn';
-    moodBtn.innerHTML = `
-        <div class="search-result-icon">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-        </div>
-        <div class="search-result-info">
-            <div class="search-result-title">'${query}' 무드 결과 ${moodResults.length}곡</div>
-            <div class="search-result-sub">클릭해서 추천 그리드로 보기</div>
-        </div>
-        <div class="search-result-arrow">›</div>
-    `;
-    moodBtn.onclick = () => {
-        const tracks = moodResults.map(r => ({ ...r, track: r.track || r.track_name || '' }));
-        document.getElementById('searchResults').innerHTML = '';
-        document.getElementById('searchInput').value = '';
-        _showSearchHome();
-        updateTrackDisplay(tracks, 0);
-        const si = document.getElementById('initialSongInput');
-        if (si) { si.classList.add('mini'); si.classList.remove('hidden'); }
-        const ti = document.getElementById('trackInfo');
-        if (ti) ti.classList.remove('hidden');
-    };
-    div.appendChild(moodBtn);
+    const label = document.createElement('div');
+    label.className = 'search-section-label';
+    label.textContent = `'${query}' 키워드 검색 결과`;
+    div.appendChild(label);
 
-    // 무드 개별 행 (상위 5개)
-    moodResults.slice(0, 5).forEach((r, i) => {
-        const idx = startIndex + i;
-        window.searchResultsData[idx] = { ...r, track: r.track || r.track_name };
-        div.appendChild(_makeTrackRow(window.searchResultsData[idx], idx));
+    // 3열 세로 그리드
+    const grid = document.createElement('div');
+    grid.className = 'search-mood-grid';
+    moodResults.forEach(r => {
+        window.searchResultsData.push(r);
+        grid.appendChild(_makeTrackCard(r));
     });
+    div.appendChild(grid);
 
     window.searchCandidateKeys = [
-        ...window.searchCandidateKeys,
+        ...(window.searchCandidateKeys || []),
         ...moodResults.map(r => r.track_key).filter(Boolean),
-    ].slice(0, 20);
+    ].slice(0, 30);
 }
 
 // ===== Track Search =====

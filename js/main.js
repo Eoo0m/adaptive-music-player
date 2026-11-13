@@ -2277,7 +2277,20 @@ function renderMusicMap(canvas, tracks) {
 
             // 선택된 커버 위에 재생 버튼 오버레이
             const isSel = selectedItem === item;
-            if (isSel) {
+            if (isPlaying) {
+                // 현재 재생 중: 흐릿한 오버레이 + 일시정지 아이콘
+                ctx.save(); ctx.translate(sx, sy);
+                ctx.fillStyle = 'rgba(0,0,0,0.38)';
+                ctx.beginPath(); roundRect(ctx, -half, -half, size, size, r); ctx.fill();
+                // 일시정지 두 막대
+                const bw = size * 0.09;
+                const bh = size * 0.32;
+                const bx = size * 0.1;
+                ctx.fillStyle = 'rgba(255,255,255,0.92)';
+                ctx.fillRect(-bx - bw, -bh/2, bw, bh);
+                ctx.fillRect( bx,      -bh/2, bw, bh);
+                ctx.restore();
+            } else if (isSel) {
                 ctx.save(); ctx.translate(sx, sy);
                 ctx.fillStyle = 'rgba(0,0,0,0.45)';
                 ctx.beginPath(); roundRect(ctx, -half, -half, size, size, r); ctx.fill();
@@ -2394,7 +2407,7 @@ function renderMusicMap(canvas, tracks) {
             if (item) {
                 if (selectedItem === item) {
                     // 같은 커버 다시 클릭 → 재생
-                    playTrack(item.track);
+                    openTrackOnYouTube(item.track);
                     selectedItem = null;
                 } else {
                     selectedItem = item;
