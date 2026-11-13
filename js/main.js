@@ -2260,9 +2260,9 @@ function renderMusicMap(canvas, tracks) {
                 ctx.fillStyle = 'rgba(0,0,0,0.42)';
                 ctx.fillRect(-half, -half, size, size);
                 // 일시정지 두 막대 (둥근 모서리)
-                const bw = size * 0.11;
-                const bh = size * 0.36;
-                const bx = size * 0.12;
+                const bw = size * 0.1;
+                const bh = size * 0.35;
+                const bx = size * 0.055;
                 const br = bw * 0.45;
                 ctx.fillStyle = 'rgba(255,255,255,0.95)';
                 roundRect(ctx, -bx - bw, -bh/2, bw, bh, br); ctx.fill();
