@@ -164,6 +164,8 @@ function switchTab(tab) {
             loadHomeFeed();
         }
     } else if (tab === 'map') {
+        searchInterface.classList.add('hidden');
+        searchInterface.classList.remove('mini');
         mapView.classList.remove('hidden');
         if (!mapIntroShown) {
             showMapIntro();

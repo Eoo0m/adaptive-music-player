@@ -133,8 +133,11 @@
                 <input type="text" class="search-input" id="searchInput"
                     placeholder="노래 제목을 입력하세요 (예: Shape of You, Ed Sheeran)">
             </div>
-            <p class="search-guide-text" id="searchGuideText">마음에 드는 곡을 저장하고, 취향지도를 만들어보세요</p>
-            <div id="searchResults"></div>
+            <div id="searchHome">
+                <p class="search-guide-text">음악을 검색하고 저장해서<br>취향 지도를 만들어보세요</p>
+                <div id="recentSearchesSection"></div>
+            </div>
+            <div id="searchResults" class="hidden"></div>
         </div>
     </div>
 
@@ -188,9 +191,9 @@
     <!-- MusicKit JS -->
     <script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js" data-web-components async></script>
     <!-- JavaScript Files -->
-    <script src="js/main.js?v=20261114"></script>
-    <script src="js/search.js?v=20261114"></script>
-    <script src="js/recommend.js?v=20261114"></script>
+    <script src="js/main.js?v=20261114b"></script>
+    <script src="js/search.js?v=20261114b"></script>
+    <script src="js/recommend.js?v=20261114b"></script>
 
     <!-- 지도 인트로 오버레이 (body 직계 자식 → fixed 정상 작동) -->
     <div class="map-intro-overlay" id="mapIntroOverlay" style="display:none;">

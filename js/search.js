@@ -1,15 +1,98 @@
 // ===== Search UI =====
-// 검색창은 항상 표시되므로 이 함수는 더 이상 필요하지 않음
 function showSearchInterface() {
-    // 검색창 포커스만 설정
     document.getElementById('searchInput').focus();
 }
 
-// ===== Loading Indicator =====
-const GUIDE_TEXT_DEFAULT = '앨범 커버를 클릭해 추천을 받고, 더블클릭해 바로 재생해보세요.';
-
 function showLoadingIndicator(message) {}
 function hideLoadingIndicator() {}
+
+// ===== Search Home / Results Toggle =====
+function _showSearchHome() {
+    document.getElementById('searchHome').style.display = '';
+    document.getElementById('searchResults').classList.add('hidden');
+}
+
+function _showSearchResults() {
+    document.getElementById('searchHome').style.display = 'none';
+    document.getElementById('searchResults').classList.remove('hidden');
+}
+
+// ===== Recent Searches =====
+function _getRecentSearches() {
+    try { return JSON.parse(localStorage.getItem('recent_searches') || '[]'); } catch { return []; }
+}
+
+function _saveRecentSearch(query) {
+    if (!authToken) return;
+    fetch(`${API_BASE_URL}/recent-searches`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({ query }),
+    }).catch(() => {});
+    // 로컬에도 저장
+    const list = [query, ..._getRecentSearches().filter(q => q !== query)].slice(0, 10);
+    localStorage.setItem('recent_searches', JSON.stringify(list));
+    _renderRecentSearches();
+}
+
+function _deleteRecentSearch(query) {
+    if (authToken) {
+        const encoded = encodeURIComponent(query);
+        fetch(`${API_BASE_URL}/recent-searches/${encoded}`, { method: 'DELETE', headers: getAuthHeaders() }).catch(() => {});
+    }
+    const list = _getRecentSearches().filter(q => q !== query);
+    localStorage.setItem('recent_searches', JSON.stringify(list));
+    _renderRecentSearches();
+}
+
+function _renderRecentSearches() {
+    const container = document.getElementById('recentSearchesSection');
+    if (!container) return;
+    const searches = _getRecentSearches();
+    if (searches.length === 0) { container.innerHTML = ''; return; }
+
+    container.innerHTML = `<div class="recent-search-label">최근 검색</div>`;
+    const row = document.createElement('div');
+    row.className = 'recent-search-chips';
+    searches.forEach(q => {
+        const chip = document.createElement('div');
+        chip.className = 'recent-search-chip';
+        chip.innerHTML = `<span>${q}</span><button onclick="event.stopPropagation(); _deleteRecentSearch('${q.replace(/'/g, "\\'")}')">✕</button>`;
+        chip.querySelector('span').onclick = () => {
+            document.getElementById('searchInput').value = q;
+            doSearch();
+        };
+        row.appendChild(chip);
+    });
+    container.appendChild(row);
+}
+
+function loadRecentSearchesFromServer() {
+    if (!authToken) { _renderRecentSearches(); return; }
+    fetch(`${API_BASE_URL}/recent-searches`, { headers: getAuthHeaders() })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+            if (data?.queries) {
+                localStorage.setItem('recent_searches', JSON.stringify(data.queries));
+            }
+            _renderRecentSearches();
+        })
+        .catch(() => _renderRecentSearches());
+}
+
+// 검색창 input 이벤트 연결 (DOMContentLoaded 후)
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('searchInput');
+    if (!input) return;
+    input.addEventListener('input', () => {
+        if (!input.value.trim()) _showSearchHome();
+    });
+    input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') doSearch();
+    });
+    _showSearchHome();
+    loadRecentSearchesFromServer();
+});
 
 // ===== Unified Search =====
 let _currentSearchQuery = '';
@@ -18,6 +101,8 @@ async function doSearch() {
     const query = document.getElementById('searchInput').value.trim();
     if (!query) return;
     _currentSearchQuery = query;
+    _saveRecentSearch(query);
+    _showSearchResults();
     logAction('search', { search_query: query, search_mode: 'smart' });
 
     window.searchResultsData = [];
@@ -115,6 +200,7 @@ function _appendMoodResults(moodResults, query) {
         const tracks = moodResults.map(r => ({ ...r, track: r.track || r.track_name || '' }));
         document.getElementById('searchResults').innerHTML = '';
         document.getElementById('searchInput').value = '';
+        _showSearchHome();
         updateTrackDisplay(tracks, 0);
         const si = document.getElementById('initialSongInput');
         if (si) { si.classList.add('mini'); si.classList.remove('hidden'); }
@@ -245,6 +331,7 @@ async function searchByKeyword(retryCount = 0) {
         // 검색창 닫기
         document.getElementById('searchResults').innerHTML = '';
         document.getElementById('searchInput').value = '';
+        _showSearchHome();
 
         // 추천 그리드에 표시
         updateTrackDisplay(tracks, 0);
