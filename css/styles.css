@@ -1626,15 +1626,15 @@ body {
     z-index: 100;
 }
 
-/* 검색 홈/결과 영역 — 검색창 아래 전체 페이지 */
+/* 검색 홈/결과 영역 — 검색창 아래 전체 화면 */
 .search-body {
     position: fixed;
     top: 70px;
-    left: 80px; /* 사이드탭 너비 */
+    left: 0;
     right: 0;
     bottom: 0;
     overflow-y: auto;
-    padding: 24px 40px 100px;
+    padding: 24px 60px 100px;
     color: #fff;
     z-index: 90;
     -ms-overflow-style: none;
@@ -1715,6 +1715,11 @@ body {
 .search-section {
     margin-bottom: 0;
 }
+#searchHome {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
 .search-guide-text {
     text-align: center;
     color: rgba(255,255,255,.3);
