@@ -161,10 +161,18 @@
                 </svg>
             </div>
         </div>
-        <button class="player-btn" id="playerNext" onclick="playerDynamicNext()" title="다음 곡" disabled>
+        <button class="player-btn" id="playerNext" onclick="playerNextSimilar()" title="유사곡" disabled>
             <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
                 <polygon points="5,4 15,12 5,20"/>
                 <rect x="16" y="4" width="3" height="16"/>
+            </svg>
+        </button>
+        <button class="player-btn player-btn-shuffle" id="playerShuffle" onclick="playerDynamicNext()" title="다른 곡" disabled>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 3 21 3 21 8"/>
+                <line x1="4" y1="20" x2="21" y2="3"/>
+                <polyline points="21 16 21 21 16 21"/>
+                <line x1="4" y1="4" x2="9" y2="9"/>
             </svg>
         </button>
     </div>
@@ -180,9 +188,9 @@
     <!-- MusicKit JS -->
     <script src="https://js-cdn.music.apple.com/musickit/v3/musickit.js" data-web-components async></script>
     <!-- JavaScript Files -->
-    <script src="js/main.js?v=20261101"></script>
-    <script src="js/search.js?v=20261101"></script>
-    <script src="js/recommend.js?v=20261101"></script>
+    <script src="js/main.js?v=20261114"></script>
+    <script src="js/search.js?v=20261114"></script>
+    <script src="js/recommend.js?v=20261114"></script>
 
     <!-- 지도 인트로 오버레이 (body 직계 자식 → fixed 정상 작동) -->
     <div class="map-intro-overlay" id="mapIntroOverlay" style="display:none;">

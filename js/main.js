@@ -59,7 +59,7 @@ async function initMusicKit() {
         musicKitInstance.addEventListener('playbackStateDidChange', ({ state }) => {
             playerIsPlaying = (state === 2);
             if (playerIsPlaying && !playerPlayStartTime) playerPlayStartTime = Date.now();
-            if (state === 5) playerDynamicNext(); // 재생 완료 → 다음 곡 (가까운 곡, listenedHalf=true)
+            if (state === 5) playerNextSimilar(); // 재생 완료 → 유사곡
         });
     } catch (e) {
         console.warn('MusicKit init failed:', e);
@@ -122,7 +122,10 @@ function switchTab(tab) {
         }
     }
     const nextBtn = document.getElementById('playerNext');
-    if (nextBtn) nextBtn.disabled = (tab !== 'map' && !currentPlaylistQueue);
+    const shuffleBtn = document.getElementById('playerShuffle');
+    const mapActive = tab === 'map' && !!lastMapData;
+    if (nextBtn) nextBtn.disabled = (!mapActive && !currentPlaylistQueue);
+    if (shuffleBtn) shuffleBtn.disabled = !mapActive;
 
     document.getElementById('tabSearch').classList.toggle('active', tab === 'search');
     document.getElementById('tabFavorites').classList.toggle('active', tab === 'favorites');
@@ -816,7 +819,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if ('mediaSession' in navigator) {
         navigator.mediaSession.setActionHandler('play', () => playerTogglePlayPause());
         navigator.mediaSession.setActionHandler('pause', () => playerTogglePlayPause());
-        navigator.mediaSession.setActionHandler('nexttrack', () => playerDynamicNext());
+        navigator.mediaSession.setActionHandler('nexttrack', () => playerNextSimilar());
     }
 
     // 입력 시 debounce 검색 (엔터도 즉시 검색)
@@ -2080,6 +2083,7 @@ function renderMusicMap(canvas, tracks) {
         cam.ty = Math.max(-gyMax * s, Math.min(h - gyMin * s, cam.ty));
     }
     let hoveredItem = null;
+    let selectedItem = null;
     const hoverScales = new Map();
     let isDragging = false, dragStart = {x:0,y:0}, camStart = {x:0,y:0};
 
@@ -2180,8 +2184,8 @@ function renderMusicMap(canvas, tracks) {
         }
 
         clampCam();
-        cam.x += (cam.tx - cam.x) * 0.15;
-        cam.y += (cam.ty - cam.y) * 0.15;
+        cam.x += (cam.tx - cam.x) * 0.22;
+        cam.y += (cam.ty - cam.y) * 0.22;
 
         // 앨범 모이는 애니메이션 (각 animT: 0→1)
         for (const item of grid) {
@@ -2269,8 +2273,25 @@ function renderMusicMap(canvas, tracks) {
                 ctx.restore();
             }
 
+            // 선택된 커버 위에 재생 버튼 오버레이
+            const isSel = selectedItem === item;
+            if (isSel) {
+                ctx.save(); ctx.translate(sx, sy);
+                ctx.fillStyle = 'rgba(0,0,0,0.45)';
+                ctx.beginPath(); roundRect(ctx, -half, -half, size, size, r); ctx.fill();
+                // 재생 삼각형
+                const ps = size * 0.32;
+                ctx.fillStyle = 'rgba(255,255,255,0.95)';
+                ctx.beginPath();
+                ctx.moveTo(-ps*0.4, -ps*0.5);
+                ctx.lineTo(-ps*0.4,  ps*0.5);
+                ctx.lineTo( ps*0.65, 0);
+                ctx.closePath(); ctx.fill();
+                ctx.restore();
+            }
+
             // 테두리
-            if (isPlaying || isSeed || isFav || isHov) {
+            if (isPlaying || isSeed || isFav || isHov || isSel) {
                 ctx.save(); ctx.translate(sx,sy);
                 ctx.beginPath(); roundRect(ctx,-half,-half,size,size,r);
                 if (isPlaying) { ctx.strokeStyle='#4fc3f7'; ctx.lineWidth=Math.max(3,size*.07); ctx.shadowColor='#4fc3f7'; ctx.shadowBlur=size*(0.5 + 0.3 * Math.sin(Date.now() / 280)); }
@@ -2359,6 +2380,7 @@ function renderMusicMap(canvas, tracks) {
         isDragging=true; dragStart={x:e.clientX,y:e.clientY}; camStart={x:cam.tx,y:cam.ty};
         lastDragPos={x:e.clientX,y:e.clientY}; velocity={x:0,y:0};
         newWrap.style.cursor='grabbing';
+        selectedItem=null;
     });
     window.addEventListener('mouseup', e => {
         if (!isDragging) return;
@@ -2367,7 +2389,20 @@ function renderMusicMap(canvas, tracks) {
         if (!moved) {
             velocity={x:0,y:0};
             const item=hitTest(e.clientX,e.clientY);
-            if (item) { cam.tx=lw()/2-item.px*cam.scale; cam.ty=lh()/2-item.py*cam.scale; }
+            if (item) {
+                if (selectedItem === item) {
+                    // 같은 커버 다시 클릭 → 재생
+                    playTrack(item.track);
+                    selectedItem = null;
+                } else {
+                    selectedItem = item;
+                    // 카메라를 해당 트랙 중심으로 부드럽게 이동
+                    cam.tx = lw()/2 - item.px*cam.scale;
+                    cam.ty = lh()/2 - item.py*cam.scale;
+                }
+            } else {
+                selectedItem = null;
+            }
             if (window._closeMapSearchIfOpen) window._closeMapSearchIfOpen();
         }
     });
@@ -2658,7 +2693,7 @@ function updatePlayerWidget(track, isPlaying) {
             if (musicKitInstance) musicKitInstance.pause();
             else playerTogglePlayPause();
         });
-        navigator.mediaSession.setActionHandler('nexttrack', () => playerDynamicNext());
+        navigator.mediaSession.setActionHandler('nexttrack', () => playerNextSimilar());
     }
     if (isPlaying) {
         playerPlayStartTime = Date.now();
@@ -2667,10 +2702,6 @@ function updatePlayerWidget(track, isPlaying) {
             playerCurrentDuration = musicKitInstance.currentPlaybackDuration * 1000;
         } else {
             playerCurrentDuration = null;
-        }
-        // 새 트랙 재생 시작 → 다음 곡 프리패치 (지도 탭일 때만)
-        if (isNewTrack && currentTab === 'map' && lastMapData) {
-            prefetchDynamicNext(track.track_key, true);
         }
     }
 
@@ -2700,7 +2731,10 @@ function updatePlayerWidget(track, isPlaying) {
 
     // 지도탭이거나 플리 재생 중이면 다음 버튼 활성화
     const nextBtn = document.getElementById('playerNext');
-    if (nextBtn) nextBtn.disabled = (currentTab !== 'map' && !currentPlaylistQueue);
+    const shuffleBtn = document.getElementById('playerShuffle');
+    const mapActive = currentTab === 'map' && !!lastMapData;
+    if (nextBtn) nextBtn.disabled = (!mapActive && !currentPlaylistQueue);
+    if (shuffleBtn) shuffleBtn.disabled = !mapActive;
 
     // 애니메이션
     if (isNewTrack) {
@@ -2728,98 +2762,61 @@ function playerTogglePlayPause() {
     }
 }
 
-// 프리패치 캐시: { trackKey, listenedHalf, tracks }
-let dynamicNextCache = null;
-let dynamicNextFetching = false;
 
-async function prefetchDynamicNext(trackKey, listenedHalf) {
-    if (!trackKey || dynamicNextFetching) return;
-    dynamicNextFetching = true;
+async function _fetchAndPlay(endpoint, trackKey) {
+    if (!lastMapData) return;
+    const candidateKeys = lastMapData.tracks.filter(t => t.track_key !== trackKey).map(t => t.track_key);
+    const body = { track_key: trackKey };
+    if (candidateKeys.length > 0) body.candidate_track_keys = candidateKeys;
+    const res = await fetch(`${API_BASE_URL}/${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`${endpoint} ${res.status}`);
+    const data = await res.json();
+    const tracks = data.tracks || [];
+    if (tracks.length === 0) return;
+
+    let idx = 0;
+    function tryNext() {
+        if (idx >= tracks.length) return;
+        const track = tracks[idx++];
+        playerMoveCamToTrack(track.track_key);
+        if (musicKitInstance && musicKitInstance.isAuthorized) {
+            playWithAppleMusic(track, tryNext);
+        } else {
+            window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(track.title + ' ' + track.artist)}`, '_blank');
+        }
+    }
+    tryNext();
+}
+
+async function playerNextSimilar() {
+    if (!playerCurrentTrack) return;
+
+    // 플리 순서 재생 중이면 순서대로
+    if (currentPlaylistQueue && currentPlaylistIndex >= 0) {
+        const nextIndex = currentPlaylistIndex + 1;
+        if (nextIndex >= currentPlaylistQueue.length) return;
+        currentPlaylistIndex = nextIndex;
+        openTrackOnYouTube(currentPlaylistQueue[nextIndex], currentPlaylistQueue.map(t => t.track_key), true);
+        return;
+    }
+
+    if (currentTab !== 'map' || !lastMapData) return;
     try {
-        const candidateKeys = lastMapData
-            ? lastMapData.tracks.filter(t => t.track_key !== trackKey).map(t => t.track_key)
-            : [];
-        const body = { track_key: trackKey, listened_half: listenedHalf };
-        if (candidateKeys.length > 0) body.candidate_track_keys = candidateKeys;
-        const res = await fetch(`${API_BASE_URL}/dynamic-next`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        });
-        if (!res.ok) throw new Error(`dynamic-next ${res.status}`);
-        const data = await res.json();
-        dynamicNextCache = { trackKey, listenedHalf, tracks: data.tracks || [] };
+        await _fetchAndPlay('next-track', playerCurrentTrack.track_key);
     } catch (e) {
-        console.warn('prefetchDynamicNext failed:', e);
-        dynamicNextCache = null;
-    } finally {
-        dynamicNextFetching = false;
+        console.error('next-track failed:', e);
     }
 }
 
 async function playerDynamicNext() {
     if (!playerCurrentTrack) return;
-
-    // 플리 순서 재생 중이면 다음 곡 순서대로
-    if (currentPlaylistQueue && currentPlaylistIndex >= 0) {
-        const nextIndex = currentPlaylistIndex + 1;
-        if (nextIndex >= currentPlaylistQueue.length) return; // 마지막 곡
-        currentPlaylistIndex = nextIndex;
-        const nextTrack = currentPlaylistQueue[nextIndex];
-        openTrackOnYouTube(nextTrack, currentPlaylistQueue.map(t => t.track_key), true);
-        return;
-    }
-
     if (currentTab !== 'map' || !lastMapData) return;
-
-    const listenedMs = playerPlayStartTime ? (Date.now() - playerPlayStartTime) : 0;
-    let durationMs = playerCurrentDuration;
-    if (!durationMs && musicKitInstance && musicKitInstance.currentPlaybackDuration) {
-        durationMs = musicKitInstance.currentPlaybackDuration * 1000;
-    }
-    const listenedHalf = durationMs ? (listenedMs >= durationMs * 0.5) : false;
-    const trackKey = playerCurrentTrack.track_key;
-
     try {
-        // 캐시 hit: 같은 트랙+모드이면 즉시 사용
-        let ranked;
-        if (dynamicNextCache && dynamicNextCache.trackKey === trackKey && dynamicNextCache.listenedHalf === listenedHalf && dynamicNextCache.tracks.length > 0) {
-            ranked = dynamicNextCache.tracks;
-            dynamicNextCache = null;
-        } else {
-            // 캐시 miss: 직접 fetch
-            const candidateKeys = lastMapData
-                ? lastMapData.tracks.filter(t => t.track_key !== trackKey).map(t => t.track_key)
-                : [];
-            const body = { track_key: trackKey, listened_half: listenedHalf };
-            if (candidateKeys.length > 0) body.candidate_track_keys = candidateKeys;
-            const res = await fetch(`${API_BASE_URL}/dynamic-next`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
-            });
-            if (!res.ok) throw new Error(`dynamic-next ${res.status}`);
-            const data = await res.json();
-            ranked = data.tracks || [];
-        }
-
-        if (ranked.length === 0) return;
-
-        // 순서대로 재시도
-        let idx = 0;
-        function tryNext() {
-            if (idx >= ranked.length) return;
-            const track = ranked[idx++];
-            playerMoveCamToTrack(track.track_key, !listenedHalf);
-            // 다음 곡 재생 시작 후 즉시 다음 프리패치
-            if (musicKitInstance && musicKitInstance.isAuthorized) {
-                playWithAppleMusic(track, tryNext);
-            } else {
-                window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(track.title + ' ' + track.artist)}`, '_blank');
-            }
-            prefetchDynamicNext(track.track_key, true);
-        }
-        tryNext();
+        await _fetchAndPlay('dynamic-next', playerCurrentTrack.track_key);
     } catch (e) {
         console.error('dynamic-next failed:', e);
     }
@@ -2834,9 +2831,8 @@ function playPlaylist(tracks) {
     openTrackOnYouTube(tracks[0], tracks.map(t => t.track_key), true);
 }
 
-function playerMoveCamToTrack(trackKey, dramatic = false) {
+function playerMoveCamToTrack(trackKey) {
     if (!lastMapData) return;
-    // renderMusicMap의 grid 참조는 클로저 내부이므로 lastMapData.tracks에서 계산
     const tracks = lastMapData.tracks;
     const target = tracks.find(t => t.track_key === trackKey);
     if (!target) return;
@@ -2853,7 +2849,5 @@ function playerMoveCamToTrack(trackKey, dramatic = false) {
     const px = col * STEP - maxCol * STEP / 2;
     const py = row * VSTEP - maxRow * VSTEP / 2;
 
-    // cam은 renderMusicMap 클로저 내부이므로 직접 접근 불가.
-    // window.mapCamTarget을 통해 통신
-    window.mapCamTarget = { px, py, dramatic, trackKey };
+    window.mapCamTarget = { px, py, trackKey };
 }

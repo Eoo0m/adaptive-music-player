@@ -229,6 +229,15 @@ body {
     cursor: default
 }
 
+.player-btn-shuffle {
+    color: #32d66b
+}
+
+.player-btn-shuffle:hover:not(:disabled) {
+    color: #32d66b;
+    background: rgba(50, 214, 107, .15)
+}
+
 .player-album-wrap {
     width: 42px;
     height: 42px;
