@@ -158,13 +158,13 @@ document.addEventListener('DOMContentLoaded', () => {
     input.addEventListener('input', () => {
         const val = input.value.trim();
         document.getElementById('searchClearBtn').classList.toggle('hidden', !val);
-        // 검색 결과 표시 중엔 input으로 상태 리셋 안 함
-        if (_currentSearchQuery) return;
+        _currentSearchQuery = '';
+        // 이전 검색결과 즉시 숨기고 홈으로
+        document.getElementById('searchResults').classList.add('hidden');
+        document.getElementById('searchHome').style.display = '';
         if (!val) {
             _hideAutocomplete();
-            _showSearchHome();
         } else {
-            _showSearchHome();
             _triggerAutocomplete(val);
         }
     });

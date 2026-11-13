@@ -1630,11 +1630,11 @@ body {
 .search-body {
     position: fixed;
     top: 70px;
-    left: 90px; /* 사이드탭 너비 */
+    left: 80px; /* 사이드탭 너비 */
     right: 0;
     bottom: 0;
     overflow-y: auto;
-    padding: 20px 40px 100px;
+    padding: 24px 40px 100px;
     color: #fff;
     z-index: 90;
     -ms-overflow-style: none;
@@ -2469,21 +2469,14 @@ body > .loading-indicator {
     margin: 8px 0 4px;
 }
 
-/* Entity grid — 2행 horizontal scroll */
+/* Entity grid — 5열 */
 .search-entity-grid {
     display: grid;
-    grid-template-rows: 1fr 1fr;
-    grid-auto-flow: column;
-    grid-auto-columns: 160px;
+    grid-template-columns: repeat(5, 1fr);
     gap: 10px;
-    overflow-x: auto;
-    padding-bottom: 6px;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
 }
-.search-entity-grid::-webkit-scrollbar { display: none; }
 
-/* Mood grid — 5열 vertical */
+/* Mood grid — 5열 */
 .search-mood-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
