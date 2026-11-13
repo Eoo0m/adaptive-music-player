@@ -1636,13 +1636,10 @@ body {
     width: 100vw !important;
     max-width: none !important;
     transform: none !important;
-    overflow-y: auto;
-    padding: 24px 100px 100px 100px;
+    overflow: hidden;
     background: #000;
     color: #fff;
     z-index: 95;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
 }
 #searchBody::-webkit-scrollbar { display: none; }
 #searchBody.hidden { display: none !important; }
@@ -1720,8 +1717,15 @@ body {
     margin-bottom: 0;
 }
 #searchHome {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
     max-width: 600px;
     margin: 0 auto;
+    padding: 24px 0;
+    pointer-events: none;
+}
+#searchHome > * {
+    pointer-events: auto;
 }
 
 .search-guide-text {
@@ -1955,8 +1959,15 @@ body > .loading-indicator {
 
 /* ===== Search Result Rows ===== */
 #searchResults {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
     width: 100%;
+    overflow-y: auto;
+    padding: 24px 100px 100px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
+#searchResults::-webkit-scrollbar { display: none; }
 .search-result-row {
     display: flex;
     align-items: center;
