@@ -160,11 +160,12 @@ document.addEventListener('DOMContentLoaded', () => {
     input.addEventListener('input', () => {
         const val = input.value.trim();
         document.getElementById('searchClearBtn').classList.toggle('hidden', !val);
+        _currentSearchQuery = '';
         if (!val) {
             _hideAutocomplete();
-            _currentSearchQuery = '';
             _showSearchHome();
         } else {
+            _showSearchHome();
             _triggerAutocomplete(val);
         }
     });
