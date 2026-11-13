@@ -214,17 +214,38 @@ async function doSearch() {
         body: JSON.stringify({ query, entity_limit: 0, mood_top_k: 24, mood_candidates: 100 }),
     }).then(r => r.ok ? r.json() : null).catch(() => null);
 
-    // 엔티티 먼저 표시
+    // 엔티티 먼저 표시 (있을 때만)
     const entityData = await entityPromise;
-    if (_currentSearchQuery !== query) return; // 도중에 쿼리 바뀌었으면 취소
+    if (_currentSearchQuery !== query) return;
     const entityResults = (entityData.results || []).map(r => ({ ...r, track: r.track || r.track_name }));
-    _renderEntityResults(entityResults, query);
+    if (entityResults.length > 0) {
+        _renderEntityResults(entityResults, query);
+    }
 
-    // 무드 완료되면 아래에 추가
+    // 무드 완료되면 추가 (엔티티 없으면 단독으로 표시)
     const moodData = await moodPromise;
     if (_currentSearchQuery !== query) return;
     if (moodData && moodData.mood_results && moodData.mood_results.length > 0) {
-        _appendMoodResults(moodData.mood_results, query);
+        if (entityResults.length === 0) {
+            // 엔티티 없으면 무드 결과만 단독 표시
+            const div = document.getElementById('searchResults');
+            div.innerHTML = '';
+            window.searchResultsData = [];
+            const label = document.createElement('div');
+            label.className = 'search-section-label';
+            label.textContent = `'${query}' 키워드 검색 결과`;
+            div.appendChild(label);
+            const grid = document.createElement('div');
+            grid.className = 'search-mood-grid';
+            moodData.mood_results.forEach(r => {
+                window.searchResultsData.push(r);
+                grid.appendChild(_makeTrackCard(r));
+            });
+            div.appendChild(grid);
+            window.searchCandidateKeys = moodData.mood_results.map(r => r.track_key).filter(Boolean);
+        } else {
+            _appendMoodResults(moodData.mood_results, query);
+        }
     }
 }
 
