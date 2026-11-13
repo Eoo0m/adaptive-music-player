@@ -2372,9 +2372,14 @@ function renderMusicMap(canvas, tracks) {
             velocity={x:0,y:0};
             const item=hitTest(e.clientX,e.clientY);
             if (item) {
-                // 단일 클릭 → 카메라 이동만
-                cam.tx = lw()/2 - item.px*cam.scale;
-                cam.ty = lh()/2 - item.py*cam.scale;
+                // 현재 재생 중인 트랙 클릭 → 재생/일시정지 토글
+                if (playerCurrentTrack && playerCurrentTrack.track_key === item.track.track_key) {
+                    playerTogglePlayPause();
+                } else {
+                    // 다른 트랙 클릭 → 카메라 이동
+                    cam.tx = lw()/2 - item.px*cam.scale;
+                    cam.ty = lh()/2 - item.py*cam.scale;
+                }
             }
             selectedItem = null;
             if (window._closeMapSearchIfOpen) window._closeMapSearchIfOpen();
