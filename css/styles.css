@@ -1955,23 +1955,7 @@ body > .loading-indicator {
 
 /* ===== Search Result Rows ===== */
 #searchResults {
-    position: fixed;
-    top: 56px; /* 검색바 아래 */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80%;
-    max-width: 600px;
-    max-height: 40vh;
-    overflow-y: auto;
-    text-align: left;
-    background: rgba(7, 8, 15, 0.96);
-    backdrop-filter: blur(20px);
-    border-bottom-left-radius: 12px;
-    border-bottom-right-radius: 12px;
-    border: 1px solid rgba(255,255,255,.08);
-    border-top: none;
-    z-index: 150;
-    padding: 4px 6px 8px;
+    width: 100%;
 }
 .search-result-row {
     display: flex;
