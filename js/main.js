@@ -3181,6 +3181,7 @@ function _populateExpandedTracks() {
         function onUp() { activeHandle = null; }
 
         if (handle) {
+            handle.addEventListener('click', playerExpandWidget);
             handle.addEventListener('mousedown', onDown);
             handle.addEventListener('touchstart', onDown, { passive: true });
         }
