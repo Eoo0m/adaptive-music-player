@@ -2981,7 +2981,11 @@ function playerTogglePlayPause() {
 async function _fetchAndPlay(endpoint, trackKey) {
     if (!lastMapData) return;
 
-    // 로딩 dots 표시
+    // 두 버튼 모두 disable + dots 표시
+    const nextBtn = document.getElementById('playerNext');
+    const shuffleBtn = document.getElementById('playerShuffle');
+    if (nextBtn) nextBtn.disabled = true;
+    if (shuffleBtn) shuffleBtn.disabled = true;
     const isNext = endpoint === 'next-track';
     const iconId = isNext ? 'playerNextIcon' : 'playerShuffleIcon';
     const dotsId = isNext ? 'playerNextDots' : 'playerShuffleDots';
@@ -3015,9 +3019,12 @@ async function _fetchAndPlay(endpoint, trackKey) {
     }
     tryNext();
     } finally {
-        // 로딩 dots 숨기기
+        // dots 숨기고 버튼 복원
         document.getElementById(iconId)?.classList.remove('hidden');
         document.getElementById(dotsId)?.classList.add('hidden');
+        const mapActive = currentTab === 'map' && !!lastMapData;
+        if (nextBtn) nextBtn.disabled = !mapActive;
+        if (shuffleBtn) shuffleBtn.disabled = !mapActive;
     }
 }
 
