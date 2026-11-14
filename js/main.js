@@ -102,6 +102,7 @@ function continueAsGuest() {
     document.getElementById('initialSongInput').classList.remove('hidden');
     document.getElementById('sideTab').classList.remove('hidden');
     document.getElementById('bottomTab').classList.remove('hidden');
+    document.getElementById('caroLogoBtn')?.classList.remove('hidden');
 }
 
 // ===== Tab Navigation =====

@@ -101,6 +101,21 @@ body {
     background: rgba(255, 255, 255, .25)
 }
 
+/* ===== Caro Logo Button ===== */
+.caro-logo-btn {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 500;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    opacity: 0.85;
+    transition: opacity .2s;
+}
+.caro-logo-btn:hover { opacity: 1; }
+
 /* ===== Side Tab ===== */
 /* ===== Apple Music 연동 버튼 ===== */
 .apple-music-btn {
