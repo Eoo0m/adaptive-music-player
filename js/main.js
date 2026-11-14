@@ -106,7 +106,7 @@ function continueAsGuest() {
 
 // ===== Tab Navigation =====
 function switchTab(tab) {
-    if ((tab === 'favorites' || tab === 'home' || tab === 'map') && !authToken) {
+    if ((tab === 'favorites' || tab === 'home' || tab === 'map' || tab === 'settings') && !authToken) {
         alert('로그인 후 이용할 수 있습니다.');
         return;
     }
@@ -141,6 +141,7 @@ function switchTab(tab) {
     const favoritesView = document.getElementById('favoritesView');
     const homeFeedView = document.getElementById('homeFeedView');
     const mapView = document.getElementById('mapView');
+    const settingsView = document.getElementById('settingsView');
     const trackInfo = document.getElementById('trackInfo');
 
     searchInterface.classList.add('hidden');
@@ -148,7 +149,10 @@ function switchTab(tab) {
     favoritesView.classList.add('hidden');
     homeFeedView.classList.add('hidden');
     mapView.classList.add('hidden');
+    if (settingsView) settingsView.classList.add('hidden');
     trackInfo.classList.add('hidden');
+
+    document.getElementById('tabSettings')?.classList.toggle('active', tab === 'settings');
 
     if (tab === 'search') {
         searchInterface.classList.remove('hidden');
@@ -173,7 +177,22 @@ function switchTab(tab) {
         } else {
             showMusicMap();
         }
+    } else if (tab === 'settings') {
+        if (settingsView) {
+            settingsView.classList.remove('hidden');
+            _renderSettingsProfile();
+        }
     }
+}
+
+function _renderSettingsProfile() {
+    if (!currentUser) return;
+    const img = document.getElementById('settingsProfileImg');
+    const name = document.getElementById('settingsProfileName');
+    const email = document.getElementById('settingsProfileEmail');
+    if (img) img.src = currentUser.profile_image_url || '';
+    if (name) name.textContent = currentUser.display_name || '';
+    if (email) email.textContent = currentUser.email || '';
 }
 
 async function loadFavorites() {
