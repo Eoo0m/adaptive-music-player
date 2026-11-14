@@ -2212,6 +2212,12 @@ async function showMusicMap() {
         loading.classList.add('hidden');
         wrap.classList.remove('hidden');
         renderMusicMap(canvas, data.tracks);
+        // 검색 홈이 떠있으면 그리드 갱신
+        const searchHome = document.getElementById('searchHome');
+        if (searchHome && searchHome.style.display !== 'none') {
+            searchHome.querySelector('.search-home-grid')?.remove();
+            if (typeof _renderSearchHomeGrid === 'function') _renderSearchHomeGrid();
+        }
         // 현재 재생 중인 트랙이 있으면 즉시 프리패치
         if (playerCurrentTrack) prefetchDynamicNext(playerCurrentTrack.track_key, true);
     } catch(e) {

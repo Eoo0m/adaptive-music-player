@@ -2003,6 +2003,53 @@ body {
 .search-interface.mini .search-guide-text {
     display: none;
 }
+
+/* ===== Search Home Grid (맵 데이터 기반 7×3) ===== */
+.search-home-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    padding: 24px 0 40px;
+}
+
+.search-home-grid-item {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.search-home-grid-item img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #1a1a24;
+    display: block;
+    transition: opacity .15s;
+}
+.search-home-grid-item:hover img {
+    opacity: .8;
+}
+
+.search-home-grid-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(255,255,255,.85);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.search-home-grid-artist {
+    font-size: 10px;
+    color: rgba(255,255,255,.4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .recent-search-label {
     font-size: 12px;
     font-weight: 600;

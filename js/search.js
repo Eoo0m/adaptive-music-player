@@ -12,6 +12,56 @@ function _showSearchHome() {
     if (body) body.classList.remove('hidden');
     document.getElementById('searchHome').style.display = '';
     document.getElementById('searchResults').classList.add('hidden');
+    _renderSearchHomeGrid();
+}
+
+function _renderSearchHomeGrid() {
+    const home = document.getElementById('searchHome');
+    if (!home) return;
+
+    // 이미 렌더됐으면 스킵
+    if (home.querySelector('.search-home-grid')) return;
+
+    const mapData = window.lastMapData;
+    if (!mapData?.tracks?.length) return;
+
+    // 21개 랜덤 샘플
+    const pool = [...mapData.tracks];
+    const sampled = [];
+    while (sampled.length < 21 && pool.length > 0) {
+        const idx = Math.floor(Math.random() * pool.length);
+        sampled.push(pool.splice(idx, 1)[0]);
+    }
+
+    const grid = document.createElement('div');
+    grid.className = 'search-home-grid';
+
+    sampled.forEach(t => {
+        const item = document.createElement('div');
+        item.className = 'search-home-grid-item';
+        item.onclick = () => selectTrack(t);
+
+        const img = document.createElement('img');
+        img.src = t.cover_image_url || '';
+        img.alt = '';
+        img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
+
+        const title = document.createElement('div');
+        title.className = 'search-home-grid-title';
+        title.textContent = t.title || t.track_name || '';
+
+        const artist = document.createElement('div');
+        artist.className = 'search-home-grid-artist';
+        artist.textContent = t.artist || '';
+
+        item.appendChild(img);
+        item.appendChild(title);
+        item.appendChild(artist);
+        grid.appendChild(item);
+    });
+
+    home.querySelector('.search-guide-text')?.remove();
+    home.appendChild(grid);
 }
 
 function _showSearchResults() {
