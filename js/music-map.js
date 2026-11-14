@@ -490,11 +490,12 @@ function renderMusicMap(canvas, tracks) {
             return;
         }
         const { screenX: sx, screenY: sy, screenHalf: half } = item;
-        if (sx === undefined) { mapDotsBtn.style.display = 'none'; return; }
+        if (sx === undefined || half === undefined) { mapDotsBtn.style.display = 'none'; return; }
+        const rect = canvas.getBoundingClientRect();
         mapDotsTarget = item.track;
         mapDotsBtn.style.display = 'flex';
-        mapDotsBtn.style.left = (sx + half - 28) + 'px';
-        mapDotsBtn.style.top  = (sy - half + 4) + 'px';
+        mapDotsBtn.style.left = Math.round(rect.left + sx + half - 26) + 'px';
+        mapDotsBtn.style.top  = Math.round(rect.top  + sy - half + 4) + 'px';
     }
 
     mapDotsBtn.onclick = (e) => {
