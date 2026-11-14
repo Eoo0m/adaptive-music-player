@@ -2124,6 +2124,8 @@ async function fetchMusicMapData() {
                 const isSame = trackKeys.every(k => savedKeys.includes(k)) && trackKeys.length === savedKeys.filter(k => currentSet.has(k)).length;
                 if (isSame) {
                     console.log('Map cache hit (DB)');
+                    // DB는 track_name으로 저장 → title 필드 복원
+                    map.map_data.forEach(t => { if (!t.title) t.title = t.track_name; });
                     const data = { tracks: map.map_data, seed_count: trackKeys.length, fill_count: map.map_data.length - trackKeys.length, total: map.map_data.length };
                     saveMapCache(trackKeys, data);
                     return data;
