@@ -2100,7 +2100,7 @@ function saveMapCache(trackKeys, data) {
     } catch(e) {}
 }
 
-async function fetchMusicMapData() {
+async function fetchMusicMapData(forceRefresh = false) {
     // 1. 찜 목록 — 이미 로드된 lastFavorites 재활용, 없으면 fetch
     let trackKeys = [];
 
@@ -2130,27 +2130,31 @@ async function fetchMusicMapData() {
     if (trackKeys.length === 0) return null;
 
     // 2. sessionStorage 캐시 확인
-    const cached = loadMapCache(trackKeys);
-    if (cached) { console.log('Map cache hit (session)'); return cached; }
+    if (!forceRefresh) {
+        const cached = loadMapCache(trackKeys);
+        if (cached) { console.log('Map cache hit (session)'); return cached; }
+    }
 
     // 3. DB 캐시 확인
-    try {
-        const dbRes = await fetch(`${API_BASE_URL}/user-maps/latest`, { headers: getAuthHeaders() });
-        if (dbRes.ok) {
-            const { map } = await dbRes.json();
-            if (map && map.map_data?.length > 0) {
-                const savedKeys = [...new Set(map.map_data.map(t => t.track_key))];
-                const currentSet = new Set(trackKeys);
-                const isSame = trackKeys.every(k => savedKeys.includes(k)) && trackKeys.length === savedKeys.filter(k => currentSet.has(k)).length;
-                if (isSame) {
-                    console.log('Map cache hit (DB)');
-                    const data = { tracks: map.map_data, seed_count: trackKeys.length, fill_count: map.map_data.length - trackKeys.length, total: map.map_data.length };
-                    saveMapCache(trackKeys, data);
-                    return data;
+    if (!forceRefresh) {
+        try {
+            const dbRes = await fetch(`${API_BASE_URL}/user-maps/latest`, { headers: getAuthHeaders() });
+            if (dbRes.ok) {
+                const { map } = await dbRes.json();
+                if (map && map.map_data?.length > 0) {
+                    const savedKeys = [...new Set(map.map_data.map(t => t.track_key))];
+                    const currentSet = new Set(trackKeys);
+                    const isSame = trackKeys.every(k => savedKeys.includes(k)) && trackKeys.length === savedKeys.filter(k => currentSet.has(k)).length;
+                    if (isSame) {
+                        console.log('Map cache hit (DB)');
+                        const data = { tracks: map.map_data, seed_count: trackKeys.length, fill_count: map.map_data.length - trackKeys.length, total: map.map_data.length };
+                        saveMapCache(trackKeys, data);
+                        return data;
+                    }
                 }
             }
-        }
-    } catch(e) {}
+        } catch(e) {}
+    }
 
     // 4. 재계산 필요 — /music-map 호출
     const res = await fetch(`${API_BASE_URL}/music-map`, {
@@ -2725,7 +2729,7 @@ function renderMusicMap(canvas, tracks) {
 
             try {
                 const canvas = document.getElementById('mapCanvas');
-                const data = await fetchMusicMapData();
+                const data = await fetchMusicMapData(true);
                 if (!data) return;
                 lastMapData = window.lastMapData = data;
                 const favKeys = new Set((lastFavorites || []).map(f => f.track_key));
