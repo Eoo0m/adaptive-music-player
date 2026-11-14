@@ -1954,14 +1954,6 @@ body {
 .search-section {
     margin-bottom: 0;
 }
-#searchHome {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 24px 0;
-    pointer-events: none;
-}
 #searchHome > * {
     pointer-events: auto;
 }
@@ -2022,7 +2014,7 @@ body {
 }
 .search-home-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(120px, 160px));
     gap: 10px;
 }
 
