@@ -2016,12 +2016,9 @@ body {
 }
 #searchHome::-webkit-scrollbar { display: none; }
 
-/* ===== Search Home Grid (7×3 고정) ===== */
+/* ===== Search Home Grid ===== */
 .search-home-label {
     padding-top: 8px;
-}
-.search-home-grid {
-    grid-template-columns: repeat(7, 1fr) !important;
 }
 
 .recent-search-label {

@@ -24,10 +24,10 @@ function _renderSearchHomeGrid() {
     const mapData = window.lastMapData;
     if (!mapData?.tracks?.length) return;
 
-    // 21개 랜덤 샘플 (7×3)
+    // 70개 랜덤 샘플 (7×10)
     const pool = [...mapData.tracks];
     const sampled = [];
-    while (sampled.length < 21 && pool.length > 0) {
+    while (sampled.length < 70 && pool.length > 0) {
         const idx = Math.floor(Math.random() * pool.length);
         sampled.push(pool.splice(idx, 1)[0]);
     }
@@ -41,7 +41,7 @@ function _renderSearchHomeGrid() {
     label.textContent = userName ? `${userName}님을 위한 추천` : '취향 기반 추천';
 
     const grid = document.createElement('div');
-    grid.className = 'search-entity-grid search-home-grid';
+    grid.className = 'search-entity-grid';
 
     sampled.forEach(t => {
         // _makeTrackCard와 동일한 형식으로 렌더
