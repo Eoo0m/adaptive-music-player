@@ -475,35 +475,7 @@ function renderMusicMap(canvas, tracks) {
 
     const mapTooltip = document.getElementById('mapTooltip');
 
-    // 뮤직맵 hover용 ··· 버튼 오버레이
-    const mapDotsBtn = document.createElement('button');
-    mapDotsBtn.className = 'track-dots-btn map-dots-btn';
-    mapDotsBtn.innerHTML = '<span></span><span></span><span></span>';
-    mapDotsBtn.style.display = 'none';
-    document.body.appendChild(mapDotsBtn);
-    let mapDotsTarget = null;
-
-    function updateMapDotsBtn(item) {
-        if (!item) {
-            mapDotsBtn.style.display = 'none';
-            mapDotsTarget = null;
-            return;
-        }
-        const { screenX: sx, screenY: sy, screenHalf: half } = item;
-        if (sx === undefined || half === undefined) { mapDotsBtn.style.display = 'none'; return; }
-        const rect = canvas.getBoundingClientRect();
-        mapDotsTarget = item.track;
-        mapDotsBtn.style.display = 'flex';
-        mapDotsBtn.style.left = Math.round(rect.left + sx + half - 26) + 'px';
-        mapDotsBtn.style.top  = Math.round(rect.top  + sy - half + 4) + 'px';
-    }
-
-    mapDotsBtn.onclick = (e) => {
-        e.stopPropagation();
-        if (mapDotsTarget) openMapTrackMenu(mapDotsTarget, mapDotsBtn.getBoundingClientRect().left + 14, mapDotsBtn.getBoundingClientRect().top);
-    };
-
-    const onMapDestroy = () => { mapDotsBtn.remove(); };
+    const onMapDestroy = () => {};
 
     const onMouseMove = e => {
         if (!isDragging) return;
@@ -535,10 +507,9 @@ function renderMusicMap(canvas, tracks) {
 
     newWrap.addEventListener('mousemove', e => {
         mousePos = { x: e.clientX, y: e.clientY };
-        if (isDragging) { hoveredItem=null; newWrap.style.cursor='grabbing'; if (mapTooltip) mapTooltip.style.display='none'; updateMapDotsBtn(null); return; }
+        if (isDragging) { hoveredItem=null; newWrap.style.cursor='grabbing'; if (mapTooltip) mapTooltip.style.display='none'; return; }
         const item=hitTest(e.clientX,e.clientY);
         hoveredItem=item;
-        updateMapDotsBtn(item);
         newWrap.style.cursor=item?'pointer':'grab';
         if (mapTooltip) {
             if (item && !item.track.is_seed) {
@@ -555,7 +526,7 @@ function renderMusicMap(canvas, tracks) {
             } else mapTooltip.style.display='none';
         }
     });
-    newWrap.addEventListener('mouseleave', () => { mousePos={x:-1,y:-1}; if (mapTooltip) mapTooltip.style.display='none'; updateMapDotsBtn(null); });
+    newWrap.addEventListener('mouseleave', () => { mousePos={x:-1,y:-1}; if (mapTooltip) mapTooltip.style.display='none'; });
     newWrap.addEventListener('mousedown', e => {
         isDragging=true; dragStart={x:e.clientX,y:e.clientY}; camStart={x:cam.tx,y:cam.ty};
         lastDragPos={x:e.clientX,y:e.clientY}; velocity={x:0,y:0};

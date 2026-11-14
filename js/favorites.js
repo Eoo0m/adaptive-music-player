@@ -193,7 +193,11 @@ function _makeRecentSection(title, tracks, onClickTrack) {
         const name = document.createElement('div');
         name.className = 'fav-hscroll-title';
         name.textContent = t.title || t.track_name || t.track || '';
-        item.appendChild(img); item.appendChild(name);
+        const dotsBtn = document.createElement('button');
+        dotsBtn.className = 'fav-dots-btn';
+        dotsBtn.innerHTML = '<span></span><span></span><span></span>';
+        dotsBtn.onclick = (e) => { e.stopPropagation(); _openTrackMenu(e, t, dotsBtn, {}); };
+        item.appendChild(img); item.appendChild(dotsBtn); item.appendChild(name);
         grid.appendChild(item);
     });
     section.appendChild(grid);
@@ -247,7 +251,11 @@ function _makeFavPagedSection(title, tracks, onClickTrack) {
             const artist = document.createElement('div');
             artist.className = 'fav-hscroll-artist';
             artist.textContent = t.artist || '';
-            item.appendChild(img); item.appendChild(name); item.appendChild(artist);
+            const dotsBtn = document.createElement('button');
+            dotsBtn.className = 'fav-dots-btn';
+            dotsBtn.innerHTML = '<span></span><span></span><span></span>';
+            dotsBtn.onclick = (e) => { e.stopPropagation(); _openTrackMenu(e, t, dotsBtn, {}); };
+            item.appendChild(img); item.appendChild(dotsBtn); item.appendChild(name); item.appendChild(artist);
             scroll.appendChild(item);
         });
         gridWrap.appendChild(scroll);

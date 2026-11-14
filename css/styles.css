@@ -712,6 +712,7 @@ body {
     cursor: pointer;
     flex-shrink: 0;
     width: 80px;
+    position: relative;
 }
 
 .fav-hscroll-cover {
@@ -1907,10 +1908,32 @@ body {
     opacity: 1;
 }
 
-.map-dots-btn {
-    position: fixed;
-    z-index: 50;
-    opacity: 1;
+.fav-dots-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(0,0,0,.5);
+    border: none;
+    cursor: pointer;
+    padding: 4px 5px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    backdrop-filter: blur(4px);
+    z-index: 2;
+}
+.fav-dots-btn span {
+    display: block;
+    width: 3px;
+    height: 3px;
+    background: rgba(255,255,255,.85);
+    border-radius: 50%;
+}
+.fav-dots-btn:hover {
+    background: rgba(0,0,0,.7);
 }
 
 .track-dots-menu {
