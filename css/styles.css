@@ -697,6 +697,18 @@ body {
     max-width: 420px;
     text-shadow: 0 1px 8px rgba(0,0,0,.9);
 }
+.map-intro-btn-preview {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 8px;
+    padding: 4px 8px;
+    margin-right: 4px;
+    vertical-align: middle;
+    color: #fff;
+}
 .map-intro-scroll-hint {
     position: absolute;
     bottom: 40px;
