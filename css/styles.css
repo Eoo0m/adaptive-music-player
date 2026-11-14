@@ -528,6 +528,8 @@ body {
 }
 .fav-hscroll-recent .fav-hscroll-item {
     width: 100%;
+    min-width: 0;
+    flex-shrink: 1;
 }
 .fav-hscroll-recent .fav-hscroll-cover {
     width: 100%;
@@ -536,6 +538,7 @@ body {
     object-fit: cover;
     border-radius: 8px;
     background: #1a1a24;
+    display: block;
 }
 .fav-hscroll-recent .fav-hscroll-title,
 .fav-hscroll-recent .fav-hscroll-artist {
