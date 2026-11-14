@@ -1325,7 +1325,6 @@ mapRefreshBtn.onclick = async () => {
 
     hideLoading();
     fitMap();
-    requestAnimationFrame(render);
   } catch(e) {
     hideLoading();
     alert('지도 생성 실패: ' + e.message);
