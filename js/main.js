@@ -1729,13 +1729,13 @@ function showMapIntro() {
             ctx.save();
             ctx.translate(sx, sy);
 
-            // glow (포커스/시드만 — 초록)
+            // glow (포커스/시드만)
             if (isFocus || n.isSeed) {
-                ctx.shadowColor = '#1db954';
+                ctx.shadowColor = 'rgba(255,255,255,.5)';
                 ctx.shadowBlur = isFocus ? finalSz * 0.8 : finalSz * 0.3;
             }
             if (isJumpDest && jumpT > 0.5) {
-                ctx.shadowColor = '#1db954';
+                ctx.shadowColor = 'rgba(255,255,255,.5)';
                 ctx.shadowBlur = finalSz * 1.0 * (jumpT - 0.5) * 2;
             }
 
@@ -1769,13 +1769,13 @@ function showMapIntro() {
                 ctx.restore();
             }
 
-            // 테두리 (포커스/시드 — 실제 지도와 동일)
+            // 테두리 (포커스/시드)
             if (n.isSeed || isFocus) {
                 ctx.save(); ctx.translate(sx, sy);
                 ctx.beginPath(); introRoundRect(-fhalf, -fhalf, finalSz, finalSz, fr);
-                ctx.strokeStyle = '#1db954';
+                ctx.strokeStyle = 'rgba(255,255,255,.9)';
                 ctx.lineWidth = isFocus ? Math.max(3, finalSz * 0.065) : Math.max(2, finalSz * 0.045);
-                ctx.shadowColor = '#1db954';
+                ctx.shadowColor = 'rgba(255,255,255,.4)';
                 ctx.shadowBlur = isFocus ? finalSz * 0.55 : finalSz * 0.25;
                 ctx.stroke(); ctx.restore();
             }
@@ -2270,8 +2270,8 @@ function renderMusicMap(canvas, tracks) {
                 ctx.save(); ctx.translate(sx,sy);
                 ctx.beginPath(); roundRect(ctx,-half,-half,size,size,r);
                 if (isPlaying) { ctx.strokeStyle='#4fc3f7'; ctx.lineWidth=Math.max(3,size*.07); ctx.shadowColor='#4fc3f7'; ctx.shadowBlur=size*(0.5 + 0.3 * Math.sin(Date.now() / 280)); }
-                else if (isFav) { ctx.strokeStyle='#1db954'; ctx.lineWidth=Math.max(3,size*.065); ctx.shadowColor='#1db954'; ctx.shadowBlur=isHov?size*.55:size*.3; }
-                else if (isSeed) { ctx.strokeStyle='#1db954'; ctx.lineWidth=Math.max(2,size*.045); ctx.shadowColor='#1db954'; ctx.shadowBlur=isHov?size*.45:size*.2; }
+                else if (isFav) { ctx.strokeStyle='rgba(255,255,255,.9)'; ctx.lineWidth=Math.max(3,size*.065); ctx.shadowColor='rgba(255,255,255,.4)'; ctx.shadowBlur=isHov?size*.4:size*.2; }
+                else if (isSeed) { ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=Math.max(2,size*.045); ctx.shadowColor='rgba(255,255,255,.3)'; ctx.shadowBlur=isHov?size*.35:size*.15; }
                 else if (isBridge) { ctx.strokeStyle='#4a9eff'; ctx.lineWidth=Math.max(2,size*.04); ctx.shadowColor='#4a9eff'; ctx.shadowBlur=isHov?size*.45:size*.2; }
                 else { ctx.strokeStyle='rgba(255,255,255,.8)'; ctx.lineWidth=Math.max(1.5,size*.03); ctx.shadowColor='rgba(255,255,255,.35)'; ctx.shadowBlur=size*.25; }
                 ctx.stroke(); ctx.restore();
