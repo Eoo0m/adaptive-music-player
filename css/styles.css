@@ -593,7 +593,7 @@ body {
 .map-intro-overlay {
     position: fixed;
     inset: 0;
-    z-index: 200;
+    z-index: 700;
     background: #07080f;
     overflow-y: auto;
     overflow-x: hidden;
