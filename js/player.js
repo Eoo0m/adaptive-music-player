@@ -227,22 +227,26 @@ async function _fetchAndPlay(endpoint, trackKey) {
 
     try {
         const cacheKey = `${endpoint}:${trackKey}`;
-        let data = _prefetchCache[cacheKey] ? await _prefetchCache[cacheKey] : null;
+        const minDelay = new Promise(r => setTimeout(r, 300));
+        let dataPromise = _prefetchCache[cacheKey] || null;
         delete _prefetchCache[cacheKey];
 
-        if (!data) {
+        if (!dataPromise) {
             const candidateKeys = lastMapData.tracks.filter(t => t.track_key !== trackKey).map(t => t.track_key);
             const body = { track_key: trackKey };
             if (candidateKeys.length > 0) body.candidate_track_keys = candidateKeys;
-            const res = await fetch(`${API_BASE_URL}/${endpoint}`, {
+            dataPromise = fetch(`${API_BASE_URL}/${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),
+            }).then(res => {
+                if (!res.ok) throw new Error(`${endpoint} ${res.status}`);
+                return res.json();
             });
-            if (!res.ok) throw new Error(`${endpoint} ${res.status}`);
-            data = await res.json();
         }
-        const tracks = data.tracks || [];
+
+        const [data] = await Promise.all([dataPromise, minDelay]);
+        const tracks = (data?.tracks) || [];
         if (tracks.length === 0) return;
 
         let idx = 0;
