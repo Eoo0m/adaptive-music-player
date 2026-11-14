@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     input.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { clearTimeout(_autocompleteTimer); _hideAutocomplete(); input.blur(); doSearch(); }
+        if (e.key === 'Enter' && !e.isComposing) { clearTimeout(_autocompleteTimer); _hideAutocomplete(); input.blur(); doSearch(); }
         if (e.key === 'Escape') _cancelSearch();
     });
 
