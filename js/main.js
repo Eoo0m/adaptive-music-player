@@ -78,7 +78,6 @@ async function playWithAppleMusic(track, onFail) {
         }
 
         if (track.apple_music_id) {
-            try { await musicKitInstance.stop(); } catch(e) {}
             await musicKitInstance.setQueue({ songs: [track.apple_music_id], startPlaying: true });
             updatePlayerWidget(track, true);
         } else {
