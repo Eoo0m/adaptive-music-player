@@ -58,9 +58,15 @@ async function initMusicKit() {
         }
         updateAppleMusicBtn();
         musicKitInstance.addEventListener('playbackStateDidChange', ({ state }) => {
-            playerIsPlaying = (state === 2);
+            const playing = MusicKit.PlaybackStates?.playing ?? 2;
+            const completed = MusicKit.PlaybackStates?.completed ?? 5;
+            playerIsPlaying = (state === playing);
+            const playIcon = document.getElementById('playerPlayIcon');
+            const pauseIcon = document.getElementById('playerPauseIcon');
+            if (playIcon) playIcon.style.display = playerIsPlaying ? 'none' : 'block';
+            if (pauseIcon) pauseIcon.style.display = playerIsPlaying ? 'block' : 'none';
             if (playerIsPlaying && !playerPlayStartTime) playerPlayStartTime = Date.now();
-            if (state === 5) playerNextSimilar(); // 재생 완료 → 유사곡
+            if (state === completed) playerNextSimilar();
         });
     } catch (e) {
         console.warn('MusicKit init failed:', e);
@@ -2963,18 +2969,11 @@ function playerTogglePlayPause() {
     const loginType = localStorage.getItem('login_type');
     if (loginType === 'apple' && musicKitInstance) {
         if (playerIsPlaying) {
-            musicKitInstance.pause();
-            playerIsPlaying = false;
+            musicKitInstance.pause(); // 아이콘은 playbackStateDidChange 이벤트에서 처리
         } else {
             musicKitInstance.play();
-            playerIsPlaying = true;
-            if (!playerPlayStartTime) playerPlayStartTime = Date.now();
         }
     }
-    const playIcon = document.getElementById('playerPlayIcon');
-    const pauseIcon = document.getElementById('playerPauseIcon');
-    if (playIcon) playIcon.style.display = playerIsPlaying ? 'none' : 'block';
-    if (pauseIcon) pauseIcon.style.display = playerIsPlaying ? 'block' : 'none';
 }
 
 
