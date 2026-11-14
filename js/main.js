@@ -2475,7 +2475,7 @@ function renderMusicMap(canvas, tracks) {
                 ctx.textAlign='center'; ctx.textBaseline='top';
                 ctx.font=`600 ${lblSz}px -apple-system,sans-serif`;
                 ctx.fillStyle=isHov?'#fff':'rgba(255,255,255,.82)';
-                ctx.fillText(truncCached(ctx, track.title, size*1.1, track.track_key+'t'), sx, lblY);
+                ctx.fillText(truncCached(ctx, track.title || track.track_name, size*1.1, track.track_key+'t'), sx, lblY);
                 ctx.font=`${lblSz*.85}px -apple-system,sans-serif`;
                 ctx.fillStyle=isHov?'rgba(255,255,255,.8)':'rgba(255,255,255,.45)';
                 ctx.fillText(truncCached(ctx, track.artist, size*1.1, track.track_key+'a'), sx, lblY+lblSz+4);
