@@ -2686,6 +2686,40 @@ function renderMusicMap(canvas, tracks) {
         const results = document.getElementById('mapSearchResults');
         const status = document.getElementById('mapSearchStatus');
         const refreshBtn = document.getElementById('mapRefreshBtn');
+
+        // 새로고침 버튼은 mapSearchInput 없어도 독립적으로 등록
+        refreshBtn && refreshBtn.addEventListener('click', async () => {
+            if (!authToken) { alert('로그인이 필요합니다.'); return; }
+            refreshBtn.classList.add('loading');
+            lastMapData = null;
+            mapPrefetchPromise = null;
+            Object.keys(sessionStorage).filter(k => k.startsWith('mapCache_')).forEach(k => sessionStorage.removeItem(k));
+
+            const canvasWrap = document.getElementById('mapCanvasWrap');
+            const loading = document.getElementById('mapLoading');
+            const loadingMsg = document.getElementById('mapLoadingMsg');
+            if (canvasWrap) canvasWrap.classList.add('hidden');
+            if (loading) { loading.classList.remove('hidden'); if (loadingMsg) loadingMsg.textContent = '취향 지도 생성 중...'; }
+
+            try {
+                const canvas = document.getElementById('mapCanvas');
+                const data = await fetchMusicMapData(true);
+                if (!data) return;
+                lastMapData = window.lastMapData = data;
+                const favKeys = new Set((lastFavorites || []).map(f => f.track_key));
+                data.tracks.forEach(t => { t.is_favorite = favKeys.has(t.track_key); });
+                if (loading) loading.classList.add('hidden');
+                if (canvasWrap) canvasWrap.classList.remove('hidden');
+                if (canvas) renderMusicMap(canvas, data.tracks);
+            } catch(e) {
+                if (loading) loading.classList.add('hidden');
+                if (canvasWrap) canvasWrap.classList.remove('hidden');
+                console.error('지도 새로고침 실패:', e);
+            } finally {
+                refreshBtn.classList.remove('loading');
+            }
+        });
+
         if (!input) return;
 
         input.addEventListener('input', () => {
@@ -2713,38 +2747,6 @@ function renderMusicMap(canvas, tracks) {
             input.blur();
         }
 
-        refreshBtn && refreshBtn.addEventListener('click', async () => {
-            if (!authToken) { alert('로그인이 필요합니다.'); return; }
-            refreshBtn.classList.add('loading');
-            lastMapData = null;
-            mapPrefetchPromise = null;
-            // 세션스토리지 캐시 전체 무효화
-            Object.keys(sessionStorage).filter(k => k.startsWith('mapCache_')).forEach(k => sessionStorage.removeItem(k));
-
-            const canvasWrap = document.getElementById('mapCanvasWrap');
-            const loading = document.getElementById('mapLoading');
-            const loadingMsg = document.getElementById('mapLoadingMsg');
-            if (canvasWrap) canvasWrap.classList.add('hidden');
-            if (loading) { loading.classList.remove('hidden'); if (loadingMsg) loadingMsg.textContent = '취향 지도 생성 중...'; }
-
-            try {
-                const canvas = document.getElementById('mapCanvas');
-                const data = await fetchMusicMapData(true);
-                if (!data) return;
-                lastMapData = window.lastMapData = data;
-                const favKeys = new Set((lastFavorites || []).map(f => f.track_key));
-                data.tracks.forEach(t => { t.is_favorite = favKeys.has(t.track_key); });
-                if (loading) loading.classList.add('hidden');
-                if (canvasWrap) canvasWrap.classList.remove('hidden');
-                if (canvas) renderMusicMap(canvas, data.tracks);
-            } catch(e) {
-                if (loading) loading.classList.add('hidden');
-                if (canvasWrap) canvasWrap.classList.remove('hidden');
-                console.error('지도 새로고침 실패:', e);
-            } finally {
-                refreshBtn.classList.remove('loading');
-            }
-        });
     });
 
     async function mapSearch(q) {
