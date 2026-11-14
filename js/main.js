@@ -2962,7 +2962,7 @@ function playerTogglePlayPause() {
     if (!playerCurrentTrack) return;
     const loginType = localStorage.getItem('login_type');
     if (loginType === 'apple' && musicKitInstance) {
-        if (musicKitInstance.playbackState === 2) { // playing
+        if (playerIsPlaying) {
             musicKitInstance.pause();
             playerIsPlaying = false;
         } else {
