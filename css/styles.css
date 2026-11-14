@@ -382,8 +382,9 @@ body {
 
 .player-exp-cover-wrap {
     position: relative;
-    width: 100%;
-    aspect-ratio: 1;
+    width: 80px;
+    height: 80px;
+    align-self: center;
     border-radius: 10px;
     overflow: hidden;
     cursor: pointer;
@@ -446,7 +447,7 @@ body {
 
 .player-widget.expanded {
     padding: 10px;
-    width: 160px;
+    width: 100px;
 }
 .player-widget.expanded .player-collapsed-view {
     display: none;
