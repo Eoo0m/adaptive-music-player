@@ -1046,8 +1046,7 @@ body {
     transition: background 0.2s, transform 0.3s;
 }
 .map-refresh-btn:hover { background: rgba(255,255,255,0.16); }
-.map-refresh-btn.loading { animation: spin 0.8s linear infinite; pointer-events: none; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.map-refresh-btn.loading { opacity: .5; pointer-events: none; }
 
 .map-canvas-wrap {
     position: relative;
