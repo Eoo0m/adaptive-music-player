@@ -290,9 +290,10 @@ body {
 .favorites-view {
     position: fixed;
     top: 5vh;
-    left: 0;
-    right: 0;
-    padding: 0 40px 0 220px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 1100px;
     height: 90vh;
     color: #fff;
     z-index: 100;
