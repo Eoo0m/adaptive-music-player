@@ -290,16 +290,13 @@ function _makeRecentSection(title, tracks, onClickTrack) {
     tracks.forEach(t => {
         const item = document.createElement('div');
         item.className = 'fav-hscroll-item';
-        item.style.width = '100%';
         item.onclick = () => onClickTrack(t);
         const img = document.createElement('img');
         img.src = t.cover_image_url || '';
         img.className = 'fav-hscroll-cover';
-        img.style.cssText = 'width:100%;height:auto;aspect-ratio:1';
         img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
         const name = document.createElement('div');
         name.className = 'fav-hscroll-title';
-        name.style.width = '100%';
         name.textContent = t.title || t.track_name || t.track || '';
         item.appendChild(img); item.appendChild(name);
         grid.appendChild(item);
@@ -309,7 +306,7 @@ function _makeRecentSection(title, tracks, onClickTrack) {
 }
 
 function _makeFavPagedSection(title, tracks, onClickTrack) {
-    const PAGE_SIZE = 16;
+    const PAGE_SIZE = 24;
     const section = document.createElement('div');
     section.className = 'fav-section';
 
@@ -326,7 +323,6 @@ function _makeFavPagedSection(title, tracks, onClickTrack) {
         return section;
     }
 
-    let currentPage = 0;
     const totalPages = Math.ceil(tracks.length / PAGE_SIZE);
 
     const gridWrap = document.createElement('div');
@@ -337,7 +333,6 @@ function _makeFavPagedSection(title, tracks, onClickTrack) {
     section.appendChild(pagination);
 
     function renderPage(page) {
-        currentPage = page;
         const start = page * PAGE_SIZE;
         const pageTracks = tracks.slice(start, start + PAGE_SIZE);
 

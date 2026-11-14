@@ -402,7 +402,7 @@ body {
 
 .fav-hscroll-2row {
     display: grid;
-    grid-template-rows: repeat(2, auto);
+    grid-template-rows: repeat(3, auto);
     grid-auto-flow: column;
     grid-auto-columns: 80px;
     flex-wrap: unset;
@@ -415,6 +415,17 @@ body {
     grid-template-columns: repeat(10, 1fr);
     gap: 8px;
     overflow: hidden;
+    width: 100%;
+}
+.fav-hscroll-recent .fav-hscroll-item {
+    width: 100%;
+}
+.fav-hscroll-recent .fav-hscroll-cover {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+}
+.fav-hscroll-recent .fav-hscroll-title {
     width: 100%;
 }
 
