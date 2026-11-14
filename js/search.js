@@ -651,7 +651,7 @@ async function _openTrackDetail(track) {
     const grid = document.createElement('div');
     grid.className = 'track-detail-similar-grid';
     grid.id = 'trackDetailSimilarGrid';
-    grid.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:13px;">불러오는 중...</div>';
+    grid.innerHTML = '<div class="search-loading-dots" style="justify-content:flex-start;margin-top:16px;"><span></span><span></span><span></span></div>';
     panel.appendChild(grid);
 
     panel.classList.remove('hidden');
