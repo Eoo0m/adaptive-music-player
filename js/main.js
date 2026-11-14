@@ -2714,6 +2714,8 @@ function renderMusicMap(canvas, tracks) {
             refreshBtn.classList.add('loading');
             lastMapData = null;
             mapPrefetchPromise = null;
+            // 세션스토리지 캐시 전체 무효화
+            Object.keys(sessionStorage).filter(k => k.startsWith('mapCache_')).forEach(k => sessionStorage.removeItem(k));
 
             const canvasWrap = document.getElementById('mapCanvasWrap');
             const loading = document.getElementById('mapLoading');
