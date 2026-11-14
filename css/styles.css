@@ -1643,13 +1643,6 @@ body {
     background: rgba(255, 255, 255, 0.18);
 }
 
-.seed-play-btn {
-    position: static;
-    margin-left: auto;
-    margin-right: 8px;
-    flex-shrink: 0;
-}
-
 
 .guide-text {
     font-size: 15px;
