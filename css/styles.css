@@ -409,24 +409,36 @@ body {
     flex-direction: unset;
 }
 
-/* 최근 재생 — 스크롤 없이 화면 꽉 채움 */
+/* 최근 재생 / 저장된 곡 — 10열 고정, 스크롤 없음, 10개 미만이면 우측 빔 */
 .fav-hscroll-recent {
     display: grid;
-    grid-template-columns: repeat(10, 1fr);
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    grid-auto-rows: auto;
     gap: 8px;
     overflow: hidden;
     width: 100%;
 }
 .fav-hscroll-recent .fav-hscroll-item {
     width: 100%;
+    min-width: 0;
 }
 .fav-hscroll-recent .fav-hscroll-cover {
     width: 100%;
     height: auto;
     aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #1a1a24;
 }
-.fav-hscroll-recent .fav-hscroll-title {
+.fav-hscroll-recent .fav-hscroll-title,
+.fav-hscroll-recent .fav-hscroll-artist {
     width: 100%;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 11px;
+    text-align: center;
 }
 
 .fav-hscroll-item {
