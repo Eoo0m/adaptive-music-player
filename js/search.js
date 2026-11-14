@@ -128,7 +128,6 @@ function _showAutocomplete(suggestions) {
         el.appendChild(row);
     });
     el.classList.remove('hidden');
-    _hideRecentChips();
 }
 
 function _hideAutocomplete() {
