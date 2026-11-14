@@ -234,9 +234,11 @@ function renderMusicMap(canvas, tracks) {
     const images = {};
     const TARGET_SCALE = window.innerWidth <= 768 ? 0.42 : 0.6;
     const MIN_SCALE = 0.15, MAX_SCALE = 2.0;
-    // 맵 중심(px=0, py=0)이 화면 중앙에 오도록 초기 카메라 설정
-    const initX = lw() / 2;
-    const initY = lh() / 2;
+    // 모든 트랙의 실제 평균 좌표를 구해 화면 중앙에 맞춤
+    const avgPx = grid.reduce((s, g) => s + g.px, 0) / grid.length;
+    const avgPy = grid.reduce((s, g) => s + g.py, 0) / grid.length;
+    const initX = lw() / 2 - avgPx * TARGET_SCALE;
+    const initY = lh() / 2 - avgPy * TARGET_SCALE;
     let cam = { x: initX, y: initY, scale: TARGET_SCALE, tx: initX, ty: initY };
     let destroyed = false;
 
