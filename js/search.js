@@ -224,12 +224,20 @@ document.addEventListener('DOMContentLoaded', () => {
 // ===== Unified Search =====
 let _currentSearchQuery = '';
 
+function _showSearchLoadingDots() {
+    document.getElementById('searchLoadingDots')?.classList.remove('hidden');
+}
+function _hideSearchLoadingDots() {
+    document.getElementById('searchLoadingDots')?.classList.add('hidden');
+}
+
 async function doSearch() {
     const query = document.getElementById('searchInput').value.trim();
     if (!query) return;
     _currentSearchQuery = query;
     _saveRecentSearch(query);
-    _showSearchResults();
+    _showSearchHome();
+    _showSearchLoadingDots();
     logAction('search', { search_query: query, search_mode: 'smart' });
 
     window.searchResultsData = [];
@@ -253,15 +261,19 @@ async function doSearch() {
     if (_currentSearchQuery !== query) return;
     const entityResults = (entityData.results || []).map(r => ({ ...r, track: r.track || r.track_name }));
     if (entityResults.length > 0) {
+        _hideSearchLoadingDots();
+        _showSearchResults();
         _renderEntityResults(entityResults, query);
     }
 
     // 무드 완료되면 추가 (엔티티 없으면 단독으로 표시)
     const moodData = await moodPromise;
     if (_currentSearchQuery !== query) return;
+    _hideSearchLoadingDots();
     if (moodData && moodData.mood_results && moodData.mood_results.length > 0) {
         if (entityResults.length === 0) {
             // 엔티티 없으면 무드 결과만 단독 표시
+            _showSearchResults();
             const div = document.getElementById('searchResults');
             div.innerHTML = '';
             window.searchResultsData = [];
