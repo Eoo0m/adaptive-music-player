@@ -100,9 +100,8 @@ async function playWithAppleMusic(track, onFail) {
 function continueAsGuest() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('initialSongInput').classList.remove('hidden');
-    document.getElementById('sideTab').classList.remove('hidden');
+    document.getElementById('sideBar')?.classList.remove('hidden');
     document.getElementById('bottomTab').classList.remove('hidden');
-    document.getElementById('caroLogoBtn')?.classList.remove('hidden');
 }
 
 // ===== Tab Navigation =====
