@@ -2082,16 +2082,20 @@ function saveMapCache(trackKeys, data) {
 }
 
 async function fetchMusicMapData() {
-    // 1. 찜 목록 가져오기
+    // 1. 찜 목록 + DB 캐시 병렬 요청
     let trackKeys = [];
-    try {
-        const res = await fetch(`${API_BASE_URL}/favorites`, { headers: getAuthHeaders() });
-        if (res.ok) {
-            const data = await res.json();
-            const favs = data.favorites || [];
-            trackKeys = favs.slice(0, 20).map(f => f.track_key);
-        }
-    } catch(e) {}
+
+    const [favsRes, dbRes] = await Promise.allSettled([
+        fetch(`${API_BASE_URL}/favorites`, { headers: getAuthHeaders() }),
+        fetch(`${API_BASE_URL}/user-maps/latest`, { headers: getAuthHeaders() }),
+    ]);
+
+    if (favsRes.status === 'fulfilled' && favsRes.value.ok) {
+        try {
+            const data = await favsRes.value.json();
+            trackKeys = (data.favorites || []).slice(0, 20).map(f => f.track_key);
+        } catch(e) {}
+    }
 
     // 찜이 없으면 인기곡 10개로 대체
     if (trackKeys.length === 0) {
@@ -2110,19 +2114,16 @@ async function fetchMusicMapData() {
     const cached = loadMapCache(trackKeys);
     if (cached) { console.log('Map cache hit (session)'); return cached; }
 
-    // 3. DB 저장 지도 확인 — 찜 목록이 같으면 바로 반환
+    // 3. DB 캐시 확인 (이미 병렬로 받아둔 응답 사용)
     try {
-        const res = await fetch(`${API_BASE_URL}/user-maps/latest`, { headers: getAuthHeaders() });
-        if (res.ok) {
-            const { map } = await res.json();
+        if (dbRes.status === 'fulfilled' && dbRes.value.ok) {
+            const { map } = await dbRes.value.json();
             if (map && map.map_data?.length > 0) {
-                // 저장된 지도의 seed 트랙 키 목록과 현재 찜 목록 비교
                 const savedKeys = [...new Set(map.map_data.map(t => t.track_key))];
                 const currentSet = new Set(trackKeys);
                 const isSame = trackKeys.every(k => savedKeys.includes(k)) && trackKeys.length === savedKeys.filter(k => currentSet.has(k)).length;
                 if (isSame) {
                     console.log('Map cache hit (DB)');
-                    // DB 데이터를 /music-map 응답 형식으로 변환
                     const data = { tracks: map.map_data, seed_count: trackKeys.length, fill_count: map.map_data.length - trackKeys.length, total: map.map_data.length };
                     saveMapCache(trackKeys, data);
                     return data;
