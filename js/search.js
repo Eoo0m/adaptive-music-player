@@ -236,6 +236,11 @@ async function doSearch() {
     if (!query) return;
     _currentSearchQuery = query;
     _saveRecentSearch(query);
+    // 열려있는 트랙 디테일 패널 닫기
+    const panel = document.getElementById('trackDetailPanel');
+    if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
+    // 이전 결과 초기화 후 로딩 표시
+    document.getElementById('searchResults').innerHTML = '';
     _showSearchHome();
     _showSearchLoadingDots();
     logAction('search', { search_query: query, search_mode: 'smart' });
