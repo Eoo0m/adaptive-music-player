@@ -43,25 +43,41 @@ function _deleteRecentSearch(query) {
 }
 
 function _renderRecentSearches() {
-    const container = document.getElementById('recentSearchesSection');
+    const container = document.getElementById('searchRecentChips');
     if (!container) return;
     const searches = _getRecentSearches();
-    if (searches.length === 0) { container.innerHTML = ''; return; }
+    if (searches.length === 0) { container.classList.add('hidden'); return; }
 
-    container.innerHTML = `<div class="recent-search-label">최근 검색</div>`;
+    container.innerHTML = `<div class="search-recent-chips-label">최근 검색</div>`;
     const row = document.createElement('div');
-    row.className = 'recent-search-chips';
+    row.className = 'search-recent-chips-row';
     searches.forEach(q => {
         const chip = document.createElement('div');
-        chip.className = 'recent-search-chip';
-        chip.innerHTML = `<span>${q}</span><button onclick="event.stopPropagation(); _deleteRecentSearch('${q.replace(/'/g, "\\'")}')">✕</button>`;
+        chip.className = 'search-recent-chip';
+        chip.innerHTML = `<span>${q}</span><button>✕</button>`;
         chip.querySelector('span').onclick = () => {
             document.getElementById('searchInput').value = q;
+            _hideRecentChips();
             doSearch();
+        };
+        chip.querySelector('button').onclick = e => {
+            e.stopPropagation();
+            _deleteRecentSearch(q);
         };
         row.appendChild(chip);
     });
     container.appendChild(row);
+}
+
+function _showRecentChips() {
+    const searches = _getRecentSearches();
+    if (searches.length === 0) return;
+    _renderRecentSearches();
+    document.getElementById('searchRecentChips')?.classList.remove('hidden');
+}
+
+function _hideRecentChips() {
+    document.getElementById('searchRecentChips')?.classList.add('hidden');
 }
 
 function loadRecentSearchesFromServer() {
@@ -112,11 +128,15 @@ function _showAutocomplete(suggestions) {
         el.appendChild(row);
     });
     el.classList.remove('hidden');
+    _hideRecentChips();
 }
 
 function _hideAutocomplete() {
     const el = document.getElementById('searchAutocomplete');
     if (el) el.classList.add('hidden');
+    // input에 값이 있으면 recent chips 다시 표시
+    const val = document.getElementById('searchInput')?.value.trim();
+    if (val) _showRecentChips();
 }
 
 function _triggerAutocomplete(q) {
@@ -161,8 +181,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('searchClearBtn')?.classList.toggle('hidden', !val);
         if (!val) {
             _hideAutocomplete();
+            _hideRecentChips();
             if (!_currentSearchQuery) _showSearchHome();
         } else {
+            _showRecentChips();
             _triggerAutocomplete(val);
         }
     });
@@ -175,12 +197,16 @@ document.addEventListener('DOMContentLoaded', () => {
     input.addEventListener('focus', () => {
         document.getElementById('searchCancelBtn').classList.remove('hidden');
         const val = input.value.trim();
-        if (val) _triggerAutocomplete(val);
+        if (val) {
+            _showRecentChips();
+            _triggerAutocomplete(val);
+        }
     });
 
     input.addEventListener('blur', () => {
         setTimeout(() => {
             _hideAutocomplete();
+            _hideRecentChips();
             if (!_currentSearchQuery && !input.value.trim()) {
                 document.getElementById('searchCancelBtn').classList.add('hidden');
             }
