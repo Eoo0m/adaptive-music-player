@@ -258,7 +258,7 @@ async function doSearch() {
     const moodPromise = fetch(`${API_BASE_URL}/smart-search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, entity_limit: 0, mood_top_k: 24, mood_candidates: 100 }),
+        body: JSON.stringify({ query, entity_limit: 0, mood_top_k: 40, mood_candidates: 200 }),
     }).then(r => r.ok ? r.json() : null).catch(() => null);
 
     // 엔티티 먼저 표시 (있을 때만)
