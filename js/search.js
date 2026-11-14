@@ -647,6 +647,7 @@ async function _openTrackDetail(track) {
 function _closeTrackDetail() {
     const panel = document.getElementById('trackDetailPanel');
     if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
+    _showSearchResults();
 }
 
 // ===== Track Display =====
