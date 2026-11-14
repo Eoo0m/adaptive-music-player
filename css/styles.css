@@ -441,6 +441,18 @@ body {
 }
 .player-exp-track-cover:hover { opacity: 0.75; }
 
+.player-exp-dot {
+    display: block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.6);
+    animation: search-dot-bounce 1s infinite ease-in-out;
+    flex-shrink: 0;
+}
+.player-exp-dot:nth-child(2) { animation-delay: .15s; }
+.player-exp-dot:nth-child(3) { animation-delay: .3s; }
+
 .player-drag-handle-close {
     cursor: pointer;
 }

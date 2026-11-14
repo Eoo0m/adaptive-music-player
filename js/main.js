@@ -3147,6 +3147,14 @@ function _populateExpandedTracks() {
                 img.src = t.cover_image_url || '';
                 img.title = `${t.title} - ${t.artist}`;
                 img.onclick = () => {
+                    // 메인 커버 즉시 교체 + 아래 로딩 dots
+                    const expCover = document.getElementById('playerExpCover');
+                    if (expCover) { expCover.src = t.cover_image_url || ''; }
+                    const nextEl = document.getElementById('playerExpNextTracks');
+                    const dynEl = document.getElementById('playerExpDynTracks');
+                    const dotsHtml = '<span class="player-exp-dot"></span><span class="player-exp-dot"></span><span class="player-exp-dot"></span>';
+                    if (nextEl) nextEl.innerHTML = dotsHtml;
+                    if (dynEl) dynEl.innerHTML = dotsHtml;
                     if (musicKitInstance && musicKitInstance.isAuthorized) {
                         playWithAppleMusic(t, null);
                     }
