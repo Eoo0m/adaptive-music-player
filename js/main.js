@@ -1621,6 +1621,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('sideBar')?.classList.remove('hidden');
         document.getElementById('bottomTab').classList.remove('hidden');
         loadFavorites();
+        prefetchMusicMap(); // 백그라운드에서 취향 지도 미리 받기
         // 로그인 시 Apple Music 버튼 표시 (비로그인은 숨김 — HTML 기본 hidden)
         const appleMusicBtn = document.getElementById('appleMusicBtn');
         if (appleMusicBtn) appleMusicBtn.style.display = '';
