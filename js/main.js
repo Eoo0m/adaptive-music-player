@@ -806,6 +806,7 @@ window.lastMapData = null;   // 캐시된 취향 지도 데이터 (search.js에�
 let lastMapData = null;      // 캐시된 취향 지도 데이터
 let mapPrefetchPromise = null; // 프리패치 중인 Promise
 let mapIntroShown = false;   // 인트로를 이미 봤으면 스킵 (세션 중 1회)
+let _mapLoopDestroy = null;  // 현재 활성 renderMusicMap loop 종료 함수
 
 // ===== Player Widget State =====
 let playerCurrentTrack = null;    // 현재 재생 중인 트랙
@@ -2298,6 +2299,9 @@ async function showMusicMap() {
 }
 
 function renderMusicMap(canvas, tracks) {
+    // 이전 loop 종료
+    if (_mapLoopDestroy) { _mapLoopDestroy(); _mapLoopDestroy = null; }
+
     const COVER = 140, GAP = 50, LABEL_H = 42, STEP = COVER + GAP;
     const VSTEP = COVER + LABEL_H + GAP;
 
@@ -2331,6 +2335,7 @@ function renderMusicMap(canvas, tracks) {
     const MIN_SCALE = 0.15, MAX_SCALE = 2.0;
     let cam = { x: lw()/2, y: lh()/2, scale: TARGET_SCALE, tx: lw()/2, ty: lh()/2 };
     let destroyed = false;
+    _mapLoopDestroy = () => { destroyed = true; };
 
     // 그리드 범위 (패딩 포함)
     const PAD = COVER * 2;
