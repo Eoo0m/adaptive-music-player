@@ -30,6 +30,7 @@ function updateAppleMusicBtn() {
 }
 
 async function toggleAppleMusicLink() {
+    if (!authToken) { alert('로그인 후 이용할 수 있습니다.'); return; }
     if (musicKitInstance && musicKitInstance.isAuthorized) return; // 이미 연동
     if (!window.MusicKit) {
         document.addEventListener('musickitloaded', () => initMusicKit(), { once: true });
@@ -2765,7 +2766,7 @@ function renderMusicMap(canvas, tracks) {
         try {
             const res = await fetch(`${API}/recommend`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ track_keys: history.slice(-10), num_recommendations: 15, exclude_track_keys: history })
+                body: JSON.stringify({ track_keys: history.slice(-10), num_recommendations: 42, exclude_track_keys: history })
             });
             const data = await res.json();
             if (!data.recommendations?.length) throw new Error('empty');
@@ -2776,7 +2777,7 @@ function renderMusicMap(canvas, tracks) {
             try {
                 const res2 = await fetch(`${API}/find-similar-tracks`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ track_key: track.track_key, num_recommendations: 15 })
+                    body: JSON.stringify({ track_key: track.track_key, num_recommendations: 42 })
                 });
                 const data2 = await res2.json();
                 if (data2.recommendations?.length) {
