@@ -668,44 +668,55 @@ async function toggleFavorite(track, btn) {
     }
 
     const isFavorited = btn.classList.contains('favorited');
+    const svgFilled = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+    const svgEmpty  = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
 
+    // 즉시 UI 반영
+    if (isFavorited) {
+        btn.classList.remove('favorited');
+        btn.innerHTML = svgEmpty;
+        lastFavorites = lastFavorites.filter(f => f.track_key !== track.track_key);
+    } else {
+        btn.classList.add('favorited');
+        btn.innerHTML = svgFilled;
+        btn.classList.remove('pop');
+        void btn.offsetWidth;
+        btn.classList.add('pop');
+        lastFavorites = [{
+            track_key: track.track_key,
+            title: track.track || track.title,
+            artist: track.artist,
+            album: track.album,
+            cover_image_url: track.cover_image_url,
+            playlist_count: track.playlist_count,
+        }, ...lastFavorites];
+    }
+
+    // 백그라운드 API 호출 — 실패 시 롤백
     try {
+        let res;
         if (isFavorited) {
-            const res = await fetch(`${API_BASE_URL}/favorites/${track.track_key}`, {
-                method: 'DELETE',
-                headers: getAuthHeaders()
-            });
-            if (res.ok) {
-                btn.classList.remove('favorited');
-                btn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
-                lastFavorites = lastFavorites.filter(f => f.track_key !== track.track_key);
-                logAction('favorite', { selected_track_key: track.track_key, candidate_track_keys: currentCandidateKeys, extra: 'remove' });
-            }
+            res = await fetch(`${API_BASE_URL}/favorites/${track.track_key}`, { method: 'DELETE', headers: getAuthHeaders() });
         } else {
-            const res = await fetch(`${API_BASE_URL}/favorites`, {
+            res = await fetch(`${API_BASE_URL}/favorites`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
                 body: JSON.stringify({ track_key: track.track_key })
             });
-            if (res.ok) {
-                btn.classList.add('favorited');
-                btn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
-                btn.classList.remove('pop');
-                void btn.offsetWidth;
-                btn.classList.add('pop');
-                // 캐시에 추가 (다음 탭 진입 시 재요청 없이 바로 반영)
-                lastFavorites = [{
-                    track_key: track.track_key,
-                    title: track.track || track.title,
-                    artist: track.artist,
-                    album: track.album,
-                    cover_image_url: track.cover_image_url,
-                    playlist_count: track.playlist_count,
-                }, ...lastFavorites];
-                logAction('favorite', { selected_track_key: track.track_key, candidate_track_keys: currentCandidateKeys, extra: 'add' });
-            }
         }
+        if (!res.ok) throw new Error(await res.text());
+        logAction('favorite', { selected_track_key: track.track_key, candidate_track_keys: currentCandidateKeys, extra: isFavorited ? 'remove' : 'add' });
     } catch (e) {
+        // 롤백
+        if (isFavorited) {
+            btn.classList.add('favorited');
+            btn.innerHTML = svgFilled;
+            lastFavorites = [{ track_key: track.track_key, title: track.track || track.title, artist: track.artist, album: track.album, cover_image_url: track.cover_image_url, playlist_count: track.playlist_count }, ...lastFavorites];
+        } else {
+            btn.classList.remove('favorited');
+            btn.innerHTML = svgEmpty;
+            lastFavorites = lastFavorites.filter(f => f.track_key !== track.track_key);
+        }
         console.error('Favorite toggle failed:', e);
     }
 }
@@ -1621,8 +1632,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('initialSongInput').classList.remove('hidden');
         document.getElementById('sideBar')?.classList.remove('hidden');
         document.getElementById('bottomTab').classList.remove('hidden');
-        loadFavorites();
-        prefetchMusicMap(); // 백그라운드에서 취향 지도 미리 받기
+        loadFavorites().then(() => prefetchMusicMap()); // favorites 로드 후 지도 미리 받기 (lastFavorites 재활용)
         // 로그인 시 Apple Music 버튼 표시 (비로그인은 숨김 — HTML 기본 hidden)
         const appleMusicBtn = document.getElementById('appleMusicBtn');
         if (appleMusicBtn) appleMusicBtn.style.display = '';
@@ -2082,18 +2092,18 @@ function saveMapCache(trackKeys, data) {
 }
 
 async function fetchMusicMapData() {
-    // 1. 찜 목록 + DB 캐시 병렬 요청
+    // 1. 찜 목록 — 이미 로드된 lastFavorites 재활용, 없으면 fetch
     let trackKeys = [];
 
-    const [favsRes, dbRes] = await Promise.allSettled([
-        fetch(`${API_BASE_URL}/favorites`, { headers: getAuthHeaders() }),
-        fetch(`${API_BASE_URL}/user-maps/latest`, { headers: getAuthHeaders() }),
-    ]);
-
-    if (favsRes.status === 'fulfilled' && favsRes.value.ok) {
+    if (lastFavorites && lastFavorites.length > 0) {
+        trackKeys = lastFavorites.slice(0, 20).map(f => f.track_key);
+    } else {
         try {
-            const data = await favsRes.value.json();
-            trackKeys = (data.favorites || []).slice(0, 20).map(f => f.track_key);
+            const res = await fetch(`${API_BASE_URL}/favorites`, { headers: getAuthHeaders() });
+            if (res.ok) {
+                const data = await res.json();
+                trackKeys = (data.favorites || []).slice(0, 20).map(f => f.track_key);
+            }
         } catch(e) {}
     }
 
@@ -2114,10 +2124,11 @@ async function fetchMusicMapData() {
     const cached = loadMapCache(trackKeys);
     if (cached) { console.log('Map cache hit (session)'); return cached; }
 
-    // 3. DB 캐시 확인 (이미 병렬로 받아둔 응답 사용)
+    // 3. DB 캐시 확인
     try {
-        if (dbRes.status === 'fulfilled' && dbRes.value.ok) {
-            const { map } = await dbRes.value.json();
+        const dbRes = await fetch(`${API_BASE_URL}/user-maps/latest`, { headers: getAuthHeaders() });
+        if (dbRes.ok) {
+            const { map } = await dbRes.json();
             if (map && map.map_data?.length > 0) {
                 const savedKeys = [...new Set(map.map_data.map(t => t.track_key))];
                 const currentSet = new Set(trackKeys);
