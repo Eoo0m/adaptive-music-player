@@ -19,7 +19,6 @@ function _renderSearchHomeGrid() {
     const home = document.getElementById('searchHome');
     if (!home) return;
 
-    // 이미 렌더됐으면 스킵
     if (home.querySelector('.search-home-grid')) return;
 
     const mapData = window.lastMapData;
@@ -33,34 +32,27 @@ function _renderSearchHomeGrid() {
         sampled.push(pool.splice(idx, 1)[0]);
     }
 
+    // 헤더 — 유저 이름 가져오기
+    const userName = (typeof currentUser !== 'undefined' && currentUser)
+        ? (currentUser.display_name || currentUser.email?.split('@')[0] || '')
+        : '';
+    const label = document.createElement('div');
+    label.className = 'search-section-label search-home-label';
+    label.textContent = userName ? `${userName}님을 위한 추천` : '취향 기반 추천';
+
     const grid = document.createElement('div');
-    grid.className = 'search-home-grid';
+    grid.className = 'search-entity-grid search-home-grid';
 
     sampled.forEach(t => {
-        const item = document.createElement('div');
-        item.className = 'search-home-grid-item';
-        item.onclick = () => selectTrack(t);
-
-        const img = document.createElement('img');
-        img.src = t.cover_image_url || '';
-        img.alt = '';
-        img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
-
-        const title = document.createElement('div');
-        title.className = 'search-home-grid-title';
-        title.textContent = t.title || t.track_name || '';
-
-        const artist = document.createElement('div');
-        artist.className = 'search-home-grid-artist';
-        artist.textContent = t.artist || '';
-
-        item.appendChild(img);
-        item.appendChild(title);
-        item.appendChild(artist);
-        grid.appendChild(item);
+        // _makeTrackCard와 동일한 형식으로 렌더
+        const r = { ...t, track: t.title || t.track_name || '', track_name: t.title || t.track_name || '' };
+        const card = _makeTrackCard(r);
+        card.addEventListener('click', () => _openTrackDetail(r));
+        grid.appendChild(card);
     });
 
     home.querySelector('.search-guide-text')?.remove();
+    home.appendChild(label);
     home.appendChild(grid);
 }
 
