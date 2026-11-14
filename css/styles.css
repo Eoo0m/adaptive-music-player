@@ -1850,14 +1850,15 @@ body {
 .search-interface {
     position: fixed;
     top: 0;
-    left: calc(72px + (100vw - 72px) / 2);
-    transform: translateX(-50%);
+    left: calc(72px + 40px);
+    right: 40px;
+    transform: none;
     background: transparent;
     padding: 16px 0 0;
     color: #fff;
     text-align: left;
-    max-width: calc(100vw - 72px - 80px);
-    width: calc(100vw - 72px - 80px);
+    max-width: none;
+    width: auto;
     box-shadow: none;
     border: none;
     backdrop-filter: none;
