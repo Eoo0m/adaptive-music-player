@@ -583,7 +583,7 @@ async function generateMap() {
         favorite_keys: favKeys,
         n_neighbors: 15,
         min_dist: 0.1,
-        fill_per_seed: 40,
+        fill_per_seed: favKeys.length >= 10 ? 3 : 5,
       })
     });
     if (!res.ok) throw new Error(await res.text());
@@ -1303,7 +1303,7 @@ mapRefreshBtn.onclick = async () => {
     const mapRes = await fetch(`${API}/music-map`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ track_keys: seeds, favorite_keys: favKeys, fill_per_seed: 40 })
+      body: JSON.stringify({ track_keys: seeds, favorite_keys: favKeys, fill_per_seed: favKeys.length >= 10 ? 3 : 5 })
     });
     if (!mapRes.ok) throw new Error(await mapRes.text());
     const result = await mapRes.json();
