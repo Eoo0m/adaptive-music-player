@@ -2081,7 +2081,7 @@ function saveMapCache(trackKeys, data) {
 }
 
 async function fetchMusicMapData() {
-    // 찜 목록 가져오기
+    // 1. 찜 목록 가져오기
     let trackKeys = [];
     try {
         const res = await fetch(`${API_BASE_URL}/favorites`, { headers: getAuthHeaders() });
@@ -2105,21 +2105,66 @@ async function fetchMusicMapData() {
 
     if (trackKeys.length === 0) return null;
 
-    // sessionStorage 캐시 확인 — 같은 찜 목록이면 UMAP 재계산 없이 바로 반환
+    // 2. sessionStorage 캐시 확인
     const cached = loadMapCache(trackKeys);
-    if (cached) { console.log('🗺️ Map cache hit'); return cached; }
+    if (cached) { console.log('Map cache hit (session)'); return cached; }
 
+    // 3. DB 저장 지도 확인 — 찜 목록이 같으면 바로 반환
+    try {
+        const res = await fetch(`${API_BASE_URL}/user-maps/latest`, { headers: getAuthHeaders() });
+        if (res.ok) {
+            const { map } = await res.json();
+            if (map && map.map_data?.length > 0) {
+                // 저장된 지도의 seed 트랙 키 목록과 현재 찜 목록 비교
+                const savedKeys = [...new Set(map.map_data.map(t => t.track_key))];
+                const currentSet = new Set(trackKeys);
+                const isSame = trackKeys.every(k => savedKeys.includes(k)) && trackKeys.length === savedKeys.filter(k => currentSet.has(k)).length;
+                if (isSame) {
+                    console.log('Map cache hit (DB)');
+                    // DB 데이터를 /music-map 응답 형식으로 변환
+                    const data = { tracks: map.map_data, seed_count: trackKeys.length, fill_count: map.map_data.length - trackKeys.length, total: map.map_data.length };
+                    saveMapCache(trackKeys, data);
+                    return data;
+                }
+            }
+        }
+    } catch(e) {}
+
+    // 4. 재계산 필요 — /music-map 호출
     const res = await fetch(`${API_BASE_URL}/music-map`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({ track_keys: trackKeys, fill_per_seed: 15, n_neighbors: 15, bridge_per_pair: 10 })
+        body: JSON.stringify({ track_keys: trackKeys, fill_per_seed: 15 })
     });
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
 
-    // 결과를 sessionStorage에 저장
+    // 5. sessionStorage + DB에 저장
     saveMapCache(trackKeys, data);
+    _saveMapToDB(data).catch(() => {});
     return data;
+}
+
+async function _saveMapToDB(data) {
+    if (!authToken || !data?.tracks?.length) return;
+    await fetch(`${API_BASE_URL}/user-maps`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({
+            name: '내 취향지도',
+            map_data: data.tracks.map(t => ({
+                track_key: t.track_key,
+                track_name: t.title || t.track_name || '',
+                artist: t.artist || '',
+                cover_image_url: t.cover_image_url || null,
+                apple_music_id: t.apple_music_id || null,
+                x: t.x ?? t.grid_col ?? 0,
+                y: t.y ?? t.grid_row ?? 0,
+                is_favorite: t.is_favorite || false,
+            }))
+        })
+    });
+    console.log('Map saved to DB');
 }
 
 function prefetchMusicMap() {
