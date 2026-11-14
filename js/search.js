@@ -25,10 +25,10 @@ function _renderSearchHomeGrid() {
     const mapData = window.lastMapData;
     if (!mapData?.tracks?.length) return;
 
-    // 21개 랜덤 샘플
+    // 최대 70개 랜덤 샘플
     const pool = [...mapData.tracks];
     const sampled = [];
-    while (sampled.length < 21 && pool.length > 0) {
+    while (sampled.length < 70 && pool.length > 0) {
         const idx = Math.floor(Math.random() * pool.length);
         sampled.push(pool.splice(idx, 1)[0]);
     }

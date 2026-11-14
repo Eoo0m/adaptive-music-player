@@ -2004,12 +2004,24 @@ body {
     display: none;
 }
 
-/* ===== Search Home Grid (맵 데이터 기반 7×3) ===== */
+/* searchHome 스크롤 */
+#searchHome {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    overflow-y: auto;
+    padding: 24px 40px 100px;
+    box-sizing: border-box;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+#searchHome::-webkit-scrollbar { display: none; }
+
+/* ===== Search Home Grid (맵 데이터 기반 7열) ===== */
 .search-home-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 10px;
-    padding: 24px 0 40px;
+    padding: 8px 0 40px;
 }
 
 .search-home-grid-item {

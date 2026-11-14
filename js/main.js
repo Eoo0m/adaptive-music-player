@@ -782,6 +782,7 @@ let lastRecommendationIndex = 0;
 let lastFavorites = [];
 let lastSavedPlaylists = [];
 let lastHomeFeeds = [];
+window.lastMapData = null;   // 캐시된 취향 지도 데이터 (search.js에서 접근)
 let lastMapData = null;      // 캐시된 취향 지도 데이터
 let mapPrefetchPromise = null; // 프리패치 중인 Promise
 let mapIntroShown = false;   // 인트로를 이미 봤으면 스킵 (세션 중 1회)
@@ -2169,7 +2170,17 @@ async function _saveMapToDB(data) {
 
 function prefetchMusicMap() {
     if (!authToken) return;
-    mapPrefetchPromise = fetchMusicMapData().catch(e => {
+    mapPrefetchPromise = fetchMusicMapData().then(data => {
+        if (!data) return null;
+        lastMapData = window.lastMapData = data;
+        // 검색홈이 보이고 있으면 그리드 갱신
+        const searchHome = document.getElementById('searchHome');
+        if (searchHome && searchHome.style.display !== 'none') {
+            searchHome.querySelector('.search-home-grid')?.remove();
+            if (typeof _renderSearchHomeGrid === 'function') _renderSearchHomeGrid();
+        }
+        return data;
+    }).catch(e => {
         console.warn('Map prefetch failed:', e);
         return null;
     });
@@ -2205,7 +2216,7 @@ async function showMusicMap() {
             empty.classList.remove('hidden');
             return;
         }
-        lastMapData = data;
+        lastMapData = window.lastMapData = data;
         // 찜 목록 기반으로 is_favorite 세팅
         const favKeys = new Set((lastFavorites || []).map(f => f.track_key));
         data.tracks.forEach(t => { t.is_favorite = favKeys.has(t.track_key); });
@@ -2692,7 +2703,7 @@ function renderMusicMap(canvas, tracks) {
                 const canvas = document.getElementById('mapCanvas');
                 const data = await fetchMusicMapData();
                 if (!data) return;
-                lastMapData = data;
+                lastMapData = window.lastMapData = data;
                 const favKeys = new Set((lastFavorites || []).map(f => f.track_key));
                 data.tracks.forEach(t => { t.is_favorite = favKeys.has(t.track_key); });
                 if (loading) loading.classList.add('hidden');
