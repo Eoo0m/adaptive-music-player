@@ -2890,6 +2890,8 @@ function updatePlayerWidget(track, isPlaying) {
     const isNewTrack = !playerCurrentTrack || playerCurrentTrack.track_key !== track.track_key;
     playerCurrentTrack = track;
     playerIsPlaying = isPlaying;
+    // 새 곡 재생 시작 시 다음 후보 미리 패칭
+    if (isNewTrack && isPlaying) _prefetchNextTracks(track.track_key);
     // Media Session 메타데이터 업데이트 (에어팟 등 하드웨어 버튼 연동)
     if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
@@ -2969,6 +2971,24 @@ function playerTogglePlayPause() {
 }
 
 
+// 프리페치 캐시: { 'next-track:trackKey': Promise, 'dynamic-next:trackKey': Promise }
+const _prefetchCache = {};
+
+function _prefetchNextTracks(trackKey) {
+    if (!lastMapData || !trackKey) return;
+    const candidateKeys = lastMapData.tracks.filter(t => t.track_key !== trackKey).map(t => t.track_key);
+    const body = JSON.stringify({ track_key: trackKey, candidate_track_keys: candidateKeys });
+    const headers = { 'Content-Type': 'application/json' };
+    for (const ep of ['next-track', 'dynamic-next']) {
+        const cacheKey = `${ep}:${trackKey}`;
+        if (!_prefetchCache[cacheKey]) {
+            _prefetchCache[cacheKey] = fetch(`${API_BASE_URL}/${ep}`, { method: 'POST', headers, body })
+                .then(r => r.ok ? r.json() : null)
+                .catch(() => null);
+        }
+    }
+}
+
 async function _fetchAndPlay(endpoint, trackKey) {
     if (!lastMapData) return;
 
@@ -2980,16 +3000,23 @@ async function _fetchAndPlay(endpoint, trackKey) {
     document.getElementById('playerNextLoading')?.classList.remove('hidden');
 
     try {
-    const candidateKeys = lastMapData.tracks.filter(t => t.track_key !== trackKey).map(t => t.track_key);
-    const body = { track_key: trackKey };
-    if (candidateKeys.length > 0) body.candidate_track_keys = candidateKeys;
-    const res = await fetch(`${API_BASE_URL}/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error(`${endpoint} ${res.status}`);
-    const data = await res.json();
+    // 프리페치 캐시 hit 시 즉시 사용
+    const cacheKey = `${endpoint}:${trackKey}`;
+    let data = _prefetchCache[cacheKey] ? await _prefetchCache[cacheKey] : null;
+    delete _prefetchCache[cacheKey];
+
+    if (!data) {
+        const candidateKeys = lastMapData.tracks.filter(t => t.track_key !== trackKey).map(t => t.track_key);
+        const body = { track_key: trackKey };
+        if (candidateKeys.length > 0) body.candidate_track_keys = candidateKeys;
+        const res = await fetch(`${API_BASE_URL}/${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error(`${endpoint} ${res.status}`);
+        data = await res.json();
+    }
     const tracks = data.tracks || [];
     if (tracks.length === 0) return;
 
