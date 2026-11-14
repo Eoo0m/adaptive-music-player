@@ -327,10 +327,6 @@ function _makeTrackCard(r) {
 }
 
 function _toggleFavCard(btn, trackKey) {
-    const isFav = btn.classList.contains('favorited');
-    btn.classList.toggle('favorited');
-    const svg = btn.querySelector('svg');
-    if (svg) svg.setAttribute('fill', isFav ? 'none' : 'currentColor');
     const track = (window.searchResultsData || []).find(t => t.track_key === trackKey) || { track_key: trackKey };
     toggleFavorite(track, btn);
 }
