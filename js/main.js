@@ -58,7 +58,6 @@ async function initMusicKit() {
         }
         updateAppleMusicBtn();
         musicKitInstance.addEventListener('playbackStateDidChange', ({ state }) => {
-            console.log('[MusicKit] playbackState:', state);
             playerIsPlaying = (state === 2);
             if (playerIsPlaying && !playerPlayStartTime) playerPlayStartTime = Date.now();
             if (state === 5) playerNextSimilar();
