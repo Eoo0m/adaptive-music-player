@@ -60,6 +60,16 @@ async function initMusicKit() {
         musicKitInstance.addEventListener('playbackStateDidChange', ({ state }) => {
             playerIsPlaying = (state === 2);
             if (playerIsPlaying && !playerPlayStartTime) playerPlayStartTime = Date.now();
+            // 재생/일시정지 아이콘 동기화
+            const playIcon = document.getElementById('playerPlayIcon');
+            const pauseIcon = document.getElementById('playerPauseIcon');
+            if (playIcon) playIcon.style.display = playerIsPlaying ? 'none' : 'block';
+            if (pauseIcon) pauseIcon.style.display = playerIsPlaying ? 'block' : 'none';
+            playerWidgetSetPulse(playerIsPlaying);
+            const expPlayIcon = document.getElementById('playerExpPlayIcon');
+            if (expPlayIcon) expPlayIcon.innerHTML = playerIsPlaying
+                ? '<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+                : '<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>';
             if (state === 5) playerNextSimilar();
         });
     } catch (e) {
