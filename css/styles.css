@@ -375,16 +375,15 @@ body {
 }
 .player-exp-main {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: stretch;
-    gap: 10px;
+    gap: 8px;
 }
 
 .player-exp-cover-wrap {
     position: relative;
-    flex-shrink: 0;
-    width: 90px;
-    height: 90px;
+    width: 100%;
+    aspect-ratio: 1;
     border-radius: 10px;
     overflow: hidden;
     cursor: pointer;
@@ -407,12 +406,9 @@ body {
 }
 
 .player-exp-right {
-    flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
-    gap: 6px;
-    min-width: 0;
+    gap: 5px;
 }
 .player-exp-row {
     display: flex;
@@ -429,8 +425,8 @@ body {
     overflow: hidden;
 }
 .player-exp-track-cover {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 5px;
     object-fit: cover;
     cursor: pointer;
@@ -447,7 +443,7 @@ body {
 
 .player-widget.expanded {
     padding: 10px;
-    width: 220px;
+    width: 180px;
 }
 .player-widget.expanded .player-collapsed-view {
     display: none;

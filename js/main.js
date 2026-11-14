@@ -3137,7 +3137,6 @@ function _populateExpandedTracks() {
                 img.src = t.cover_image_url || '';
                 img.title = `${t.title} - ${t.artist}`;
                 img.onclick = () => {
-                    playerCollapseWidget();
                     if (musicKitInstance && musicKitInstance.isAuthorized) {
                         playWithAppleMusic(t, null);
                     }
