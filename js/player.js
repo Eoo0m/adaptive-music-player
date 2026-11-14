@@ -40,7 +40,10 @@ async function initMusicKit() {
         updateAppleMusicBtn();
         musicKitInstance.addEventListener('playbackStateDidChange', ({ state }) => {
             playerIsPlaying = (state === 2);
-            if (playerIsPlaying && !playerPlayStartTime) playerPlayStartTime = Date.now();
+            if (playerIsPlaying) {
+                if (!playerPlayStartTime) playerPlayStartTime = Date.now();
+                document.getElementById('playerNextLoading')?.classList.add('hidden');
+            }
             const playIcon = document.getElementById('playerPlayIcon');
             const pauseIcon = document.getElementById('playerPauseIcon');
             if (playIcon) playIcon.style.display = playerIsPlaying ? 'none' : 'block';
@@ -247,7 +250,10 @@ async function _fetchAndPlay(endpoint, trackKey) {
 
         const [data] = await Promise.all([dataPromise, minDelay]);
         const tracks = (data?.tracks) || [];
-        if (tracks.length === 0) return;
+        if (tracks.length === 0) {
+            document.getElementById('playerNextLoading')?.classList.add('hidden');
+            return;
+        }
 
         let idx = 0;
         function tryNext() {
@@ -261,9 +267,11 @@ async function _fetchAndPlay(endpoint, trackKey) {
             }
         }
         tryNext();
+    } catch (err) {
+        document.getElementById('playerNextLoading')?.classList.add('hidden');
+        throw err;
     } finally {
         _fetchAndPlayInProgress = false;
-        document.getElementById('playerNextLoading')?.classList.add('hidden');
         const mapActive = currentTab === 'map' && !!lastMapData;
         if (nextBtn) nextBtn.disabled = !mapActive;
         if (shuffleBtn) shuffleBtn.disabled = !mapActive;
