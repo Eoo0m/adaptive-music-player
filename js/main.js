@@ -2970,16 +2970,28 @@ function playerTogglePlayPause() {
             playerIsPlaying = true;
             if (!playerPlayStartTime) playerPlayStartTime = Date.now();
         }
-        const playIcon = document.getElementById('playerPlayIcon');
-        const pauseIcon = document.getElementById('playerPauseIcon');
-        if (playIcon) playIcon.style.display = playerIsPlaying ? 'none' : 'block';
-        if (pauseIcon) pauseIcon.style.display = playerIsPlaying ? 'block' : 'none';
+    } else {
+        // Apple 미연동 (YouTube) — 상태 토글만
+        playerIsPlaying = !playerIsPlaying;
     }
+    const playIcon = document.getElementById('playerPlayIcon');
+    const pauseIcon = document.getElementById('playerPauseIcon');
+    if (playIcon) playIcon.style.display = playerIsPlaying ? 'none' : 'block';
+    if (pauseIcon) pauseIcon.style.display = playerIsPlaying ? 'block' : 'none';
 }
 
 
 async function _fetchAndPlay(endpoint, trackKey) {
     if (!lastMapData) return;
+
+    // 로딩 dots 표시
+    const isNext = endpoint === 'next-track';
+    const iconId = isNext ? 'playerNextIcon' : 'playerShuffleIcon';
+    const dotsId = isNext ? 'playerNextDots' : 'playerShuffleDots';
+    document.getElementById(iconId)?.classList.add('hidden');
+    document.getElementById(dotsId)?.classList.remove('hidden');
+
+    try {
     const candidateKeys = lastMapData.tracks.filter(t => t.track_key !== trackKey).map(t => t.track_key);
     const body = { track_key: trackKey };
     if (candidateKeys.length > 0) body.candidate_track_keys = candidateKeys;
@@ -3005,6 +3017,11 @@ async function _fetchAndPlay(endpoint, trackKey) {
         }
     }
     tryNext();
+    } finally {
+        // 로딩 dots 숨기기
+        document.getElementById(iconId)?.classList.remove('hidden');
+        document.getElementById(dotsId)?.classList.add('hidden');
+    }
 }
 
 async function playerNextSimilar() {

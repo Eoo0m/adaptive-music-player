@@ -288,6 +288,21 @@ body {
     background: rgba(50, 214, 107, .15)
 }
 
+.player-btn-dots {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+}
+.player-btn-dots.hidden { display: none; }
+.player-btn-dots span {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: search-dot-bounce 1s infinite ease-in-out;
+}
+.player-btn-dots span:nth-child(2) { animation-delay: .15s; }
+.player-btn-dots span:nth-child(3) { animation-delay: .3s; }
+
 .player-album-wrap {
     width: 42px;
     height: 42px;
