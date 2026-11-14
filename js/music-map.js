@@ -443,12 +443,11 @@ function renderMusicMap(canvas, tracks) {
                 ctx.restore();
             }
 
-            if (isPlaying || isSeed || isFav || isHov) {
+            if (isPlaying || isFav || isHov) {
                 ctx.save(); ctx.translate(sx,sy);
                 ctx.beginPath(); roundRect(ctx,-half,-half,size,size,r);
                 if (isPlaying) { ctx.strokeStyle='#4fc3f7'; ctx.lineWidth=Math.max(3,size*.07); ctx.shadowColor='#4fc3f7'; ctx.shadowBlur=size*(0.5 + 0.3 * Math.sin(Date.now() / 280)); }
                 else if (isFav) { ctx.strokeStyle='rgba(255,255,255,.9)'; ctx.lineWidth=Math.max(3,size*.065); ctx.shadowColor='rgba(255,255,255,.4)'; ctx.shadowBlur=isHov?size*.4:size*.2; }
-                else if (isSeed) { ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=Math.max(2,size*.045); ctx.shadowColor='rgba(255,255,255,.3)'; ctx.shadowBlur=isHov?size*.35:size*.15; }
                 else if (isBridge) { ctx.strokeStyle='#4a9eff'; ctx.lineWidth=Math.max(2,size*.04); ctx.shadowColor='#4a9eff'; ctx.shadowBlur=isHov?size*.45:size*.2; }
                 else { ctx.strokeStyle='rgba(255,255,255,.8)'; ctx.lineWidth=Math.max(1.5,size*.03); ctx.shadowColor='rgba(255,255,255,.35)'; ctx.shadowBlur=size*.25; }
                 ctx.stroke(); ctx.restore();
