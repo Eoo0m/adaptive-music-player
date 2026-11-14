@@ -1910,30 +1910,26 @@ body {
 
 .fav-dots-btn {
     position: absolute;
-    top: 4px;
-    right: 4px;
-    background: rgba(0,0,0,.5);
+    top: 6px;
+    right: 6px;
+    background: none;
     border: none;
     cursor: pointer;
-    padding: 4px 5px;
-    border-radius: 50%;
+    padding: 2px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    backdrop-filter: blur(4px);
+    gap: 3px;
     z-index: 2;
 }
 .fav-dots-btn span {
     display: block;
     width: 3px;
     height: 3px;
-    background: rgba(255,255,255,.85);
+    background: rgba(255,255,255,.9);
     border-radius: 50%;
-}
-.fav-dots-btn:hover {
-    background: rgba(0,0,0,.7);
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.8));
 }
 
 .track-dots-menu {
