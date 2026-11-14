@@ -113,3 +113,73 @@ CSS를 수정했는데 반영이 안 될 때 → `?v=` 뒤 숫자를 바꿔서 �
 | 찜 목록 | `.favorites-view` | fixed | 뷰포트 |
 | 취향 지도 | `.map-view` | fixed | 뷰포트 |
 | 사이드탭 | `.side-tab` | fixed | 뷰포트 |
+
+---
+
+## 검색창 구조 — 드롭다운과 결과가 독립적인 이유
+
+### 레이어 구조
+
+```
+z-index 200  .search-autocomplete   ← 자동완성 드롭다운 (검색창 바로 아래)
+z-index 100  .search-interface      ← 검색창 (항상 화면 상단 고정)
+z-index  95  #searchBody            ← 검색 결과 전체 화면
+```
+
+**z-index** = 숫자가 클수록 위에 뜸. 같은 화면에 겹쳐있을 때 누가 앞에 나오는지 결정.
+
+---
+
+### 드롭다운은 검색창에 종속
+
+자동완성(드롭다운)은 `.search-interface` 안에 들어있음.
+
+```
+.search-interface (fixed, 화면 상단 가운데)
+  └── input (검색 입력창)
+  └── .search-autocomplete (드롭다운, 검색창 너비와 동일)
+  └── #searchRecentChips (최근 검색어)
+```
+
+→ 검색창이 움직이면 드롭다운도 같이 움직임. 부모-자식 관계이기 때문.
+
+---
+
+### 검색 결과는 검색창과 완전 독립
+
+`#searchBody`는 `.search-interface`의 자식이 아님. 완전히 별개의 div.
+
+```html
+<div class="search-interface">검색창 + 드롭다운</div>
+<div id="searchBody">검색 결과 전체 화면</div>  ← 형제(sibling) 관계
+```
+
+→ 검색창을 클릭하거나 배경을 클릭해도 결과가 사라지지 않음.
+→ 결과가 뜬 채로 검색창에서 자동완성도 독립적으로 작동.
+
+---
+
+### 검색 결과 안의 레이어 구조
+
+`#searchBody` 안에 `position: absolute` div들이 쌓임:
+
+```
+#searchBody (fixed, 전체 화면)
+  └── #searchHome      (홈 안내 텍스트, 기본 상태)
+  └── #searchResults   (검색 결과 그리드, 검색 후)
+  └── #trackDetailPanel (트랙 클릭 시 상세 패널, z-index:10)
+```
+
+`absolute`이기 때문에 `#searchBody` 안에서만 위치가 잡힘. 화면 전체를 덮는 건 `#searchBody`가 `fixed`로 전체를 차지하기 때문.
+
+---
+
+### 이슈 히스토리
+
+| 이슈 | 원인 | 해결 |
+|---|---|---|
+| 검색 결과가 600px 너비로 제한됨 | `#searchResults`에 `max-width: 600px` 남아있었음 | `position: absolute; left:0; right:0`으로 변경 |
+| 엔터 치면 자동완성이 같이 뜸 | 자동완성 타이머가 엔터 후에도 실행됨 | 엔터 시 `clearTimeout` 추가 |
+| 뒤로가기 누르면 빈 화면 | `_closeTrackDetail()`이 결과를 다시 안 보여줌 | `_showSearchResults()` 호출 추가 |
+| 한국어 입력 시 엔터 두 번 | IME(한글 조합) 중에도 keydown 이벤트 발생 | `e.isComposing` 체크로 조합 중엔 무시 |
+| 찜 토글이 반대로 작동 | JS에서 미리 상태를 뒤집고 API 호출 | 미리 뒤집는 코드 제거, API 응답 후 반영 |

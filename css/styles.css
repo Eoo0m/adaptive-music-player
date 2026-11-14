@@ -486,7 +486,6 @@ body {
     align-items: center;
     gap: 12px;
     width: 100%;
-    max-width: 900px;
     box-sizing: border-box
 }
 
