@@ -183,3 +183,69 @@ z-index  95  #searchBody            ← 검색 결과 전체 화면
 | 뒤로가기 누르면 빈 화면 | `_closeTrackDetail()`이 결과를 다시 안 보여줌 | `_showSearchResults()` 호출 추가 |
 | 한국어 입력 시 엔터 두 번 | IME(한글 조합) 중에도 keydown 이벤트 발생 | `e.isComposing` 체크로 조합 중엔 무시 |
 | 찜 토글이 반대로 작동 | JS에서 미리 상태를 뒤집고 API 호출 | 미리 뒤집는 코드 제거, API 응답 후 반영 |
+
+---
+
+## 트랙 상세 패널 — 열기/닫기 로직
+
+### 레이어 구조 (다시)
+
+```
+#searchBody
+  ├── #searchHome         ← 기본 홈 화면
+  ├── #searchResults      ← 검색 결과 그리드
+  └── #trackDetailPanel   ← 트랙 상세 (z-index: 10, 위에 덮음)
+```
+
+세 div가 모두 `position: absolute`로 `#searchBody` 안에 겹쳐 있음.
+어떤 걸 `hidden`으로 숨기느냐에 따라 무엇이 보이는지 결정됨.
+
+---
+
+### 열기: 커버 클릭 → `_openTrackDetail(track)`
+
+```
+1. #trackDetailPanel.innerHTML 초기화
+2. 뒤로가기 버튼 생성 → addEventListener('click', _closeTrackDetail)
+3. 선택된 트랙 카드 렌더링 (커버 + 제목 + 아티스트 + 찜버튼)
+4. 로딩 dots 표시
+5. API /find-similar-tracks 호출 (비동기)
+6. 응답 오면 유사곡 그리드 렌더링
+7. #trackDetailPanel.classList.remove('hidden') → 패널이 결과 위에 덮임
+```
+
+**왜 `onclick="..."`이 아니라 `addEventListener`를 쓰나?**
+`innerHTML`로 버튼을 만들면 문자열 안에 함수 이름을 넣어야 하는데,
+`search.js`의 함수는 전역이 아닐 수 있어서 `onclick` 문자열이 작동 안 할 수 있음.
+`addEventListener`는 JS 객체를 직접 참조하므로 확실하게 연결됨.
+
+---
+
+### 닫기: 뒤로가기 → `_closeTrackDetail()`
+
+```javascript
+function _closeTrackDetail() {
+    // 1. 패널 숨기고 내용 비움
+    panel.classList.add('hidden');
+    panel.innerHTML = '';
+
+    // 2. 검색 결과가 있으면 결과로, 없으면 홈으로
+    if (searchResults.children.length > 0) {
+        _showSearchResults();  // #searchResults 보여줌
+    } else {
+        _showSearchHome();     // #searchHome 보여줌
+    }
+}
+```
+
+**이슈 히스토리:**
+- 처음엔 `_closeTrackDetail`이 패널만 숨기고 아무것도 안 보여줬음 → 빈 화면
+- `_showSearchResults()` 호출 추가로 해결
+
+---
+
+### 유사곡 카드 클릭 → 패널 갱신 (스택처럼 동작)
+
+유사곡 카드를 클릭하면 `_openTrackDetail(rec)`을 다시 호출.
+패널 innerHTML을 초기화하고 새 트랙으로 다시 렌더링.
+→ 뒤로가기는 항상 "검색 결과"로 돌아감 (히스토리 스택은 없음)
