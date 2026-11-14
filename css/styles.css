@@ -401,9 +401,9 @@ body {
 .favorites-view {
     position: fixed;
     top: 5vh;
-    left: calc(50% + 36px);
+    left: calc(72px + (100vw - 72px) / 2);
     transform: translateX(-50%);
-    width: 972px;
+    width: calc(100vw - 72px - 80px);
     height: 90vh;
     color: #fff;
     z-index: 100;
@@ -519,26 +519,27 @@ body {
     flex-direction: unset;
 }
 
-/* 최근 재생 / 저장된 곡 — 10열 고정, 스크롤 없음 */
+/* 최근 재생 / 저장된 곡 — 10열, 패널 너비에 맞게 확장 */
 .fav-hscroll-recent {
     display: grid;
-    grid-template-columns: repeat(10, 90px);
+    grid-template-columns: repeat(10, 1fr);
     gap: 8px;
     overflow: hidden;
 }
 .fav-hscroll-recent .fav-hscroll-item {
-    width: 90px;
+    width: 100%;
 }
 .fav-hscroll-recent .fav-hscroll-cover {
-    width: 90px;
-    height: 90px;
+    width: 100%;
+    aspect-ratio: 1;
+    height: auto;
     object-fit: cover;
     border-radius: 8px;
     background: #1a1a24;
 }
 .fav-hscroll-recent .fav-hscroll-title,
 .fav-hscroll-recent .fav-hscroll-artist {
-    width: 90px;
+    width: 100%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
