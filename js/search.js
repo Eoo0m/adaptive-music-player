@@ -178,6 +178,10 @@ document.addEventListener('DOMContentLoaded', () => {
     input.addEventListener('input', () => {
         const val = input.value.trim();
         document.getElementById('searchClearBtn')?.classList.toggle('hidden', !val);
+        // 검색 결과 보는 중에 타이핑하면 새 검색 의도 → 쿼리 초기화
+        if (_currentSearchQuery && val !== _currentSearchQuery) {
+            _currentSearchQuery = '';
+        }
         if (!val) {
             _hideAutocomplete();
             _hideRecentChips();
@@ -195,6 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     input.addEventListener('focus', () => {
         document.getElementById('searchCancelBtn').classList.remove('hidden');
+        if (_currentSearchQuery) return; // 검색 결과 보는 중엔 드롭다운 안 띄움
         const val = input.value.trim();
         if (val) {
             _showRecentChips();
