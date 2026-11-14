@@ -2335,7 +2335,6 @@ function renderMusicMap(canvas, tracks) {
     const MIN_SCALE = 0.15, MAX_SCALE = 2.0;
     let cam = { x: lw()/2, y: lh()/2, scale: TARGET_SCALE, tx: lw()/2, ty: lh()/2 };
     let destroyed = false;
-    _mapLoopDestroy = () => { destroyed = true; };
 
     // 그리드 범위 (패딩 포함)
     const PAD = COVER * 2;
@@ -2387,6 +2386,12 @@ function renderMusicMap(canvas, tracks) {
     })).then(() => {
         // 이미지 로드 완료 후 애니메이션 시작 (버퍼링 방지)
         for (const item of grid) item.animT = 0;
+        // loop 시작 직전에 destroy 함수 등록 (이전 loop 종료 후 새 loop 시작 보장)
+        _mapLoopDestroy = () => {
+            destroyed = true;
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('resize', onResize);
+        };
         requestAnimationFrame(loop);
     });
 
