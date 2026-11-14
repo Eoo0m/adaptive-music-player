@@ -8,10 +8,8 @@ window._mapRefresh = async function() {
     mapPrefetchPromise = null;
     Object.keys(sessionStorage).filter(k => k.startsWith('mapCache_')).forEach(k => sessionStorage.removeItem(k));
 
-    const canvasWrap = document.getElementById('mapCanvasWrap');
     const loading = document.getElementById('mapLoading');
     const loadingMsg = document.getElementById('mapLoadingMsg');
-    if (canvasWrap) canvasWrap.classList.add('hidden');
     if (loading) { loading.classList.remove('hidden'); if (loadingMsg) loadingMsg.textContent = '취향 지도 생성 중...'; }
 
     try {
@@ -21,14 +19,11 @@ window._mapRefresh = async function() {
         lastMapData = window.lastMapData = data;
         const favKeys = new Set((lastFavorites || []).map(f => f.track_key));
         data.tracks.forEach(t => { t.is_favorite = favKeys.has(t.track_key); });
-        if (loading) loading.classList.add('hidden');
-        if (canvasWrap) canvasWrap.classList.remove('hidden');
         if (canvas) renderMusicMap(canvas, data.tracks);
     } catch(e) {
-        if (loading) loading.classList.add('hidden');
-        if (canvasWrap) canvasWrap.classList.remove('hidden');
         console.error('지도 새로고침 실패:', e);
     } finally {
+        if (loading) loading.classList.add('hidden');
         if (refreshBtn) refreshBtn.classList.remove('loading');
     }
 };
@@ -57,13 +52,13 @@ async function fetchMusicMapData(forceRefresh = false) {
     let trackKeys = [];
 
     if (lastFavorites && lastFavorites.length > 0) {
-        trackKeys = lastFavorites.slice(0, 20).map(f => f.track_key);
+        trackKeys = lastFavorites.slice(0, 40).map(f => f.track_key);
     } else {
         try {
             const res = await fetch(`${API_BASE_URL}/favorites`, { headers: getAuthHeaders() });
             if (res.ok) {
                 const data = await res.json();
-                trackKeys = (data.favorites || []).slice(0, 20).map(f => f.track_key);
+                trackKeys = (data.favorites || []).slice(0, 40).map(f => f.track_key);
             }
         } catch(e) {}
     }
@@ -108,7 +103,7 @@ async function fetchMusicMapData(forceRefresh = false) {
     const res = await fetch(`${API_BASE_URL}/music-map`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-        body: JSON.stringify({ track_keys: trackKeys, fill_per_seed: 15 })
+        body: JSON.stringify({ track_keys: trackKeys, fill_per_seed: trackKeys.length > 20 ? 2 : trackKeys.length > 10 ? 3 : 5 })
     });
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
