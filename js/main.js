@@ -271,6 +271,54 @@ function _makeHScrollSection(title, tracks, onClickTrack, rows = 1) {
     return section;
 }
 
+function _makeFavListSection(title, tracks, onClickTrack) {
+    const section = document.createElement('div');
+    section.className = 'fav-section';
+
+    const header = document.createElement('div');
+    header.className = 'fav-section-title';
+    header.textContent = title;
+    section.appendChild(header);
+
+    if (!tracks || tracks.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'fav-section-empty';
+        empty.textContent = '없습니다';
+        section.appendChild(empty);
+        return section;
+    }
+
+    const list = document.createElement('div');
+    list.className = 'fav-list';
+
+    tracks.forEach((t, i) => {
+        const item = document.createElement('div');
+        item.className = 'fav-list-item';
+        item.onclick = () => onClickTrack(t);
+
+        const num = document.createElement('div');
+        num.className = 'fav-list-num';
+        num.textContent = i + 1;
+
+        const cover = document.createElement('img');
+        cover.src = t.cover_image_url || '';
+        cover.className = 'fav-list-cover';
+        cover.onerror = () => { cover.style.background = '#1a1a24'; cover.src = ''; };
+
+        const info = document.createElement('div');
+        info.className = 'fav-list-info';
+        info.innerHTML = `<div class="fav-list-title">${t.title || t.track_name || ''}</div><div class="fav-list-artist">${t.artist || ''}</div>`;
+
+        item.appendChild(num);
+        item.appendChild(cover);
+        item.appendChild(info);
+        list.appendChild(item);
+    });
+
+    section.appendChild(list);
+    return section;
+}
+
 function _makePlSection(savedPlaylists) {
     const section = document.createElement('div');
     section.className = 'fav-section';
@@ -389,11 +437,11 @@ function renderFavorites(favorites, savedPlaylists = [], recentTracks = []) {
         openTrackOnYouTube(track);
     };
 
-    // 1. 최근 재생
-    container.appendChild(_makeHScrollSection('최근 재생', recentTracks, onClickTrack));
+    // 1. 최근 재생 (최대 10개, 가로 스크롤)
+    container.appendChild(_makeHScrollSection('최근 재생', recentTracks.slice(0, 10), onClickTrack));
 
-    // 2. 저장된 곡 (2줄)
-    container.appendChild(_makeHScrollSection('저장된 곡', favorites.map(f => ({ ...f, title: f.title || f.track_name })), onClickTrack, 2));
+    // 2. 저장된 곡 (세로 번호 리스트)
+    container.appendChild(_makeFavListSection('저장된 곡', favorites.map(f => ({ ...f, title: f.title || f.track_name })), onClickTrack));
 
     // 3. 저장된 PL
     container.appendChild(_makePlSection(savedPlaylists));

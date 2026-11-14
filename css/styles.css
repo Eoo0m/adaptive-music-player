@@ -335,6 +335,51 @@ body {
 }
 .fav-hscroll::-webkit-scrollbar { display: none; }
 
+.fav-list { display: flex; flex-direction: column; width: 100%; }
+.fav-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 4px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background .15s;
+}
+.fav-list-item:hover { background: rgba(255,255,255,.06); }
+.fav-list-num {
+    width: 24px;
+    text-align: right;
+    font-size: 13px;
+    color: rgba(255,255,255,.35);
+    flex-shrink: 0;
+}
+.fav-list-cover {
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #1a1a24;
+    flex-shrink: 0;
+}
+.fav-list-info { flex: 1; min-width: 0; }
+.fav-list-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fav-list-artist {
+    font-size: 12px;
+    color: rgba(255,255,255,.45);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .fav-hscroll-2row {
     display: grid;
     grid-template-rows: repeat(2, auto);
