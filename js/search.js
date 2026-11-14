@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     input.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { clearTimeout(_autocompleteTimer); _hideAutocomplete(); doSearch(); }
+        if (e.key === 'Enter') { clearTimeout(_autocompleteTimer); _hideAutocomplete(); input.blur(); doSearch(); }
         if (e.key === 'Escape') _cancelSearch();
     });
 
@@ -643,7 +643,12 @@ async function _openTrackDetail(track) {
 function _closeTrackDetail() {
     const panel = document.getElementById('trackDetailPanel');
     if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
-    _showSearchResults();
+    const resultsDiv = document.getElementById('searchResults');
+    if (resultsDiv && resultsDiv.children.length > 0) {
+        _showSearchResults();
+    } else {
+        _showSearchHome();
+    }
 }
 
 // ===== Track Display =====
