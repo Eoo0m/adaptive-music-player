@@ -279,7 +279,7 @@ function _makeTrackCard(r) {
             </button>
         </div>
     `;
-    card.onclick = () => selectTrack(r);
+    card.onclick = () => _openTrackDetail(r);
     return card;
 }
 
@@ -559,6 +559,74 @@ async function showRecommendations(selectedTrack) {
         console.error('Recommendation error:', e);
         alert('추천 시스템에 연결할 수 없습니다.');
     }
+}
+
+// ===== Track Detail Panel =====
+async function _openTrackDetail(track) {
+    const panel = document.getElementById('trackDetailPanel');
+    if (!panel) return;
+
+    const trackName = track.track || track.track_name || 'Unknown';
+    const artistName = track.artist || '';
+    const coverSrc = track.cover_image_url || '';
+    const isFav = (lastFavorites || []).some(f => f.track_key === track.track_key);
+
+    panel.innerHTML = `
+        <button class="track-detail-back" onclick="_closeTrackDetail()">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            뒤로
+        </button>
+        <div class="track-detail-selected">
+            ${coverSrc ? `<img class="track-detail-selected-cover" src="${coverSrc}" alt="">` : '<div class="track-detail-selected-cover"></div>'}
+            <div class="track-detail-selected-info">
+                <div class="track-detail-selected-title">${trackName}</div>
+                <div class="track-detail-selected-artist">${artistName}</div>
+            </div>
+            <button class="search-grid-heart ${isFav ? 'favorited' : ''}" style="position:static;margin-left:auto;" onclick="event.stopPropagation(); _toggleFavCard(this, '${track.track_key}')">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
+        </div>
+        <div class="track-detail-similar-label">유사한 곡</div>
+        <div class="track-detail-similar-grid" id="trackDetailSimilarGrid">
+            <div style="color:rgba(255,255,255,.3);font-size:13px;">불러오는 중...</div>
+        </div>
+    `;
+    panel.classList.remove('hidden');
+
+    logAction('select_from_search', {
+        selected_track_key: track.track_key,
+        candidate_track_keys: window.searchCandidateKeys || [track.track_key]
+    });
+
+    try {
+        const r = await fetch(`${API_BASE_URL}/find-similar-tracks`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ track_key: track.track_key, num_recommendations: 24 })
+        });
+        const d = await r.json();
+        const grid = document.getElementById('trackDetailSimilarGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        if (d.recommendations?.length > 0) {
+            d.recommendations.forEach(rec => {
+                const card = _makeTrackCard(rec);
+                // 유사곡 카드 클릭은 다시 detail로 (스택 갱신)
+                card.onclick = () => _openTrackDetail(rec);
+                grid.appendChild(card);
+            });
+        } else {
+            grid.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:13px;">유사한 곡이 없습니다.</div>';
+        }
+    } catch (e) {
+        const grid = document.getElementById('trackDetailSimilarGrid');
+        if (grid) grid.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:13px;">불러오기 실패</div>';
+    }
+}
+
+function _closeTrackDetail() {
+    const panel = document.getElementById('trackDetailPanel');
+    if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
 }
 
 // ===== Track Display =====
