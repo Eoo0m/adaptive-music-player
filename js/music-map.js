@@ -206,6 +206,8 @@ function renderMusicMap(canvas, tracks) {
     const COVER = 140, GAP = 50, LABEL_H = 42, STEP = COVER + GAP;
     const VSTEP = COVER + LABEL_H + GAP;
 
+    window.mapCamTarget = null;
+
     const dpr = window.devicePixelRatio || 1;
     canvas.width = window.innerWidth * dpr;
     canvas.height = window.innerHeight * dpr;
@@ -232,7 +234,10 @@ function renderMusicMap(canvas, tracks) {
     const images = {};
     const TARGET_SCALE = window.innerWidth <= 768 ? 0.42 : 0.6;
     const MIN_SCALE = 0.15, MAX_SCALE = 2.0;
-    let cam = { x: lw()/2, y: lh()/2, scale: TARGET_SCALE, tx: lw()/2, ty: lh()/2 };
+    // 맵 중심(px=0, py=0)이 화면 중앙에 오도록 초기 카메라 설정
+    const initX = lw() / 2;
+    const initY = lh() / 2;
+    let cam = { x: initX, y: initY, scale: TARGET_SCALE, tx: initX, ty: initY };
     let destroyed = false;
 
     const PAD = COVER * 2;
