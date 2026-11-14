@@ -7,54 +7,67 @@ AI 기반 음악 추천 플레이어 프론트엔드. 바닐라 HTML/CSS/JS, SPA
 - **Framework**: 없음 (순수 HTML/CSS/JS)
 - **Deploy**: Cloudflare Pages (git push 시 자동 배포)
 - **Backend**: https://api.caromusic.kr
-- **Domain**: https://caromusic.kr
+- **Domain**: https://caromusic.kr/app
 
 ## Project Structure
 ```
-index.html           # 단일 HTML 엔트리포인트
+app.html             # 단일 HTML 엔트리포인트
 css/styles.css       # 전체 스타일
 js/
-  main.js            # Auth, 탭 전환, 찜/홈피드, 액션 로그, 취향 지도(music-map),
-                     # 플레이어(MusicKit), 다음 곡 선택(playerDynamicNext — JS cosine 계산)
-  search.js          # 검색 (트랙/키워드), 검색 결과 표시, 트랙 선택
-  recommend.js       # Two-Tower 추천, 앨범 그리드 표시
+  main.js            # Auth, 탭 전환, 찜, 홈피드, 취향 지도(music-map),
+                     # 플레이어(MusicKit), 다음 곡 선택, 플리 빌더
+  search.js          # 검색 (트랙/키워드/스마트), 검색 결과 표시, 검색 홈 그리드
+  recommend.js       # Two-Tower 추천
 ```
 
 ## UI 구조
-1. **로그인 화면** — Caro 로고 + Google 로그인 / 게스트 버튼
-2. **사이드 탭** (좌측) — 홈(집) / 검색(돋보기) / 찜(하트)
-3. **검색 화면** — 트랙/키워드 모드 전환, 검색 결과 리스트
-4. **추천 화면** — 5x3 앨범 커버 그리드 (선택 곡 초록 테두리)
-5. **홈 피드** — 찜한 곡 기반 유사곡 카드 3개 (6x2 그리드)
-6. **찜 목록** — 프로필 카드 + 저장한 곡 그리드
+1. **로그인 화면** — Caro 로고 + Apple 로그인 / 게스트 버튼
+2. **사이드바** (좌측 72px 고정) — 검색 / 찜 / 취향지도 / Apple Music 연동 / 설정
+3. **검색 탭**
+   - 비검색 상태: 취향지도 트랙 70개 (7열) 그리드 (`search-home-grid`)
+   - 검색 중: 로딩 dots
+   - 검색 결과: 엔티티(제목/아티스트) + 무드(키워드) 결과 그리드
+4. **찜 탭** — 프로필 카드 + 저장한 곡 그리드
+5. **취향지도 탭** — Canvas 기반 인터랙티브 지도
+6. **설정 탭** — 프로필 카드 + 로그아웃
+7. **플레이어 위젯** (우측 하단 고정) — 재생/정지, 앨범아트, 다음곡, 다이나믹
 
-## 주요 인터랙션
-- **싱글 클릭**: 추천 로드
-- **더블 클릭**: YouTube 재생 (추천 안 됨)
-- **하트 버튼**: 앨범 커버 호버 시 표시, 클릭으로 찜/해제
-- 클릭/더블클릭 분리: `onClickOrDblClick` 헬퍼 (250ms 타이머)
+## 플레이어
+- **Apple Music 연동** (`musicKitInstance`) 필수 — 미연동 시 YouTube 검색으로 fallback
+- `playWithAppleMusic(track, onFail)` — `setQueue({ songs: [apple_music_id], startPlaying: true })`
+- `playerTogglePlayPause()` — `musicKitInstance.pause()` / `play()`
+- `playerIsPlaying` 상태는 `playbackStateDidChange` 이벤트(state === 2)로 동기화
+- **다음곡 (`/next-track`)**: 유사곡 — 가까운 상위 10%
+- **다이나믹 (`/dynamic-next`)**: 다른 곡 — 먼 상위 30%
+- **프리페치**: 곡 재생 시작 시 `_prefetchNextTracks(trackKey)` 호출 → 두 엔드포인트 미리 패칭, 버튼 클릭 시 캐시 hit으로 즉시 사용
+
+## 취향지도 캐싱 (3단계)
+1. **sessionStorage** (`mapCache_<keys>`) — 가장 빠름
+2. **DB** (`/user-maps/latest`) — 찜 목록 동일하면 hit
+3. **재계산** (`/music-map`) — 위 둘 miss 시 호출 후 DB 저장
+- `/favorites`와 `/user-maps/latest`는 병렬 요청
+- `lastFavorites`가 이미 있으면 `/favorites` 재요청 생략
+
+## 검색 홈 그리드
+- `window.lastMapData.tracks`에서 70개 랜덤 샘플
+- `search-home-grid` 클래스: `repeat(auto-fill, minmax(120px, 160px))`, `#searchHome padding: 24px 40px`
+- 데이터 없으면 로딩 dots, 프리페치 완료 시 자동 렌더
 
 ## Auth
-- JWT 토큰을 localStorage에 저장
-- Google OAuth 콜백 시 URL 파라미터로 토큰 수신
-- `getAuthHeaders()`로 API 요청에 Bearer 토큰 첨부
+- JWT를 localStorage에 저장 (`auth_token`)
+- Apple Sign In → `/auth/apple/mobile` → JWT 발급
+- `getAuthHeaders()`로 Bearer 토큰 첨부
+- `login_type`: `'apple'` | `'google'`
+
+## 찜 (Optimistic UI)
+- 버튼 클릭 즉시 UI 반영 (`lastFavorites` 업데이트 포함)
+- API 실패 시 롤백
 
 ## Action Logging
 모든 유저 행동을 `/log-action`으로 전송:
-- `search` — 검색 실행
-- `select_from_search` — 검색 결과에서 선택
-- `select_from_recommend` — 추천에서 선택
-- `favorite` — 찜 추가/해제
-- `play` — 더블클릭 YouTube 재생
-
-## 다음 곡 선택 (playerDynamicNext)
-`/dynamic-next` API 호출 없이 JS에서 직접 처리.
-- `/music-map` 응답에 각 트랙의 `embedding` (64d float array) 포함됨
-- `listened_half=true` → candidates 중 cosine 가장 가까운 트랙
-- `listened_half=false` → playlist_count 상위 200개 중 cosine 가장 먼 트랙
-- `lastMapData`가 없으면(지도 미오픈) 동작 안 함
+- `search`, `select_from_search`, `select_from_recommend`, `favorite`, `play`
 
 ## Notes
-- 비로그인도 검색/추천 가능, 찜/홈피드는 로그인 필요
-- Cloudflare 캐시로 JS 업데이트 지연 가능 → Cmd+Shift+R 필요할 수 있음
+- Cloudflare 캐시로 JS 업데이트 지연 가능 → Cmd+Shift+R 필요
 - 배포: git push → Cloudflare Pages 자동 배포
+- `window.lastMapData` — search.js에서 접근하므로 반드시 `window.`으로 할당
