@@ -322,7 +322,7 @@ function _makeTrackCard(r) {
             </button>
         </div>
     `;
-    card.onclick = () => _openTrackDetail(r);
+    onClickOrDblClick(card, () => _openTrackDetail(r), () => openTrackOnYouTube(r));
     return card;
 }
 
