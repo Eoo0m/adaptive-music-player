@@ -926,11 +926,22 @@ function createTrackCard(track, isCurrent, singleAction, options = {}) {
     trackDiv.appendChild(imgWrapper);
     trackDiv.appendChild(infoDiv);
 
-    if (recommendationViewMode === 'list') {
+    if (isCurrent) {
+        const playBtn = document.createElement('button');
+        playBtn.className = 'track-play-btn seed-play-btn';
+        playBtn.type = 'button';
+        playBtn.setAttribute('aria-label', `${getTrackTitle(track)} 재생`);
+        playBtn.textContent = '▶';
+        playBtn.onclick = (e) => {
+            e.stopPropagation();
+            openTrackOnYouTube(track, candidateKeys);
+        };
+        trackDiv.appendChild(playBtn);
+    } else if (recommendationViewMode === 'list') {
         const playBtn = document.createElement('button');
         playBtn.className = 'track-play-btn';
         playBtn.type = 'button';
-        playBtn.setAttribute('aria-label', `${getTrackTitle(track)} 유튜브에서 찾기`);
+        playBtn.setAttribute('aria-label', `${getTrackTitle(track)} 재생`);
         playBtn.textContent = '▶';
         playBtn.onclick = (e) => {
             e.stopPropagation();
