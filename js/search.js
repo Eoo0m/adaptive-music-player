@@ -19,7 +19,7 @@ function _renderSearchHomeGrid() {
     const home = document.getElementById('searchHome');
     if (!home) return;
 
-    if (home.querySelector('.search-entity-grid')) return;
+    if (home.querySelector('.search-home-grid')) return;
 
     const mapData = window.lastMapData;
     if (!mapData?.tracks?.length) return;
@@ -41,7 +41,7 @@ function _renderSearchHomeGrid() {
     label.textContent = userName ? `${userName}님을 위한 추천` : '취향 기반 추천';
 
     const grid = document.createElement('div');
-    grid.className = 'search-entity-grid';
+    grid.className = 'search-home-grid';
 
     sampled.forEach(t => {
         // _makeTrackCard와 동일한 형식으로 렌더

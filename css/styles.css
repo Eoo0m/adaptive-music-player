@@ -2020,6 +2020,11 @@ body {
 .search-home-label {
     padding-top: 8px;
 }
+.search-home-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+}
 
 .recent-search-label {
     font-size: 12px;

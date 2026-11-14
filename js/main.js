@@ -2176,7 +2176,7 @@ function prefetchMusicMap() {
         // 검색홈이 보이고 있으면 그리드 갱신
         const searchHome = document.getElementById('searchHome');
         if (searchHome && searchHome.style.display !== 'none') {
-            searchHome.querySelector('.search-entity-grid')?.remove();
+            searchHome.querySelector('.search-home-grid')?.remove();
             if (typeof _renderSearchHomeGrid === 'function') _renderSearchHomeGrid();
         }
         return data;
@@ -2226,7 +2226,7 @@ async function showMusicMap() {
         // 검색 홈이 떠있으면 그리드 갱신
         const searchHome = document.getElementById('searchHome');
         if (searchHome && searchHome.style.display !== 'none') {
-            searchHome.querySelector('.search-entity-grid')?.remove();
+            searchHome.querySelector('.search-home-grid')?.remove();
             if (typeof _renderSearchHomeGrid === 'function') _renderSearchHomeGrid();
         }
         // 현재 재생 중인 트랙이 있으면 즉시 프리패치
