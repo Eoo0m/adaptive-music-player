@@ -26,7 +26,7 @@ function updateAppleMusicBtn() {
     if (!btn) return;
     const linked = !!(musicKitInstance && musicKitInstance.isAuthorized);
     btn.classList.toggle('linked', linked);
-    if (label) label.textContent = linked ? 'Apple Music 연동됨' : 'Apple Music';
+    if (label) label.textContent = linked ? '연결됨' : '연결';
 }
 
 async function toggleAppleMusicLink() {

@@ -148,35 +148,37 @@ body {
     width: 100%;
 }
 
-/* ===== Apple Music 연동 버튼 ===== */
+/* ===== Apple Music 연동 버튼 (사이드바 하단) ===== */
 .apple-music-btn {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    z-index: 600;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 6px;
-    background: rgba(0, 0, 0, .5);
-    border: 1px solid rgba(255, 255, 255, .15);
-    border-radius: 20px;
-    padding: 7px 14px 7px 10px;
-    color: rgba(255, 255, 255, .45);
-    font-size: 13px;
+    justify-content: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    border-radius: 12px;
+    width: 52px;
+    padding: 8px 0;
+    color: rgba(255, 255, 255, .4);
+    font-size: 9px;
     font-weight: 600;
     cursor: pointer;
-    backdrop-filter: blur(10px);
-    transition: color .2s, border-color .2s, background .2s;
+    transition: color .2s, background .2s;
     font-family: inherit;
+    margin-top: auto;
+    margin-bottom: 4px;
+    letter-spacing: .3px;
 }
 .apple-music-btn:hover {
     color: rgba(255, 255, 255, .8);
-    border-color: rgba(255, 255, 255, .3);
+    background: rgba(255, 255, 255, .08);
 }
 .apple-music-btn.linked {
-    color: #fff;
-    border-color: rgba(255, 255, 255, .4);
-    background: rgba(255, 255, 255, .08);
+    color: #fc3c44;
+}
+.apple-music-btn.linked svg {
+    color: #fc3c44;
 }
 
 .side-tab {
@@ -1790,7 +1792,7 @@ body {
     left: 72px !important;
     right: 0 !important;
     bottom: 0 !important;
-    width: 100vw !important;
+    width: auto !important;
     max-width: none !important;
     transform: none !important;
     overflow: visible;
