@@ -340,6 +340,122 @@ body {
     color: rgba(255, 255, 255, .4)
 }
 
+/* ===== Player Expanded View ===== */
+.player-collapsed-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.player-drag-handle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4px 8px;
+    cursor: grab;
+    opacity: 0.4;
+    transition: opacity .2s;
+}
+.player-drag-handle:hover { opacity: 0.8; }
+.player-drag-handle span {
+    display: block;
+    width: 24px;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255,255,255,.8);
+}
+
+.player-expanded-view {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+.player-exp-main {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 10px;
+}
+
+.player-exp-cover-wrap {
+    position: relative;
+    flex-shrink: 0;
+    width: 90px;
+    height: 90px;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    background: rgba(255,255,255,.08);
+}
+.player-exp-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.player-exp-play-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-shadow: 0 0 8px rgba(0,0,0,.8);
+}
+
+.player-exp-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 6px;
+    min-width: 0;
+}
+.player-exp-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.player-exp-icon-next { color: #32d66b; flex-shrink: 0; }
+.player-exp-icon-dyn { flex-shrink: 0; }
+.player-exp-tracks {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-wrap: nowrap;
+    overflow: hidden;
+}
+.player-exp-track-cover {
+    width: 32px;
+    height: 32px;
+    border-radius: 5px;
+    object-fit: cover;
+    cursor: pointer;
+    flex-shrink: 0;
+    background: rgba(255,255,255,.08);
+    border: 0.5px solid rgba(255,255,255,.12);
+    transition: opacity .15s;
+}
+.player-exp-track-cover:hover { opacity: 0.75; }
+
+.player-drag-handle-close {
+    cursor: pointer;
+}
+
+.player-widget.expanded {
+    padding: 10px;
+    width: 220px;
+}
+.player-widget.expanded .player-collapsed-view {
+    display: none;
+}
+.player-widget.expanded .player-expanded-view {
+    display: flex !important;
+}
+
 @media (max-width: 768px) {
     .player-widget {
         display: none !important

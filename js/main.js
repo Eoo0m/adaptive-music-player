@@ -2952,6 +2952,20 @@ function updatePlayerWidget(track, isPlaying) {
     if (nextBtn) nextBtn.disabled = (!mapActive && !currentPlaylistQueue);
     if (shuffleBtn) shuffleBtn.disabled = !mapActive;
 
+    // 확장 뷰 동기화
+    const expCover = document.getElementById('playerExpCover');
+    const expPlayIcon = document.getElementById('playerExpPlayIcon');
+    if (expCover) {
+        expCover.src = coverUrl;
+        expCover.style.display = coverUrl ? 'block' : 'none';
+    }
+    if (expPlayIcon) {
+        expPlayIcon.innerHTML = isPlaying
+            ? '<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+            : '<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>';
+    }
+    if (_playerExpanded && isNewTrack) _populateExpandedTracks();
+
     // 애니메이션
     if (isNewTrack) {
         playerWidgetBump('bump-track');
@@ -3069,6 +3083,118 @@ async function playerDynamicNext() {
         console.error('dynamic-next failed:', e);
     }
 }
+
+// ===== Player Expanded Widget =====
+
+let _playerExpanded = false;
+
+function playerExpandWidget() {
+    const widget = document.getElementById('playerWidget');
+    if (!widget || _playerExpanded) return;
+    _playerExpanded = true;
+    widget.classList.add('expanded');
+    _populateExpandedTracks();
+}
+
+function playerCollapseWidget() {
+    const widget = document.getElementById('playerWidget');
+    if (!widget || !_playerExpanded) return;
+    _playerExpanded = false;
+    widget.classList.remove('expanded');
+}
+
+function _populateExpandedTracks() {
+    const nextEl = document.getElementById('playerExpNextTracks');
+    const dynEl = document.getElementById('playerExpDynTracks');
+    const coverEl = document.getElementById('playerExpCover');
+    const playIconEl = document.getElementById('playerExpPlayIcon');
+    if (!nextEl || !dynEl) return;
+
+    // 커버
+    if (coverEl && playerCurrentTrack) {
+        const url = playerCurrentTrack.cover_image_url || playerCurrentTrack.cover || '';
+        coverEl.src = url;
+        coverEl.style.display = url ? 'block' : 'none';
+    }
+    // 재생 아이콘
+    if (playIconEl) {
+        playIconEl.innerHTML = playerIsPlaying
+            ? '<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+            : '<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>';
+    }
+
+    // 트랙 커버 렌더링
+    function renderCovers(el, cacheKey) {
+        el.innerHTML = '';
+        const promise = _prefetchCache[cacheKey];
+        if (!promise) return;
+        promise.then(data => {
+            if (!data) return;
+            const tracks = (data.tracks || []).slice(0, 3);
+            tracks.forEach(t => {
+                const img = document.createElement('img');
+                img.className = 'player-exp-track-cover';
+                img.src = t.cover_image_url || '';
+                img.title = `${t.title} - ${t.artist}`;
+                img.onclick = () => {
+                    playerCollapseWidget();
+                    if (musicKitInstance && musicKitInstance.isAuthorized) {
+                        playWithAppleMusic(t, null);
+                    }
+                };
+                el.appendChild(img);
+            });
+        });
+    }
+
+    if (playerCurrentTrack) {
+        renderCovers(nextEl, `next-track:${playerCurrentTrack.track_key}`);
+        renderCovers(dynEl, `dynamic-next:${playerCurrentTrack.track_key}`);
+    }
+}
+
+// 드래그 핸들 이벤트 초기화
+(function initPlayerDrag() {
+    document.addEventListener('DOMContentLoaded', () => {
+        const handle = document.getElementById('playerDragHandle');
+        const handleClose = document.getElementById('playerDragHandleClose');
+
+        let startY = 0;
+        let activeHandle = null;
+
+        function onDown(e) {
+            activeHandle = e.currentTarget;
+            startY = e.touches ? e.touches[0].clientY : e.clientY;
+        }
+        function onMove(e) {
+            if (!activeHandle) return;
+            const y = e.touches ? e.touches[0].clientY : e.clientY;
+            const delta = y - startY;
+            if (!_playerExpanded && activeHandle === handle && delta > 20) {
+                activeHandle = null;
+                playerExpandWidget();
+            } else if (_playerExpanded && activeHandle === handleClose && delta < -20) {
+                activeHandle = null;
+                playerCollapseWidget();
+            }
+        }
+        function onUp() { activeHandle = null; }
+
+        if (handle) {
+            handle.addEventListener('mousedown', onDown);
+            handle.addEventListener('touchstart', onDown, { passive: true });
+        }
+        if (handleClose) {
+            handleClose.addEventListener('mousedown', onDown);
+            handleClose.addEventListener('touchstart', onDown, { passive: true });
+            handleClose.addEventListener('click', playerCollapseWidget);
+        }
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('touchmove', onMove, { passive: true });
+        window.addEventListener('mouseup', onUp);
+        window.addEventListener('touchend', onUp);
+    });
+})();
 
 function playPlaylist(tracks) {
     if (!tracks || tracks.length === 0) return;
