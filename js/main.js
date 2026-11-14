@@ -58,15 +58,9 @@ async function initMusicKit() {
         }
         updateAppleMusicBtn();
         musicKitInstance.addEventListener('playbackStateDidChange', ({ state }) => {
-            const playing = MusicKit.PlaybackStates?.playing ?? 2;
-            const completed = MusicKit.PlaybackStates?.completed ?? 5;
-            playerIsPlaying = (state === playing);
-            const playIcon = document.getElementById('playerPlayIcon');
-            const pauseIcon = document.getElementById('playerPauseIcon');
-            if (playIcon) playIcon.style.display = playerIsPlaying ? 'none' : 'block';
-            if (pauseIcon) pauseIcon.style.display = playerIsPlaying ? 'block' : 'none';
+            playerIsPlaying = (state === 2);
             if (playerIsPlaying && !playerPlayStartTime) playerPlayStartTime = Date.now();
-            if (state === completed) playerNextSimilar();
+            if (state === 5) playerNextSimilar();
         });
     } catch (e) {
         console.warn('MusicKit init failed:', e);
