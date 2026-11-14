@@ -167,20 +167,16 @@ function createTrackCard(track, isCurrent, singleAction, options = {}) {
     const imgWrapper = document.createElement('div');
     imgWrapper.className = 'album-cover-wrapper';
 
-    const heartBtn = document.createElement('button');
-    heartBtn.className = `heart-btn${options.favorited ? ' favorited' : ''}`;
-    const heartSvg = (filled) => `<svg viewBox="0 0 24 24" width="16" height="16" fill="${filled ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
-    heartBtn.innerHTML = heartSvg(options.favorited);
-    heartBtn.onclick = (e) => {
+    const dotsBtn = document.createElement('button');
+    dotsBtn.className = 'track-dots-btn';
+    dotsBtn.innerHTML = '<span></span><span></span><span></span>';
+    dotsBtn.onclick = (e) => {
         e.stopPropagation();
-        toggleFavorite(track, heartBtn);
-        if (options.onFavoriteChange) {
-            setTimeout(() => options.onFavoriteChange(heartBtn, track), 300);
-        }
+        _openTrackMenu(e, track, dotsBtn, options);
     };
 
     imgWrapper.appendChild(img);
-    imgWrapper.appendChild(heartBtn);
+    imgWrapper.appendChild(dotsBtn);
     trackDiv.appendChild(imgWrapper);
     trackDiv.appendChild(infoDiv);
 
@@ -221,6 +217,84 @@ async function logAction(actionType, data = {}) {
     } catch (e) {
         console.error('Action log failed:', e);
     }
+}
+
+// ===== Track Dots Menu =====
+let _trackMenuEl = null;
+
+function _openTrackMenu(_e, track, anchorEl, options = {}) {
+    _closeTrackMenu();
+
+    const isFav = !!(lastFavorites || []).find(f => f.track_key === track.track_key);
+
+    const menu = document.createElement('div');
+    menu.className = 'track-dots-menu';
+
+    const item = document.createElement('button');
+    item.className = 'track-dots-menu-item';
+    item.textContent = isFav ? '저장 취소' : '저장하기';
+    item.onclick = async (ev) => {
+        ev.stopPropagation();
+        _closeTrackMenu();
+        await toggleFavorite(track, null);
+        if (options.onFavoriteChange) options.onFavoriteChange(null, track);
+    };
+    menu.appendChild(item);
+
+    document.body.appendChild(menu);
+    _trackMenuEl = menu;
+
+    const rect = anchorEl.getBoundingClientRect();
+    let top = rect.bottom + 4;
+    let left = rect.right - menu.offsetWidth;
+    if (left < 4) left = 4;
+    if (top + 48 > window.innerHeight) top = rect.top - 48;
+    menu.style.top = top + 'px';
+    menu.style.left = left + 'px';
+
+    setTimeout(() => {
+        document.addEventListener('click', _closeTrackMenu, { once: true });
+    }, 0);
+}
+
+function _closeTrackMenu() {
+    if (_trackMenuEl) { _trackMenuEl.remove(); _trackMenuEl = null; }
+}
+
+// 뮤직맵 canvas용 트랙 메뉴
+function openMapTrackMenu(track, screenX, screenY) {
+    _closeTrackMenu();
+    if (!authToken) { alert('로그인 후 이용할 수 있습니다.'); return; }
+
+    const isFav = !!(lastFavorites || []).find(f => f.track_key === track.track_key);
+
+    const menu = document.createElement('div');
+    menu.className = 'track-dots-menu';
+
+    const item = document.createElement('button');
+    item.className = 'track-dots-menu-item';
+    item.textContent = isFav ? '저장 취소' : '저장하기';
+    item.onclick = async (ev) => {
+        ev.stopPropagation();
+        _closeTrackMenu();
+        await toggleFavorite(track, null);
+    };
+    menu.appendChild(item);
+
+    document.body.appendChild(menu);
+    _trackMenuEl = menu;
+
+    let left = screenX - menu.offsetWidth / 2;
+    let top = screenY - menu.offsetHeight - 8;
+    if (left < 4) left = 4;
+    if (left + menu.offsetWidth > window.innerWidth - 4) left = window.innerWidth - menu.offsetWidth - 4;
+    if (top < 4) top = screenY + 8;
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+
+    setTimeout(() => {
+        document.addEventListener('click', _closeTrackMenu, { once: true });
+    }, 0);
 }
 
 // ===== Keyboard / Media Session =====

@@ -52,20 +52,24 @@ async function toggleFavorite(track, btn) {
         return;
     }
 
-    const isFavorited = btn.classList.contains('favorited');
+    const isFavorited = btn
+        ? btn.classList.contains('favorited')
+        : !!(lastFavorites || []).find(f => f.track_key === track.track_key);
+
     const svgFilled = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
     const svgEmpty  = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
 
     if (isFavorited) {
-        btn.classList.remove('favorited');
-        btn.innerHTML = svgEmpty;
+        if (btn) { btn.classList.remove('favorited'); btn.innerHTML = svgEmpty; }
         lastFavorites = lastFavorites.filter(f => f.track_key !== track.track_key);
     } else {
-        btn.classList.add('favorited');
-        btn.innerHTML = svgFilled;
-        btn.classList.remove('pop');
-        void btn.offsetWidth;
-        btn.classList.add('pop');
+        if (btn) {
+            btn.classList.add('favorited');
+            btn.innerHTML = svgFilled;
+            btn.classList.remove('pop');
+            void btn.offsetWidth;
+            btn.classList.add('pop');
+        }
         lastFavorites = [{
             track_key: track.track_key,
             title: track.track || track.title,
@@ -92,12 +96,10 @@ async function toggleFavorite(track, btn) {
     } catch (e) {
         // 롤백
         if (isFavorited) {
-            btn.classList.add('favorited');
-            btn.innerHTML = svgFilled;
+            if (btn) { btn.classList.add('favorited'); btn.innerHTML = svgFilled; }
             lastFavorites = [{ track_key: track.track_key, title: track.track || track.title, artist: track.artist, album: track.album, cover_image_url: track.cover_image_url, playlist_count: track.playlist_count }, ...lastFavorites];
         } else {
-            btn.classList.remove('favorited');
-            btn.innerHTML = svgEmpty;
+            if (btn) { btn.classList.remove('favorited'); btn.innerHTML = svgEmpty; }
             lastFavorites = lastFavorites.filter(f => f.track_key !== track.track_key);
         }
         console.error('Favorite toggle failed:', e);
