@@ -3004,6 +3004,7 @@ function playerTogglePlayPause() {
 
 // 프리페치 캐시: { 'next-track:trackKey': Promise, 'dynamic-next:trackKey': Promise }
 const _prefetchCache = {};
+let _fetchAndPlayInProgress = false;
 
 function _prefetchNextTracks(trackKey) {
     if (!lastMapData || !trackKey) return;
@@ -3022,6 +3023,8 @@ function _prefetchNextTracks(trackKey) {
 
 async function _fetchAndPlay(endpoint, trackKey) {
     if (!lastMapData) return;
+    if (_fetchAndPlayInProgress) return;
+    _fetchAndPlayInProgress = true;
 
     // 두 버튼 모두 disable + dots 표시
     const nextBtn = document.getElementById('playerNext');
@@ -3064,6 +3067,7 @@ async function _fetchAndPlay(endpoint, trackKey) {
     }
     tryNext();
     } finally {
+        _fetchAndPlayInProgress = false;
         document.getElementById('playerNextLoading')?.classList.add('hidden');
         const mapActive = currentTab === 'map' && !!lastMapData;
         if (nextBtn) nextBtn.disabled = !mapActive;
