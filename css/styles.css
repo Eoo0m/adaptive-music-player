@@ -290,7 +290,7 @@ body {
 .favorites-view {
     position: absolute;
     top: 50%;
-    left: 50%;
+    left: calc(50% + 40px);
     transform: translate(-50%, -50%);
     color: #fff;
     width: 90%;
