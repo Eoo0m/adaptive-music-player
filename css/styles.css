@@ -67,12 +67,16 @@ body {
 }
 
 .login-button-apple {
-    background: #000;
-    border: 1px solid rgba(255,255,255,.3)
+    background: #fff;
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .login-button-apple:hover {
-    background: #1a1a1a
+    background: #f0f0f0;
 }
 
 .login-button-google {
