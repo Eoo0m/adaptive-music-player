@@ -2978,11 +2978,7 @@ async function _fetchAndPlay(endpoint, trackKey) {
     const shuffleBtn = document.getElementById('playerShuffle');
     if (nextBtn) nextBtn.disabled = true;
     if (shuffleBtn) shuffleBtn.disabled = true;
-    const isNext = endpoint === 'next-track';
-    const iconId = isNext ? 'playerNextIcon' : 'playerShuffleIcon';
-    const dotsId = isNext ? 'playerNextDots' : 'playerShuffleDots';
-    document.getElementById(iconId)?.classList.add('hidden');
-    document.getElementById(dotsId)?.classList.remove('hidden');
+    document.getElementById('playerNextLoading')?.classList.remove('hidden');
 
     try {
     const candidateKeys = lastMapData.tracks.filter(t => t.track_key !== trackKey).map(t => t.track_key);
@@ -3011,9 +3007,7 @@ async function _fetchAndPlay(endpoint, trackKey) {
     }
     tryNext();
     } finally {
-        // dots 숨기고 버튼 복원
-        document.getElementById(iconId)?.classList.remove('hidden');
-        document.getElementById(dotsId)?.classList.add('hidden');
+        document.getElementById('playerNextLoading')?.classList.add('hidden');
         const mapActive = currentTab === 'map' && !!lastMapData;
         if (nextBtn) nextBtn.disabled = !mapActive;
         if (shuffleBtn) shuffleBtn.disabled = !mapActive;
