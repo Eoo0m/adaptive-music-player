@@ -2966,10 +2966,9 @@ function updatePlayerWidget(track, isPlaying) {
 
 function playerTogglePlayPause() {
     if (!playerCurrentTrack) return;
-    const loginType = localStorage.getItem('login_type');
-    if (loginType === 'apple' && musicKitInstance) {
+    if (musicKitInstance) {
         if (playerIsPlaying) {
-            musicKitInstance.pause(); // 아이콘은 playbackStateDidChange 이벤트에서 처리
+            musicKitInstance.pause();
         } else {
             musicKitInstance.play();
         }
