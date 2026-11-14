@@ -306,7 +306,7 @@ function _makeRecentSection(title, tracks, onClickTrack) {
 }
 
 function _makeFavPagedSection(title, tracks, onClickTrack) {
-    const PAGE_SIZE = 24;
+    const PAGE_SIZE = 20;
     const section = document.createElement('div');
     section.className = 'fav-section';
 
@@ -338,7 +338,7 @@ function _makeFavPagedSection(title, tracks, onClickTrack) {
 
         gridWrap.innerHTML = '';
         const scroll = document.createElement('div');
-        scroll.className = 'fav-hscroll fav-hscroll-2row';
+        scroll.className = 'fav-hscroll-recent';
         pageTracks.forEach(t => {
             const item = document.createElement('div');
             item.className = 'fav-hscroll-item';
