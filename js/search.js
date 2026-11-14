@@ -19,7 +19,7 @@ function _renderSearchHomeGrid() {
     const home = document.getElementById('searchHome');
     if (!home) return;
 
-    if (home.querySelector('.search-home-grid')) return;
+    if (home.querySelector('.search-entity-grid')) return;
 
     const mapData = window.lastMapData;
     if (!mapData?.tracks?.length) return;
