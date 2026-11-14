@@ -335,6 +335,26 @@ body {
 }
 .fav-hscroll::-webkit-scrollbar { display: none; }
 
+.fav-pagination {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+}
+.fav-page-btn {
+    background: rgba(255,255,255,.1);
+    border: none;
+    color: rgba(255,255,255,.5);
+    font-size: 13px;
+    font-weight: 600;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+}
+.fav-page-btn:hover { background: rgba(255,255,255,.18); color: #fff; }
+.fav-page-btn.active { background: #fff; color: #000; }
+
 .fav-list { display: flex; flex-direction: column; width: 100%; }
 .fav-list-item {
     display: flex;
@@ -387,6 +407,15 @@ body {
     grid-auto-columns: 80px;
     flex-wrap: unset;
     flex-direction: unset;
+}
+
+/* 최근 재생 — 스크롤 없이 화면 꽉 채움 */
+.fav-hscroll-recent {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 8px;
+    overflow: hidden;
+    width: 100%;
 }
 
 .fav-hscroll-item {

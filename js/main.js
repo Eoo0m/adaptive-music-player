@@ -271,6 +271,114 @@ function _makeHScrollSection(title, tracks, onClickTrack, rows = 1) {
     return section;
 }
 
+function _makeRecentSection(title, tracks, onClickTrack) {
+    const section = document.createElement('div');
+    section.className = 'fav-section';
+    const header = document.createElement('div');
+    header.className = 'fav-section-title';
+    header.textContent = title;
+    section.appendChild(header);
+    if (!tracks || tracks.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'fav-section-empty';
+        empty.textContent = '없습니다';
+        section.appendChild(empty);
+        return section;
+    }
+    const grid = document.createElement('div');
+    grid.className = 'fav-hscroll-recent';
+    tracks.forEach(t => {
+        const item = document.createElement('div');
+        item.className = 'fav-hscroll-item';
+        item.style.width = '100%';
+        item.onclick = () => onClickTrack(t);
+        const img = document.createElement('img');
+        img.src = t.cover_image_url || '';
+        img.className = 'fav-hscroll-cover';
+        img.style.cssText = 'width:100%;height:auto;aspect-ratio:1';
+        img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
+        const name = document.createElement('div');
+        name.className = 'fav-hscroll-title';
+        name.style.width = '100%';
+        name.textContent = t.title || t.track_name || t.track || '';
+        item.appendChild(img); item.appendChild(name);
+        grid.appendChild(item);
+    });
+    section.appendChild(grid);
+    return section;
+}
+
+function _makeFavPagedSection(title, tracks, onClickTrack) {
+    const PAGE_SIZE = 16;
+    const section = document.createElement('div');
+    section.className = 'fav-section';
+
+    const header = document.createElement('div');
+    header.className = 'fav-section-title';
+    header.textContent = title;
+    section.appendChild(header);
+
+    if (!tracks || tracks.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'fav-section-empty';
+        empty.textContent = '없습니다';
+        section.appendChild(empty);
+        return section;
+    }
+
+    let currentPage = 0;
+    const totalPages = Math.ceil(tracks.length / PAGE_SIZE);
+
+    const gridWrap = document.createElement('div');
+    section.appendChild(gridWrap);
+
+    const pagination = document.createElement('div');
+    pagination.className = 'fav-pagination';
+    section.appendChild(pagination);
+
+    function renderPage(page) {
+        currentPage = page;
+        const start = page * PAGE_SIZE;
+        const pageTracks = tracks.slice(start, start + PAGE_SIZE);
+
+        gridWrap.innerHTML = '';
+        const scroll = document.createElement('div');
+        scroll.className = 'fav-hscroll fav-hscroll-2row';
+        pageTracks.forEach(t => {
+            const item = document.createElement('div');
+            item.className = 'fav-hscroll-item';
+            item.onclick = () => onClickTrack(t);
+            const img = document.createElement('img');
+            img.src = t.cover_image_url || '';
+            img.className = 'fav-hscroll-cover';
+            img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
+            const name = document.createElement('div');
+            name.className = 'fav-hscroll-title';
+            name.textContent = t.title || t.track_name || t.track || '';
+            const artist = document.createElement('div');
+            artist.className = 'fav-hscroll-artist';
+            artist.textContent = t.artist || '';
+            item.appendChild(img); item.appendChild(name); item.appendChild(artist);
+            scroll.appendChild(item);
+        });
+        gridWrap.appendChild(scroll);
+
+        // 페이지 버튼
+        pagination.innerHTML = '';
+        if (totalPages <= 1) return;
+        for (let i = 0; i < totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.className = `fav-page-btn${i === page ? ' active' : ''}`;
+            btn.textContent = i + 1;
+            btn.onclick = () => renderPage(i);
+            pagination.appendChild(btn);
+        }
+    }
+
+    renderPage(0);
+    return section;
+}
+
 function _makeFavListSection(title, tracks, onClickTrack) {
     const section = document.createElement('div');
     section.className = 'fav-section';
@@ -437,11 +545,11 @@ function renderFavorites(favorites, savedPlaylists = [], recentTracks = []) {
         openTrackOnYouTube(track);
     };
 
-    // 1. 최근 재생 (최대 10개, 가로 스크롤)
-    container.appendChild(_makeHScrollSection('최근 재생', recentTracks.slice(0, 10), onClickTrack));
+    // 1. 최근 재생 (최대 10개, 고정 그리드)
+    container.appendChild(_makeRecentSection('최근 재생', recentTracks.slice(0, 10), onClickTrack));
 
-    // 2. 저장된 곡 (세로 번호 리스트)
-    container.appendChild(_makeFavListSection('저장된 곡', favorites.map(f => ({ ...f, title: f.title || f.track_name })), onClickTrack));
+    // 2. 저장된 곡 (2줄 가로 + 페이지네이션)
+    container.appendChild(_makeFavPagedSection('저장된 곡', favorites.map(f => ({ ...f, title: f.title || f.track_name })), onClickTrack));
 
     // 3. 저장된 PL
     container.appendChild(_makePlSection(savedPlaylists));
