@@ -1601,6 +1601,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('initialSongInput').classList.remove('hidden');
         document.getElementById('sideTab').classList.remove('hidden');
         document.getElementById('bottomTab').classList.remove('hidden');
+        document.getElementById('caroLogoBtn')?.classList.remove('hidden');
         loadFavorites();
         // Google 로그인은 Apple Music 버튼 숨김 (유튜브만 사용)
         if (currentUser.login_type === 'google') {

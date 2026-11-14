@@ -106,7 +106,7 @@ body {
     position: fixed;
     top: 16px;
     left: 16px;
-    z-index: 500;
+    z-index: 600;
     background: none;
     border: none;
     cursor: pointer;
