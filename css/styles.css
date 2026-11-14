@@ -375,16 +375,15 @@ body {
 }
 .player-exp-main {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: stretch;
     gap: 8px;
 }
 
 .player-exp-cover-wrap {
     position: relative;
-    flex-shrink: 0;
-    width: 72px;
-    height: 72px;
+    width: 100%;
+    aspect-ratio: 1;
     border-radius: 10px;
     overflow: hidden;
     cursor: pointer;
@@ -409,13 +408,15 @@ body {
 .player-exp-right {
     display: flex;
     flex-direction: row;
-    gap: 5px;
+    gap: 6px;
+    justify-content: center;
 }
 .player-exp-row {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
+    flex: 1;
 }
 .player-exp-icon-next { color: #32d66b; flex-shrink: 0; }
 .player-exp-icon-dyn { flex-shrink: 0; }
