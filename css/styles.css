@@ -288,7 +288,7 @@ body {
 
 /* ===== Favorites View ===== */
 .favorites-view {
-    position: absolute;
+    position: fixed;
     top: 50%;
     left: calc(50% + 40px);
     transform: translate(-50%, -50%);
