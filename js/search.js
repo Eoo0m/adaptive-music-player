@@ -12,6 +12,8 @@ function _showSearchHome() {
     if (body) body.classList.remove('hidden');
     document.getElementById('searchHome').style.display = '';
     document.getElementById('searchResults').classList.add('hidden');
+    // 안내 텍스트 제거
+    document.querySelector('#searchHome .search-guide-text')?.remove();
     _renderSearchHomeGrid();
 }
 
@@ -22,7 +24,17 @@ function _renderSearchHomeGrid() {
     if (home.querySelector('.search-home-grid')) return;
 
     const mapData = window.lastMapData;
-    if (!mapData?.tracks?.length) return;
+    if (!mapData?.tracks?.length) {
+        // 데이터 없으면 로딩 dots 표시
+        home.querySelector('.search-guide-text')?.remove();
+        const dots = document.getElementById('searchLoadingDots');
+        if (dots) dots.classList.remove('hidden');
+        return;
+    }
+
+    // 데이터 왔으면 dots 숨기기
+    const dots = document.getElementById('searchLoadingDots');
+    if (dots) dots.classList.add('hidden');
 
     // 70개 랜덤 샘플 (7×10)
     const pool = [...mapData.tracks];
