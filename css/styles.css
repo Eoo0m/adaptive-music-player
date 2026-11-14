@@ -375,15 +375,16 @@ body {
 }
 .player-exp-main {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: stretch;
     gap: 8px;
 }
 
 .player-exp-cover-wrap {
     position: relative;
-    width: 100%;
-    aspect-ratio: 1;
+    flex-shrink: 0;
+    width: 72px;
+    height: 72px;
     border-radius: 10px;
     overflow: hidden;
     cursor: pointer;
@@ -407,26 +408,27 @@ body {
 
 .player-exp-right {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 5px;
 }
 .player-exp-row {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
 }
 .player-exp-icon-next { color: #32d66b; flex-shrink: 0; }
 .player-exp-icon-dyn { flex-shrink: 0; }
 .player-exp-tracks {
     display: flex;
+    flex-direction: column;
     gap: 4px;
     align-items: center;
-    flex-wrap: nowrap;
     overflow: hidden;
 }
 .player-exp-track-cover {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: 5px;
     object-fit: cover;
     cursor: pointer;
@@ -443,7 +445,7 @@ body {
 
 .player-widget.expanded {
     padding: 10px;
-    width: 180px;
+    width: 160px;
 }
 .player-widget.expanded .player-collapsed-view {
     display: none;
