@@ -1290,7 +1290,7 @@ mapRefreshBtn.onclick = async () => {
     const res = await fetch(`${API}/favorites`, { headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
     const favs = data.favorites || [];
-    if (!favs.length) { alert('찜한 곡이 없습니다.'); return; }
+    if (!favs.length) { alert('찜한 곡이 없습니다.'); mapRefreshBtn.classList.remove('spinning'); return; }
 
     // 찜 목록에서 랜덤 최대 20곡 시드로
     const shuffled = [...favs].sort(() => Math.random() - 0.5);
@@ -1302,7 +1302,7 @@ mapRefreshBtn.onclick = async () => {
     showLoading('찜 목록으로 지도를 새로 그리는 중...');
     const mapRes = await fetch(`${API}/music-map`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ track_keys: seeds, favorite_keys: favKeys, fill_per_seed: 40 })
     });
     if (!mapRes.ok) throw new Error(await mapRes.text());
@@ -1325,6 +1325,7 @@ mapRefreshBtn.onclick = async () => {
 
     hideLoading();
     fitMap();
+    requestAnimationFrame(render);
   } catch(e) {
     hideLoading();
     alert('지도 생성 실패: ' + e.message);
