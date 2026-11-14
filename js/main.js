@@ -2970,9 +2970,6 @@ function playerTogglePlayPause() {
             playerIsPlaying = true;
             if (!playerPlayStartTime) playerPlayStartTime = Date.now();
         }
-    } else {
-        // Apple 미연동 (YouTube) — 상태 토글만
-        playerIsPlaying = !playerIsPlaying;
     }
     const playIcon = document.getElementById('playerPlayIcon');
     const pauseIcon = document.getElementById('playerPauseIcon');
