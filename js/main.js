@@ -2498,6 +2498,7 @@ function renderMusicMap(canvas, tracks) {
                     html = `<span style="color:#4a9eff;font-size:10px;letter-spacing:.05em">◆ 브릿지</span><br>`
                          + `<b>${a.title || a.key}</b> <span style="color:rgba(255,255,255,.45);font-size:10px">${a.artist || ''}</span> <span style="color:#4a9eff;font-size:10px">${(a.sim*100).toFixed(0)}%</span><br>`
                          + `<b>${b.title || b.key}</b> <span style="color:rgba(255,255,255,.45);font-size:10px">${b.artist || ''}</span> <span style="color:#4a9eff;font-size:10px">${(b.sim*100).toFixed(0)}%</span>`;
+                }
                 if (html) { mapTooltip.innerHTML=html; mapTooltip.style.left=(e.clientX+14)+'px'; mapTooltip.style.top=(e.clientY-10)+'px'; mapTooltip.style.display='block'; }
                 else mapTooltip.style.display='none';
             } else mapTooltip.style.display='none';
