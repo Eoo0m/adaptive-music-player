@@ -138,7 +138,7 @@ function _triggerAutocomplete(q) {
 // ===== Input 버튼 헬퍼 =====
 function _clearSearchInput() {
     document.getElementById('searchInput').value = '';
-    document.getElementById('searchClearBtn').classList.add('hidden');
+    document.getElementById('searchClearBtn')?.classList.add('hidden');
     _currentSearchQuery = '';
     _hideAutocomplete();
     _showSearchHome();
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     input.addEventListener('input', () => {
         if (_currentSearchQuery) return; // 검색 완료 상태에선 무시
         const val = input.value.trim();
-        document.getElementById('searchClearBtn').classList.toggle('hidden', !val);
+        document.getElementById('searchClearBtn')?.classList.toggle('hidden', !val);
         if (!val) {
             _hideAutocomplete();
             _showSearchHome();
