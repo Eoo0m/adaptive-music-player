@@ -571,26 +571,46 @@ async function _openTrackDetail(track) {
     const coverSrc = track.cover_image_url || '';
     const isFav = (lastFavorites || []).some(f => f.track_key === track.track_key);
 
-    panel.innerHTML = `
-        <button class="track-detail-back" onclick="_closeTrackDetail()">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            뒤로
-        </button>
-        <div class="track-detail-selected">
-            ${coverSrc ? `<img class="track-detail-selected-cover" src="${coverSrc}" alt="">` : '<div class="track-detail-selected-cover"></div>'}
-            <div class="track-detail-selected-info">
-                <div class="track-detail-selected-title">${trackName}</div>
-                <div class="track-detail-selected-artist">${artistName}</div>
-            </div>
-            <button class="search-grid-heart ${isFav ? 'favorited' : ''}" style="position:static;margin-left:auto;" onclick="event.stopPropagation(); _toggleFavCard(this, '${track.track_key}')">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            </button>
-        </div>
-        <div class="track-detail-similar-label">유사한 곡</div>
-        <div class="track-detail-similar-grid" id="trackDetailSimilarGrid">
-            <div style="color:rgba(255,255,255,.3);font-size:13px;">불러오는 중...</div>
+    panel.innerHTML = '';
+
+    // 뒤로가기 버튼
+    const backBtn = document.createElement('button');
+    backBtn.className = 'track-detail-back';
+    backBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> 뒤로`;
+    backBtn.addEventListener('click', _closeTrackDetail);
+    panel.appendChild(backBtn);
+
+    // 선택된 트랙
+    const selectedDiv = document.createElement('div');
+    selectedDiv.className = 'track-detail-selected';
+    const coverEl = coverSrc ? `<img class="track-detail-selected-cover" src="${coverSrc}" alt="">` : '<div class="track-detail-selected-cover"></div>';
+    selectedDiv.innerHTML = `
+        ${coverEl}
+        <div class="track-detail-selected-info">
+            <div class="track-detail-selected-title">${trackName}</div>
+            <div class="track-detail-selected-artist">${artistName}</div>
         </div>
     `;
+    const heartBtn = document.createElement('button');
+    heartBtn.className = `search-grid-heart ${isFav ? 'favorited' : ''}`;
+    heartBtn.style.cssText = 'position:static;margin-left:auto;';
+    heartBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+    heartBtn.addEventListener('click', e => { e.stopPropagation(); _toggleFavCard(heartBtn, track.track_key); });
+    selectedDiv.appendChild(heartBtn);
+    panel.appendChild(selectedDiv);
+
+    // 유사한 곡 레이블 + 그리드
+    const label = document.createElement('div');
+    label.className = 'track-detail-similar-label';
+    label.textContent = '유사한 곡';
+    panel.appendChild(label);
+
+    const grid = document.createElement('div');
+    grid.className = 'track-detail-similar-grid';
+    grid.id = 'trackDetailSimilarGrid';
+    grid.innerHTML = '<div style="color:rgba(255,255,255,.3);font-size:13px;">불러오는 중...</div>';
+    panel.appendChild(grid);
+
     panel.classList.remove('hidden');
 
     logAction('select_from_search', {
