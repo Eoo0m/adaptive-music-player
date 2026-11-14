@@ -1620,11 +1620,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('sideBar')?.classList.remove('hidden');
         document.getElementById('bottomTab').classList.remove('hidden');
         loadFavorites();
-        // Google 로그인은 Apple Music 버튼 숨김 (유튜브만 사용)
-        if (currentUser.login_type === 'google') {
-            const appleMusicBtn = document.getElementById('appleMusicBtn');
-            if (appleMusicBtn) appleMusicBtn.style.display = 'none';
-        }
+        // 로그인 시 Apple Music 버튼 표시 (비로그인은 숨김 — HTML 기본 hidden)
+        const appleMusicBtn = document.getElementById('appleMusicBtn');
+        if (appleMusicBtn) appleMusicBtn.style.display = '';
         // Apple Music 이전 연동 이력 있으면 자동 재연동
         if (localStorage.getItem('apple_music_linked') === '1') {
             if (window.MusicKit) {
