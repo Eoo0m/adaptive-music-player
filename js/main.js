@@ -118,13 +118,9 @@ function openTrackOnYouTube(track, candidateKeys = currentCandidateKeys, keepQue
     }
     logAction('play', { selected_track_key: track.track_key, candidate_track_keys: candidateKeys });
     if (currentTab === 'map') playerMoveCamToTrack(track.track_key);
-    if (musicKitInstance && musicKitInstance.isAuthorized) {
-        updatePlayerWidget(track, false);
-        document.getElementById('playerNextLoading')?.classList.remove('hidden');
-        playWithAppleMusic(track);
-    } else {
-        window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(track.title + ' ' + track.artist)}`, '_blank');
-    }
+    updatePlayerWidget(track, false);
+    document.getElementById('playerNextLoading')?.classList.remove('hidden');
+    playWithAppleMusic(track);
 }
 
 function appendRecommendationHeader(container, tracks, currentIndex) {
