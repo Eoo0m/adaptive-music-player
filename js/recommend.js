@@ -68,8 +68,8 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
             return true;
         });
 
-        // 플레이리스트 구성: 클릭한 트랙(1) + 추천(23) = 24곡
-        const displayTracks = [track, ...uniqueTracks.slice(0, 23)];
+        // 플레이리스트 구성: 클릭한 트랙(1) + 추천(55) = 56곡
+        const displayTracks = [track, ...uniqueTracks.slice(0, 55)];
         shownRecommendationKeys = displayTracks.slice(1).map(t => t.track_key).filter(Boolean);
 
         console.log(`📝 Display: ${displayTracks.length} tracks (1 selected + ${displayTracks.length - 1} recommendations)`);
