@@ -722,7 +722,7 @@ async function _openTrackDetail(track) {
         const r = await fetch(`${API_BASE_URL}/find-similar-tracks`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ track_key: track.track_key, num_recommendations: 24 })
+            body: JSON.stringify({ track_key: track.track_key, num_recommendations: 56 })
         });
         const d = await r.json();
         const grid = document.getElementById('trackDetailSimilarGrid');
