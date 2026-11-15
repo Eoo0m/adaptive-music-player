@@ -301,32 +301,22 @@ async function doSearch() {
 
     window.searchResultsData = [];
 
-    // 1. 엔티티 검색 즉시 (빠름)
-    const entityPromise = fetch(`${API_BASE_URL}/search-songs`, {
+    const smartData = await fetch(`${API_BASE_URL}/smart-search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query }),
-    }).then(r => r.ok ? r.json() : { results: [] }).catch(() => ({ results: [] }));
-
-    // 2. 무드 검색 병렬 시작 (느림, 나중에 붙임)
-    const moodPromise = fetch(`${API_BASE_URL}/smart-search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, entity_limit: 0, mood_top_k: 40, mood_candidates: 100 }),
+        body: JSON.stringify({ query, entity_limit: 10, mood_top_k: 40, mood_candidates: 100 }),
     }).then(r => r.ok ? r.json() : null).catch(() => null);
 
-    // 엔티티 먼저 표시 (있을 때만)
-    const entityData = await entityPromise;
     if (_currentSearchQuery !== query) return;
-    const entityResults = (entityData.results || []).map(r => ({ ...r, track: r.track || r.track_name }));
+    _hideSearchLoadingDots();
+
+    const entityResults = (smartData?.entity_results || []).map(r => ({ ...r, track: r.track || r.track_name }));
     if (entityResults.length > 0) {
-        _hideSearchLoadingDots();
         _showSearchResults();
         _renderEntityResults(entityResults, query);
     }
 
-    // 무드 완료되면 추가 (엔티티 없으면 단독으로 표시)
-    const moodData = await moodPromise;
+    const moodData = smartData;
     if (_currentSearchQuery !== query) return;
     _hideSearchLoadingDots();
     if (moodData && moodData.mood_results && moodData.mood_results.length > 0) {
@@ -445,16 +435,15 @@ async function searchByTrack(retryCount = 0) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        const r = await fetch(`${API_BASE_URL}/search-songs`, {
+        const r = await fetch(`${API_BASE_URL}/smart-search`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query }),
+            body: JSON.stringify({ query, entity_limit: 20, mood_top_k: 0, mood_candidates: 0 }),
             signal: controller.signal
         });
 
         clearTimeout(timeoutId);
 
-        // 500 에러 시 재시도
         if (!r.ok) {
             console.warn(`Search failed with status ${r.status}, retrying...`);
             if (retryCount < 3) {
@@ -468,12 +457,10 @@ async function searchByTrack(retryCount = 0) {
 
         const d = await r.json();
 
-        console.log('🔍 Search response:', d);
-
         if (d.error) {
             document.getElementById('searchResults').innerHTML = `<div class="error-message">${d.error}</div>`;
-        } else if (d.results && Array.isArray(d.results)) {
-            displaySearchResults(d.results, 'track');
+        } else if (d.entity_results && Array.isArray(d.entity_results)) {
+            displaySearchResults(d.entity_results, 'track');
         } else {
             document.getElementById('searchResults').innerHTML = '<div class="error-message">검색 결과 형식이 올바르지 않습니다.</div>';
         }
@@ -500,10 +487,10 @@ async function searchByKeyword(retryCount = 0) {
     const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
-        const response = await fetch(`${API_BASE_URL}/search-by-keyword`, {
+        const response = await fetch(`${API_BASE_URL}/smart-search`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ keyword, top_k: 200 }),
+            body: JSON.stringify({ query: keyword, entity_limit: 0, mood_top_k: 200, mood_candidates: 300 }),
             signal: controller.signal
         });
 
@@ -534,7 +521,7 @@ async function searchByKeyword(retryCount = 0) {
             console.log('📊 찾은 플레이리스트 수:', data.debug.playlists_found);
         }
 
-        const tracks = (data.results || []).map(r => ({
+        const tracks = (data.mood_results || data.entity_results || []).map(r => ({
             ...r,
             track: r.track_name || r.track || 'Unknown'
         }));
@@ -626,13 +613,13 @@ async function showRecommendations(selectedTrack) {
     showLoadingIndicator('추천곡을 찾는 중입니다.');
 
     try {
-        // 검색 결과 클릭 시 /find-similar-tracks 사용
-        const r = await fetch(`${API_BASE_URL}/find-similar-tracks`, {
+        const r = await fetch(`${API_BASE_URL}/recommend`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
             body: JSON.stringify({
                 track_key: selectedTrack.track_key,
-                num_recommendations: 30
+                num_recommendations: 30,
+                exclude_track_keys: []
             })
         });
         const d = await r.json();
@@ -719,9 +706,9 @@ async function _openTrackDetail(track) {
     });
 
     try {
-        const r = await fetch(`${API_BASE_URL}/find-similar-tracks`, {
+        const r = await fetch(`${API_BASE_URL}/recommend`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
             body: JSON.stringify({ track_key: track.track_key, num_recommendations: 56 })
         });
         const d = await r.json();

@@ -1113,15 +1113,16 @@ function showMapIntro() {
         results.innerHTML = '';
         selectedKey = null; history = [];
         try {
-            const res = await fetch(`${API}/search-songs`, {
+            const res = await fetch(`${API}/smart-search`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: q })
+                body: JSON.stringify({ query: q, entity_limit: 5, mood_top_k: 0, mood_candidates: 0 })
             });
             const data = await res.json();
-            if (!data.results?.length) { status.textContent = '결과 없음'; return; }
+            const hits = data.entity_results?.length ? data.entity_results : (data.mood_results || []);
+            if (!hits.length) { status.textContent = '결과 없음'; return; }
             status.textContent = '';
             syncFavKeys();
-            data.results.slice(0, 5).forEach(track => results.appendChild(createItem(track)));
+            hits.slice(0, 5).forEach(track => results.appendChild(createItem(track)));
         } catch(e) { status.textContent = '검색 실패'; }
     }
 
@@ -1223,7 +1224,7 @@ function showMapIntro() {
             renderResults(data.recommendations, track);
         } catch(e) {
             try {
-                const res2 = await fetch(`${API}/find-similar-tracks`, {
+                const res2 = await fetch(`${API}/recommend`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ track_key: track.track_key, num_recommendations: 42 })
                 });
