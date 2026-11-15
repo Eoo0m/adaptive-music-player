@@ -757,7 +757,7 @@ function updateTrackDisplay(tracks, currentIndex) {
     trackGrid.className = `track-grid ${recommendationViewMode === 'list' ? 'track-list' : ''}`;
     trackInfoContainer.appendChild(trackGrid);
 
-    const endIdx = Math.min(tracks.length, currentIndex + 24);
+    const endIdx = Math.min(tracks.length, currentIndex + 56);
     const tracksToDisplay = [];
     for (let i = currentIndex; i < endIdx; i++) {
         tracksToDisplay.push({ track: tracks[i], originalIndex: i });
