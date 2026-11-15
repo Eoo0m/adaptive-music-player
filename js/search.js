@@ -618,7 +618,7 @@ async function showRecommendations(selectedTrack) {
             headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
             body: JSON.stringify({
                 track_key: selectedTrack.track_key,
-                num_recommendations: 30,
+                num_recommendations: 56,
                 exclude_track_keys: []
             })
         });
@@ -629,7 +629,7 @@ async function showRecommendations(selectedTrack) {
         if (d.error) {
             alert(d.error);
         } else if (d.recommendations?.length > 0) {
-            const displayTracks = [selectedTrack, ...d.recommendations.slice(0, 23)];
+            const displayTracks = [selectedTrack, ...d.recommendations];
             updateTrackDisplay(displayTracks, 0);
         } else {
             alert('추천곡을 찾을 수 없습니다.');
