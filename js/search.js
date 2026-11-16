@@ -43,20 +43,7 @@ function _navReset() {
 }
 
 function _updateBackBtn() {
-    const container = document.getElementById('trackInfo');
-    if (!container) return;
-    const existing = container.querySelector('.track-info-back-btn');
-    if (_navStack.length === 0) {
-        if (existing) existing.remove();
-    } else {
-        if (!existing) {
-            const btn = document.createElement('button');
-            btn.className = 'track-detail-back track-info-back-btn';
-            btn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> 뒤로`;
-            btn.addEventListener('click', () => _navPop());
-            container.insertBefore(btn, container.firstChild);
-        }
-    }
+    // updateTrackDisplay에서 렌더링 시 직접 처리됨
 }
 
 function _renderSearchResultsFromData({ results, query }) {
@@ -780,6 +767,14 @@ function updateTrackDisplay(tracks, currentIndex) {
     const trackInfoContainer = document.getElementById('trackInfo');
     trackInfoContainer.innerHTML = '';
     trackInfoContainer.style.pointerEvents = 'auto';
+
+    if (_navStack.length > 0) {
+        const backBtn = document.createElement('button');
+        backBtn.className = 'track-detail-back';
+        backBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> 뒤로`;
+        backBtn.addEventListener('click', () => _navPop());
+        trackInfoContainer.appendChild(backBtn);
+    }
 
     appendRecommendationHeader(trackInfoContainer, tracks, currentIndex);
 

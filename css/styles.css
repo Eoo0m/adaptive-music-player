@@ -2813,6 +2813,9 @@ body > .loading-indicator {
         padding: 12px 12px 20px !important;
         align-items: stretch !important;
         box-sizing: border-box !important;
+        pointer-events: auto !important;
+        background: #0a0a12 !important;
+        z-index: 100 !important;
     }
 
     /* 저장탭 — 2열 큰 카드, 스크롤 */
