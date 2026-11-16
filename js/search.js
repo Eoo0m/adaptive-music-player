@@ -7,19 +7,19 @@ function _navPush(state) {
 }
 
 function _navPop() {
-    if (_navStack.length === 0) return;
+    if (_navStack.length <= 1) return;
     _navStack.pop();
     _updateBackBtn();
     const prev = _navStack[_navStack.length - 1];
     if (!prev || prev.type === 'home') {
         _navClear();
+        _hideDetailPanel();
+        _hideTrackInfo();
         _showSearchHome();
     } else if (prev.type === 'search') {
         _hideDetailPanel();
         _hideTrackInfo();
-        _showSearchResults(true);
-    } else if (prev.type === 'detail') {
-        _openTrackDetail(prev.track, true);
+        _showSearchResults();
     } else if (prev.type === 'recommend') {
         _hideDetailPanel();
         _showTrackInfo();
@@ -129,14 +129,11 @@ function _renderSearchHomeGrid() {
     home.appendChild(grid);
 }
 
-function _showSearchResults(skipPushState = false) {
+function _showSearchResults() {
     const body = document.getElementById('searchBody');
     if (body) body.classList.remove('hidden');
     document.getElementById('searchHome').style.display = 'none';
     document.getElementById('searchResults').classList.remove('hidden');
-    if (!skipPushState) {
-        _navPush({ type: 'search' });
-    }
 }
 
 // ===== Recent Searches =====
@@ -376,7 +373,7 @@ async function doSearch() {
 
     const entityResults = (smartData?.entity_results || []).map(r => ({ ...r, track: r.track || r.track_name }));
     if (entityResults.length > 0) {
-        _showSearchResults(true);
+        _showSearchResults();
         _renderEntityResults(entityResults, query);
     }
 
@@ -386,7 +383,7 @@ async function doSearch() {
     if (moodData && moodData.mood_results && moodData.mood_results.length > 0) {
         if (entityResults.length === 0) {
             // 엔티티 없으면 무드 결과만 단독 표시
-            _showSearchResults(true);
+            _showSearchResults();
             const div = document.getElementById('searchResults');
             div.innerHTML = '';
             window.searchResultsData = [];
@@ -405,6 +402,10 @@ async function doSearch() {
         } else {
             _appendMoodResults(moodData.mood_results, query);
         }
+    }
+    // 검색 완료 후 스택에 search 추가 (결과가 있을 때만)
+    if (document.getElementById('searchResults')?.children.length > 0) {
+        _navPush({ type: 'search' });
     }
 }
 
@@ -803,7 +804,7 @@ function _closeTrackDetail() {
     if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
     const resultsDiv = document.getElementById('searchResults');
     if (resultsDiv && resultsDiv.children.length > 0) {
-        _showSearchResults(true);
+        _showSearchResults();
     } else {
         _showSearchHome();
     }
