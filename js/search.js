@@ -27,7 +27,7 @@ function _navPop() {
         _showSearchResults();
         _renderSearchResultsFromData(prev.data);
     } else if (prev.screen === 'detail') {
-        _openTrackDetail(prev.data.track);
+        _openTrackDetail(prev.data.track, true);
     }
 
     setTimeout(() => {
@@ -654,7 +654,7 @@ async function showRecommendations(selectedTrack) {
 }
 
 // ===== Track Detail Panel =====
-async function _openTrackDetail(track) {
+async function _openTrackDetail(track, skipNav = false) {
     const panel = document.getElementById('trackDetailPanel');
     if (!panel) return;
 
@@ -711,7 +711,7 @@ async function _openTrackDetail(track) {
     panel.appendChild(grid);
 
     panel.classList.remove('hidden');
-    _navNavigate('detail', { track });
+    if (!skipNav) _navNavigate('detail', { track });
 
     logAction('select_from_search', {
         selected_track_key: track.track_key,
