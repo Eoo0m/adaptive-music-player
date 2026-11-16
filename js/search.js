@@ -21,6 +21,9 @@ function _navPop() {
     const panel = document.getElementById('trackDetailPanel');
     if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
 
+    const trackInfo = document.getElementById('trackInfo');
+    if (trackInfo) { trackInfo.classList.add('hidden'); trackInfo.innerHTML = ''; }
+
     if (prev.screen === 'home') {
         _showSearchHome();
     } else if (prev.screen === 'search') {
@@ -51,6 +54,11 @@ function _updateBackBtn() {
 
     const mobileBtn = document.getElementById('searchBackBtn');
     if (mobileBtn) mobileBtn.classList.toggle('hidden', hidden);
+
+    if (window.innerWidth > 768) {
+        const desktopBtn = document.getElementById('searchBackBtnDesktop');
+        if (desktopBtn) desktopBtn.classList.toggle('hidden', hidden);
+    }
 }
 
 function _renderSearchResultsFromData({ results, query }) {
