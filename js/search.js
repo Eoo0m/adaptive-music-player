@@ -662,7 +662,7 @@ async function _openTrackDetail(track, skipPushState = false) {
     const backBtn = document.createElement('button');
     backBtn.className = 'track-detail-back';
     backBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> 뒤로`;
-    backBtn.addEventListener('click', _closeTrackDetail);
+    backBtn.addEventListener('click', () => history.back());
     panel.appendChild(backBtn);
 
     // 선택된 트랙
