@@ -793,10 +793,12 @@ window.addEventListener('popstate', (e) => {
         return;
     }
     if (state.type === 'search') {
+        const trackInfo = document.getElementById('trackInfo');
+        if (trackInfo) { trackInfo.innerHTML = ''; trackInfo.classList.add('hidden'); }
         _showSearchResults(true);
     } else if (state.type === 'recommend') {
-        updateTrackDisplay(state.tracks, state.currentIndex, true);
         const trackInfo = document.getElementById('trackInfo');
         if (trackInfo) trackInfo.classList.remove('hidden');
+        updateTrackDisplayOnly(state.tracks, state.currentIndex, true);
     }
 });

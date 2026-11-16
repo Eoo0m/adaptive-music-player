@@ -87,8 +87,11 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
 }
 
 // ===== Display Functions =====
-function updateTrackDisplayOnly(tracks, currentIndex) {
+function updateTrackDisplayOnly(tracks, currentIndex, skipPushState = false) {
     setCurrentCandidates(tracks);
+    if (!skipPushState) {
+        history.pushState({ type: 'recommend', tracks, currentIndex }, '');
+    }
     console.log('🎨 Updating track display, total tracks:', tracks.length, 'current index:', currentIndex);
 
     const trackInfoContainer = document.getElementById('trackInfo');
