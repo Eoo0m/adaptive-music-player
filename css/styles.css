@@ -2807,6 +2807,17 @@ body > .loading-indicator {
         right: 16px !important;
     }
 
+    #searchBody {
+        left: 0 !important;
+        bottom: 60px !important;
+        padding: 0 12px;
+    }
+
+    #searchResults {
+        padding: 16px 0 100px !important;
+        max-height: none !important;
+    }
+
     .favorites-view {
         left: 50% !important;
         width: calc(100vw - 32px) !important;
