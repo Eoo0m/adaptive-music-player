@@ -2797,6 +2797,25 @@ body > .loading-indicator {
         grid-template-columns: repeat(3, 1fr) !important;
     }
 
+    /* 저장탭 — 2열 큰 카드, 스크롤 */
+    #favoritesView {
+        overflow-y: auto;
+        bottom: 60px;
+    }
+    .favorites-list {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+        padding: 12px !important;
+    }
+    .favorites-list:not(.compact-track-list) .track-item img {
+        width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 1;
+    }
+    .favorites-list:not(.compact-track-list) .track-item-info {
+        width: 100% !important;
+    }
+
     /* 콘텐츠 영역 사이드바 offset 해제 */
     .map-view {
         left: 0 !important;
