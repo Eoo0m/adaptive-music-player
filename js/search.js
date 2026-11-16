@@ -45,7 +45,7 @@ function showSearchInterface() {
     document.getElementById('searchInput').focus();
 }
 
-function showLoadingIndicator(message) {}
+function showLoadingIndicator() {}
 function hideLoadingIndicator() {}
 
 // ===== Search Home / Results Toggle =====
@@ -354,7 +354,7 @@ async function doSearch() {
     const entityResults = (smartData?.entity_results || []).map(r => ({ ...r, track: r.track || r.track_name }));
     if (entityResults.length > 0) {
         _showSearchResults();
-        _renderEntityResults(entityResults, query);
+        _renderEntityResults(entityResults);
     }
 
     const moodData = smartData;
@@ -420,7 +420,7 @@ function _toggleFavCard(btn, trackKey) {
     toggleFavorite(track, btn);
 }
 
-function _renderEntityResults(entityResults, query) {
+function _renderEntityResults(entityResults) {
     const div = document.getElementById('searchResults');
     div.innerHTML = '';
     window.searchResultsData = entityResults;
@@ -600,10 +600,6 @@ async function searchByKeyword(retryCount = 0) {
     }
 }
 
-// ===== Display Search Results (legacy, 미사용) =====
-function displaySearchResults(results, type) {
-    // smartSearch로 대체됨 — 하위 호환용 stub
-}
 
 function toggleFavoriteFromSearch(index, btn) {
     const track = window.searchResultsData[index];
@@ -687,7 +683,7 @@ async function showRecommendations(selectedTrack) {
 }
 
 // ===== Track Detail Panel =====
-async function _openTrackDetail(track, skipPushState = false) {
+async function _openTrackDetail(track) {
     const panel = document.getElementById('trackDetailPanel');
     if (!panel) return;
 
@@ -744,9 +740,7 @@ async function _openTrackDetail(track, skipPushState = false) {
     panel.appendChild(grid);
 
     panel.classList.remove('hidden');
-    if (!skipPushState) {
-        _updateBackBtn();
-    }
+    _updateBackBtn();
 
     logAction('select_from_search', {
         selected_track_key: track.track_key,
@@ -789,11 +783,8 @@ function _closeTrackDetail() {
 }
 
 // ===== Track Display =====
-function updateTrackDisplay(tracks, currentIndex, skipPushState = false) {
+function updateTrackDisplay(tracks, currentIndex) {
     setCurrentCandidates(tracks);
-    if (!skipPushState) {
-        _updateBackBtn();
-    }
 
     const trackInfoContainer = document.getElementById('trackInfo');
     trackInfoContainer.innerHTML = '';

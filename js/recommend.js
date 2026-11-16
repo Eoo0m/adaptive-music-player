@@ -87,12 +87,8 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
 }
 
 // ===== Display Functions =====
-function updateTrackDisplayOnly(tracks, currentIndex, skipPushState = false) {
+function updateTrackDisplayOnly(tracks, currentIndex) {
     setCurrentCandidates(tracks);
-    if (!skipPushState) {
-        _updateBackBtn();
-    }
-    console.log('🎨 Updating track display, total tracks:', tracks.length, 'current index:', currentIndex);
 
     const trackInfoContainer = document.getElementById('trackInfo');
     trackInfoContainer.innerHTML = '';
