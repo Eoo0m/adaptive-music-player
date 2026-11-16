@@ -298,6 +298,13 @@ function _clearSearchInput() {
     _currentSearchQuery = '';
     _hideAutocomplete();
     _navReset();
+    // 추천결과 패널도 닫기
+    const trackInfo = document.getElementById('trackInfo');
+    if (trackInfo) { trackInfo.innerHTML = ''; trackInfo.classList.add('hidden'); }
+    const si = document.getElementById('initialSongInput');
+    if (si) si.classList.remove('mini');
+    const panel = document.getElementById('trackDetailPanel');
+    if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
     _showSearchHome();
 }
 
