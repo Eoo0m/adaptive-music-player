@@ -372,6 +372,7 @@ function _hideSearchLoadingDots() {
 async function doSearch() {
     const query = document.getElementById('searchInput').value.trim();
     if (!query) return;
+    _navReset();
     _currentSearchQuery = query;
     _saveRecentSearch(query);
     // 열려있는 트랙 디테일 패널 닫기
