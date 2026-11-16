@@ -120,7 +120,6 @@ function _renderSearchHomeGrid() {
         // _makeTrackCard와 동일한 형식으로 렌더
         const r = { ...t, track: t.title || t.track_name || '', track_name: t.title || t.track_name || '' };
         const card = _makeTrackCard(r);
-        card.addEventListener('click', () => _openTrackDetail(r));
         grid.appendChild(card);
     });
 
