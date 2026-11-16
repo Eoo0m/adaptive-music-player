@@ -120,7 +120,12 @@ function openTrackOnYouTube(track, candidateKeys = currentCandidateKeys, keepQue
     if (currentTab === 'map') playerMoveCamToTrack(track.track_key);
     updatePlayerWidget(track, false);
     document.getElementById('playerNextLoading')?.classList.remove('hidden');
-    playWithAppleMusic(track);
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+        window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(getTrackTitle(track) + ' ' + getTrackArtist(track))}`, '_blank');
+    } else {
+        playWithAppleMusic(track);
+    }
 }
 
 function appendRecommendationHeader(container, tracks, currentIndex) {

@@ -2755,6 +2755,57 @@ body > .loading-indicator {
 }
 
 @media (max-width: 768px) {
+    /* 사이드바 → 하단 탭바로 전환 */
+    .sidebar {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        padding: 0;
+        border-right: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .sidebar-logo,
+    .sidebar-divider,
+    .apple-music-btn,
+    #tabSettings {
+        display: none !important;
+    }
+
+    .sidebar-nav {
+        flex-direction: row;
+        width: 100%;
+        gap: 0;
+    }
+
+    .side-tab-btn {
+        flex: 1;
+        padding: 10px 4px 8px;
+        border-radius: 0;
+    }
+
+    /* 콘텐츠 영역 사이드바 offset 해제 */
+    .map-view {
+        left: 0 !important;
+        bottom: 60px;
+    }
+
+    .search-interface {
+        left: 16px !important;
+        right: 16px !important;
+    }
+
+    .favorites-view {
+        left: 50% !important;
+        width: calc(100vw - 32px) !important;
+        bottom: 60px;
+    }
+
     /* 사이드 탭 숨기기 */
     .side-tab {
         display: none !important;
