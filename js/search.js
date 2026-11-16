@@ -43,11 +43,17 @@ function _navReset() {
 }
 
 function _updateBackBtn() {
-    const btn = document.getElementById('searchBackBtn');
-    if (!btn) return;
     const trackInfo = document.getElementById('trackInfo');
-    const trackInfoVisible = trackInfo && !trackInfo.classList.contains('hidden');
-    btn.classList.toggle('hidden', _navStack.length === 0 || !trackInfoVisible);
+    const panel = document.getElementById('trackDetailPanel');
+    const contentVisible = (trackInfo && !trackInfo.classList.contains('hidden'))
+        || (panel && !panel.classList.contains('hidden'));
+    const hidden = _navStack.length === 0 || !contentVisible;
+
+    const mobileBtn = document.getElementById('searchBackBtn');
+    if (mobileBtn) mobileBtn.classList.toggle('hidden', hidden);
+
+    const desktopBtn = document.getElementById('searchBackBtnDesktop');
+    if (desktopBtn) desktopBtn.classList.toggle('hidden', hidden);
 }
 
 function _renderSearchResultsFromData({ results, query }) {

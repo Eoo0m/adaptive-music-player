@@ -57,9 +57,11 @@
     .track-grid,
     .search-entity-grid,
     .search-mood-grid,
-    .search-home-grid {
+    .search-home-grid,
+    .track-detail-similar-grid {
         display: grid !important;
         grid-template-columns: repeat(3, 1fr) !important;
+        gap: 3px !important;
         width: 100% !important;
         box-sizing: border-box !important;
     }
