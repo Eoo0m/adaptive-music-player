@@ -75,6 +75,7 @@ function _showSearchResults(skipPushState = false) {
     document.getElementById('searchResults').classList.remove('hidden');
     if (!skipPushState) {
         history.pushState({ type: 'search', query: _currentSearchQuery }, '');
+        console.log('📌 pushState search | stack length ~', history.length);
     }
 }
 
@@ -703,7 +704,10 @@ async function _openTrackDetail(track, skipPushState = false) {
     panel.appendChild(grid);
 
     panel.classList.remove('hidden');
-    if (!skipPushState) history.pushState({ type: 'detail', track }, '');
+    if (!skipPushState) {
+        history.pushState({ type: 'detail', track }, '');
+        console.log('📌 pushState detail:', track.track_key, '| stack length ~', history.length);
+    }
 
     logAction('select_from_search', {
         selected_track_key: track.track_key,
@@ -789,10 +793,12 @@ function updateTrackDisplay(tracks, currentIndex, skipPushState = false) {
 document.addEventListener('DOMContentLoaded', () => {
     // 초기 state 설정 (뒤로가기로 null에 도달하지 않도록)
     history.replaceState({ type: 'home' }, '');
+    console.log('🏠 Initial history state set:', history.state);
 });
 
 window.addEventListener('popstate', (e) => {
     const state = e.state;
+    console.log('⬅️ popstate fired, state:', state);
     if (!state || state.type === 'home') {
         // 홈으로 복원
         const trackInfo = document.getElementById('trackInfo');
