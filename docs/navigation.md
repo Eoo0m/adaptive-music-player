@@ -56,6 +56,17 @@ _navNavigate('detail', { track });
 - X 버튼으로 검색창 초기화 (`_clearSearchInput`)
 - 검색 탭 재진입 (`switchTab('search')`)
 
+### `_clearSearchInput()`
+X 버튼 클릭 시 호출. 단순 검색창 초기화가 아니라 **전체 상태 초기화**:
+- 검색창 비우기
+- `_navReset()` — 스택 초기화
+- `trackInfo` 숨기기 (추천결과 패널)
+- `initialSongInput`에서 `mini` 클래스 제거
+- `trackDetailPanel` 닫기
+- `_showSearchHome()` — 홈으로 이동
+
+어떤 화면(추천결과, 디테일 패널)에 있든 X 누르면 항상 홈으로 돌아감.
+
 ### `_updateBackBtn()`
 스택이 비어있으면 뒤로 버튼 숨김, 아니면 표시.
 
