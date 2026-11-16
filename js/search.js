@@ -111,10 +111,14 @@ function _renderSearchHomeGrid() {
 
     const mapData = window.lastMapData;
     if (!mapData?.tracks?.length) {
-        // 데이터 없으면 로딩 dots 표시
-        home.querySelector('.search-guide-text')?.remove();
         const dots = document.getElementById('searchLoadingDots');
-        if (dots) dots.classList.remove('hidden');
+        if (typeof authToken !== 'undefined' && authToken) {
+            // 로그인 상태 — 데이터 로딩 중
+            if (dots) dots.classList.remove('hidden');
+        } else {
+            // 게스트 — 로딩 없이 안내 텍스트만
+            if (dots) dots.classList.add('hidden');
+        }
         return;
     }
 
