@@ -646,7 +646,7 @@ async function showRecommendations(selectedTrack) {
 }
 
 // ===== Track Detail Panel =====
-async function _openTrackDetail(track) {
+async function _openTrackDetail(track, skipPushState = false) {
     const panel = document.getElementById('trackDetailPanel');
     if (!panel) return;
 
@@ -703,6 +703,7 @@ async function _openTrackDetail(track) {
     panel.appendChild(grid);
 
     panel.classList.remove('hidden');
+    if (!skipPushState) history.pushState({ type: 'detail', track }, '');
 
     logAction('select_from_search', {
         selected_track_key: track.track_key,
@@ -801,7 +802,13 @@ window.addEventListener('popstate', (e) => {
         _showSearchHome();
         return;
     }
+    if (state.type === 'detail') {
+        _openTrackDetail(state.track, true);
+        return;
+    }
     if (state.type === 'search') {
+        const panel = document.getElementById('trackDetailPanel');
+        if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
         const trackInfo = document.getElementById('trackInfo');
         if (trackInfo) { trackInfo.innerHTML = ''; trackInfo.classList.add('hidden'); }
         const searchInterface = document.getElementById('initialSongInput');
