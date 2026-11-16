@@ -45,7 +45,9 @@ function _navReset() {
 function _updateBackBtn() {
     const btn = document.getElementById('searchBackBtn');
     if (!btn) return;
-    btn.classList.toggle('hidden', _navStack.length === 0);
+    const trackInfo = document.getElementById('trackInfo');
+    const trackInfoVisible = trackInfo && !trackInfo.classList.contains('hidden');
+    btn.classList.toggle('hidden', _navStack.length === 0 || !trackInfoVisible);
 }
 
 function _renderSearchResultsFromData({ results, query }) {
@@ -301,6 +303,7 @@ function _clearSearchInput() {
     // 추천결과 패널도 닫기
     const trackInfo = document.getElementById('trackInfo');
     if (trackInfo) { trackInfo.innerHTML = ''; trackInfo.classList.add('hidden'); }
+    _updateBackBtn();
     const si = document.getElementById('initialSongInput');
     if (si) si.classList.remove('mini');
     const panel = document.getElementById('trackDetailPanel');
@@ -566,6 +569,7 @@ async function searchByKeyword(retryCount = 0) {
         }
         const trackInfo = document.getElementById('trackInfo');
         if (trackInfo) trackInfo.classList.remove('hidden');
+        _updateBackBtn();
 
     } catch (e) {
         clearTimeout(timeoutId);
@@ -617,6 +621,7 @@ async function selectTrack(trackData) {
 
     const trackInfo = document.getElementById('trackInfo');
     if (trackInfo) trackInfo.classList.remove('hidden');
+    _updateBackBtn();
 }
 
 // ===== Show Recommendations =====
