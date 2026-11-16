@@ -1,6 +1,32 @@
 /* ===== 모바일 전용 스타일 (max-width: 768px) ===== */
 
+/* 데스크탑에서 side-tab-label 숨기기 */
+.side-tab-label {
+    display: none;
+}
+
 @media (max-width: 768px) {
+
+    /* 사이드바 → 하단 탭바 */
+    .side-tab-btn {
+        flex: 1;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        padding: 10px 4px 8px !important;
+        border-radius: 0 !important;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .side-tab-label {
+        display: block;
+        font-size: 10px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        letter-spacing: -0.2px;
+    }
+
+
 
     /* 추천결과 패널 — 화면 전체 덮기 */
     .track-info {
