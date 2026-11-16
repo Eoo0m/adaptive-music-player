@@ -51,9 +51,6 @@ function _updateBackBtn() {
 
     const mobileBtn = document.getElementById('searchBackBtn');
     if (mobileBtn) mobileBtn.classList.toggle('hidden', hidden);
-
-    const desktopBtn = document.getElementById('searchBackBtnDesktop');
-    if (desktopBtn) desktopBtn.classList.toggle('hidden', hidden);
 }
 
 function _renderSearchResultsFromData({ results, query }) {

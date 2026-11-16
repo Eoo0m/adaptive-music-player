@@ -90,9 +90,4 @@
     .mobile-back-btn.hidden {
         display: none !important;
     }
-
-    /* 데스크톱용 뒤로가기 버튼 모바일에서 숨기기 */
-    #searchBackBtnDesktop {
-        display: none !important;
-    }
 }
