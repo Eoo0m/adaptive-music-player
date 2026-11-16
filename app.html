@@ -152,7 +152,9 @@
             <div class="search-row">
                 <input type="text" class="search-input" id="searchInput"
                     placeholder="곡/아티스트/분위기 검색">
-                <button class="search-cancel-btn hidden" id="searchCancelBtn" onclick="_cancelSearch()">취소</button>
+                <button class="search-clear-btn hidden" id="searchClearBtn" onclick="_clearSearchInput()">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
             </div>
             <div class="search-autocomplete hidden" id="searchAutocomplete"></div>
             <div class="search-recent-chips hidden" id="searchRecentChips"></div>
