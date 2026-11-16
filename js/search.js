@@ -1,3 +1,64 @@
+// ===== Navigation Stack =====
+const _navStack = [];
+
+function _navPush(state) {
+    _navStack.push(state);
+    _updateBackBtn();
+}
+
+function _navPop() {
+    if (_navStack.length === 0) return;
+    _navStack.pop();
+    _updateBackBtn();
+    const prev = _navStack[_navStack.length - 1];
+    if (!prev || prev.type === 'home') {
+        _navClear();
+        _showSearchHome();
+    } else if (prev.type === 'search') {
+        _hideDetailPanel();
+        _hideTrackInfo();
+        _showSearchResults(true);
+    } else if (prev.type === 'detail') {
+        _openTrackDetail(prev.track, true);
+    } else if (prev.type === 'recommend') {
+        _hideDetailPanel();
+        _showTrackInfo();
+        updateTrackDisplayOnly(prev.tracks, prev.currentIndex, true);
+    }
+}
+
+function _navClear() {
+    _navStack.length = 0;
+    _navStack.push({ type: 'home' });
+    _updateBackBtn();
+}
+
+function _updateBackBtn() {
+    const btn = document.getElementById('searchBackBtn');
+    if (!btn) return;
+    const hasBack = _navStack.length > 1;
+    btn.classList.toggle('hidden', !hasBack);
+}
+
+function _hideDetailPanel() {
+    const panel = document.getElementById('trackDetailPanel');
+    if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
+}
+
+function _hideTrackInfo() {
+    const el = document.getElementById('trackInfo');
+    if (el) { el.innerHTML = ''; el.classList.add('hidden'); }
+    const si = document.getElementById('initialSongInput');
+    if (si) si.classList.remove('mini');
+}
+
+function _showTrackInfo() {
+    const el = document.getElementById('trackInfo');
+    if (el) el.classList.remove('hidden');
+    const si = document.getElementById('initialSongInput');
+    if (si) { si.classList.add('mini'); si.classList.remove('hidden'); }
+}
+
 // ===== Search UI =====
 function showSearchInterface() {
     document.getElementById('searchInput').focus();
@@ -74,8 +135,7 @@ function _showSearchResults(skipPushState = false) {
     document.getElementById('searchHome').style.display = 'none';
     document.getElementById('searchResults').classList.remove('hidden');
     if (!skipPushState) {
-        history.pushState({ type: 'search', query: _currentSearchQuery }, '');
-        console.log('📌 pushState search | stack length ~', history.length);
+        _navPush({ type: 'search' });
     }
 }
 
@@ -398,7 +458,6 @@ function _renderEntityResults(entityResults, query) {
     div.appendChild(grid);
 
     window.searchCandidateKeys = entityResults.map(r => r.track_key).filter(Boolean);
-    history.pushState({ type: 'search', query: _currentSearchQuery }, '');
 }
 
 function _appendMoodResults(moodResults, query) {
@@ -662,7 +721,7 @@ async function _openTrackDetail(track, skipPushState = false) {
     const backBtn = document.createElement('button');
     backBtn.className = 'track-detail-back';
     backBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> 뒤로`;
-    backBtn.addEventListener('click', () => history.back());
+    backBtn.addEventListener('click', () => _navPop());
     panel.appendChild(backBtn);
 
     // 선택된 트랙
@@ -705,8 +764,7 @@ async function _openTrackDetail(track, skipPushState = false) {
 
     panel.classList.remove('hidden');
     if (!skipPushState) {
-        history.pushState({ type: 'detail', track }, '');
-        console.log('📌 pushState detail:', track.track_key, '| stack length ~', history.length);
+        _navPush({ type: 'detail', track });
     }
 
     logAction('select_from_search', {
@@ -755,9 +813,8 @@ function _closeTrackDetail() {
 function updateTrackDisplay(tracks, currentIndex, skipPushState = false) {
     setCurrentCandidates(tracks);
     if (!skipPushState) {
-        history.pushState({ type: 'recommend', tracks, currentIndex }, '');
+        _navPush({ type: 'recommend', tracks, currentIndex });
     }
-    console.log('🎨 Updating track display, total tracks:', tracks.length);
 
     const trackInfoContainer = document.getElementById('trackInfo');
     trackInfoContainer.innerHTML = '';
@@ -789,42 +846,7 @@ function updateTrackDisplay(tracks, currentIndex, skipPushState = false) {
     console.log('✅ Track display updated');
 }
 
-// ===== Browser Back/Forward Navigation =====
+// ===== Nav stack init =====
 document.addEventListener('DOMContentLoaded', () => {
-    // 초기 state 설정 (뒤로가기로 null에 도달하지 않도록)
-    history.replaceState({ type: 'home' }, '');
-    console.log('🏠 Initial history state set:', history.state);
-});
-
-window.addEventListener('popstate', (e) => {
-    const state = e.state;
-    console.log('⬅️ popstate fired, state:', state);
-    if (!state || state.type === 'home') {
-        // 홈으로 복원
-        const trackInfo = document.getElementById('trackInfo');
-        if (trackInfo) { trackInfo.innerHTML = ''; trackInfo.classList.add('hidden'); }
-        const searchInterface = document.getElementById('initialSongInput');
-        if (searchInterface) { searchInterface.classList.remove('mini'); }
-        _showSearchHome();
-        return;
-    }
-    if (state.type === 'detail') {
-        _openTrackDetail(state.track, true);
-        return;
-    }
-    if (state.type === 'search') {
-        const panel = document.getElementById('trackDetailPanel');
-        if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
-        const trackInfo = document.getElementById('trackInfo');
-        if (trackInfo) { trackInfo.innerHTML = ''; trackInfo.classList.add('hidden'); }
-        const searchInterface = document.getElementById('initialSongInput');
-        if (searchInterface) { searchInterface.classList.remove('mini'); }
-        _showSearchResults(true);
-    } else if (state.type === 'recommend') {
-        const trackInfo = document.getElementById('trackInfo');
-        if (trackInfo) trackInfo.classList.remove('hidden');
-        const searchInterface = document.getElementById('initialSongInput');
-        if (searchInterface) { searchInterface.classList.add('mini'); searchInterface.classList.remove('hidden'); }
-        updateTrackDisplayOnly(state.tracks, state.currentIndex, true);
-    }
+    _navClear();
 });
