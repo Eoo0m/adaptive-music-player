@@ -319,7 +319,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('initialSongInput').classList.remove('hidden');
         document.getElementById('sideBar')?.classList.remove('hidden');
-        document.getElementById('bottomTab').classList.remove('hidden');
         loadFavorites().then(() => prefetchMusicMap());
         const appleMusicBtn = document.getElementById('appleMusicBtn');
         if (appleMusicBtn) appleMusicBtn.style.display = '';
