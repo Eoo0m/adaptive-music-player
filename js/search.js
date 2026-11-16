@@ -785,20 +785,33 @@ function updateTrackDisplay(tracks, currentIndex, skipPushState = false) {
 }
 
 // ===== Browser Back/Forward Navigation =====
+document.addEventListener('DOMContentLoaded', () => {
+    // 초기 state 설정 (뒤로가기로 null에 도달하지 않도록)
+    history.replaceState({ type: 'home' }, '');
+});
+
 window.addEventListener('popstate', (e) => {
     const state = e.state;
-    if (!state) {
-        // 스택 바닥 → 홈
+    if (!state || state.type === 'home') {
+        // 홈으로 복원
+        const trackInfo = document.getElementById('trackInfo');
+        if (trackInfo) { trackInfo.innerHTML = ''; trackInfo.classList.add('hidden'); }
+        const searchInterface = document.getElementById('initialSongInput');
+        if (searchInterface) { searchInterface.classList.remove('mini'); }
         _showSearchHome();
         return;
     }
     if (state.type === 'search') {
         const trackInfo = document.getElementById('trackInfo');
         if (trackInfo) { trackInfo.innerHTML = ''; trackInfo.classList.add('hidden'); }
+        const searchInterface = document.getElementById('initialSongInput');
+        if (searchInterface) { searchInterface.classList.remove('mini'); }
         _showSearchResults(true);
     } else if (state.type === 'recommend') {
         const trackInfo = document.getElementById('trackInfo');
         if (trackInfo) trackInfo.classList.remove('hidden');
+        const searchInterface = document.getElementById('initialSongInput');
+        if (searchInterface) { searchInterface.classList.add('mini'); searchInterface.classList.remove('hidden'); }
         updateTrackDisplayOnly(state.tracks, state.currentIndex, true);
     }
 });
