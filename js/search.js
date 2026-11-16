@@ -68,11 +68,14 @@ function _renderSearchHomeGrid() {
     home.appendChild(grid);
 }
 
-function _showSearchResults() {
+function _showSearchResults(skipPushState = false) {
     const body = document.getElementById('searchBody');
     if (body) body.classList.remove('hidden');
     document.getElementById('searchHome').style.display = 'none';
     document.getElementById('searchResults').classList.remove('hidden');
+    if (!skipPushState) {
+        history.pushState({ type: 'search', query: _currentSearchQuery }, '');
+    }
 }
 
 // ===== Recent Searches =====
@@ -312,7 +315,7 @@ async function doSearch() {
 
     const entityResults = (smartData?.entity_results || []).map(r => ({ ...r, track: r.track || r.track_name }));
     if (entityResults.length > 0) {
-        _showSearchResults();
+        _showSearchResults(true);
         _renderEntityResults(entityResults, query);
     }
 
@@ -322,7 +325,7 @@ async function doSearch() {
     if (moodData && moodData.mood_results && moodData.mood_results.length > 0) {
         if (entityResults.length === 0) {
             // 엔티티 없으면 무드 결과만 단독 표시
-            _showSearchResults();
+            _showSearchResults(true);
             const div = document.getElementById('searchResults');
             div.innerHTML = '';
             window.searchResultsData = [];
@@ -394,6 +397,7 @@ function _renderEntityResults(entityResults, query) {
     div.appendChild(grid);
 
     window.searchCandidateKeys = entityResults.map(r => r.track_key).filter(Boolean);
+    history.pushState({ type: 'search', query: _currentSearchQuery }, '');
 }
 
 function _appendMoodResults(moodResults, query) {
@@ -736,15 +740,18 @@ function _closeTrackDetail() {
     if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
     const resultsDiv = document.getElementById('searchResults');
     if (resultsDiv && resultsDiv.children.length > 0) {
-        _showSearchResults();
+        _showSearchResults(true);
     } else {
         _showSearchHome();
     }
 }
 
 // ===== Track Display =====
-function updateTrackDisplay(tracks, currentIndex) {
+function updateTrackDisplay(tracks, currentIndex, skipPushState = false) {
     setCurrentCandidates(tracks);
+    if (!skipPushState) {
+        history.pushState({ type: 'recommend', tracks, currentIndex }, '');
+    }
     console.log('🎨 Updating track display, total tracks:', tracks.length);
 
     const trackInfoContainer = document.getElementById('trackInfo');
@@ -776,3 +783,20 @@ function updateTrackDisplay(tracks, currentIndex) {
 
     console.log('✅ Track display updated');
 }
+
+// ===== Browser Back/Forward Navigation =====
+window.addEventListener('popstate', (e) => {
+    const state = e.state;
+    if (!state) {
+        // 스택 바닥 → 홈
+        _showSearchHome();
+        return;
+    }
+    if (state.type === 'search') {
+        _showSearchResults(true);
+    } else if (state.type === 'recommend') {
+        updateTrackDisplay(state.tracks, state.currentIndex, true);
+        const trackInfo = document.getElementById('trackInfo');
+        if (trackInfo) trackInfo.classList.remove('hidden');
+    }
+});
