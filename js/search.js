@@ -5,11 +5,13 @@
 const _navStack = [];
 
 function _navPush(screen, data = {}) {
-    // 현재 화면 scrollTop 저장
     const body = document.getElementById('searchBody');
-    if (_navStack.length > 0) {
-        _navStack[_navStack.length - 1].scrollTop = body?.scrollTop || 0;
+    // 스택이 비어있으면 home을 먼저 추가
+    if (_navStack.length === 0) {
+        _navStack.push({ screen: 'home', data: {}, scrollTop: 0 });
     }
+    // 현재 화면 scrollTop 저장
+    _navStack[_navStack.length - 1].scrollTop = body?.scrollTop || 0;
     _navStack.push({ screen, data, scrollTop: 0 });
     _updateBackBtn();
 }
