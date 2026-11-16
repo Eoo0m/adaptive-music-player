@@ -2821,6 +2821,7 @@ body > .loading-indicator {
     .search-interface {
         left: 16px !important;
         right: 16px !important;
+        z-index: 250 !important;
     }
 
     #searchBody {
