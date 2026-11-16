@@ -297,6 +297,7 @@ function _clearSearchInput() {
     document.getElementById('searchClearBtn')?.classList.add('hidden');
     _currentSearchQuery = '';
     _hideAutocomplete();
+    _navReset();
     _showSearchHome();
 }
 
