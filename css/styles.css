@@ -2410,12 +2410,13 @@ body > .loading-indicator {
     display: flex;
     gap: 10px;
     margin-bottom: 0;
+    position: relative;
 }
 
 
 .search-input {
     flex: 1;
-    padding: 10px 14px;
+    padding: 10px 36px 10px 14px;
     margin: 0;
     border: 2px solid rgba(255, 255, 255, .3);
     border-radius: 20px;
@@ -3151,15 +3152,20 @@ body > .loading-indicator {
 
 /* ===== Search Input Buttons ===== */
 .search-clear-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
     background: none;
     border: none;
     color: rgba(255,255,255,.4);
-    font-size: 13px;
     cursor: pointer;
-    padding: 4px 8px;
-    flex-shrink: 0;
+    padding: 4px;
     line-height: 1;
     transition: color .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .search-clear-btn:hover { color: rgba(255,255,255,.8); }
 .search-clear-btn.hidden { display: none; }
