@@ -785,8 +785,6 @@ async function _openTrackDetail(track, skipPushState = false) {
         if (d.recommendations?.length > 0) {
             d.recommendations.forEach(rec => {
                 const card = _makeTrackCard(rec);
-                // 유사곡 카드 클릭은 다시 detail로 (스택 갱신)
-                card.onclick = () => _openTrackDetail(rec);
                 grid.appendChild(card);
             });
         } else {
