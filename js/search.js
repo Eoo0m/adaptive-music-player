@@ -1,59 +1,51 @@
 // ===== Navigation Stack =====
-// 각 entry: { screen, data, scrollTop }
-// screen: 'home' | 'search' | 'detail'
-// data: search → { results, query } / detail → { track }
+// 이동할 때 현재 화면을 스택에 push → 뒤로가기 시 pop해서 복원
+// entry: { screen, data, scrollTop }
 const _navStack = [];
+let _currentScreen = { screen: 'home', data: {} };
 
-function _navPush(screen, data = {}) {
+function _navNavigate(screen, data = {}) {
+    // 현재 화면을 스택에 push (scrollTop 포함)
     const body = document.getElementById('searchBody');
-    // 스택이 비어있으면 home을 먼저 추가
-    if (_navStack.length === 0) {
-        _navStack.push({ screen: 'home', data: {}, scrollTop: 0 });
-    }
-    // 현재 화면 scrollTop 저장
-    _navStack[_navStack.length - 1].scrollTop = body?.scrollTop || 0;
-    _navStack.push({ screen, data, scrollTop: 0 });
+    _navStack.push({ ..._currentScreen, scrollTop: body?.scrollTop || 0 });
+    _currentScreen = { screen, data };
     _updateBackBtn();
 }
 
 function _navPop() {
-    if (_navStack.length <= 1) return;
-    _navStack.pop();
+    if (_navStack.length === 0) return;
+    const prev = _navStack.pop();
+    _currentScreen = { screen: prev.screen, data: prev.data };
     _updateBackBtn();
-    const entry = _navStack[_navStack.length - 1];
-    _navRestore(entry);
-}
 
-function _navRestore(entry) {
     const panel = document.getElementById('trackDetailPanel');
     if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
 
-    if (entry.screen === 'home') {
+    if (prev.screen === 'home') {
         _showSearchHome();
-    } else if (entry.screen === 'search') {
+    } else if (prev.screen === 'search') {
         _showSearchResults();
-        _renderSearchResultsFromData(entry.data);
-    } else if (entry.screen === 'detail') {
-        _openTrackDetail(entry.data.track);
+        _renderSearchResultsFromData(prev.data);
+    } else if (prev.screen === 'detail') {
+        _openTrackDetail(prev.data.track);
     }
 
-    // 스크롤 복원
     setTimeout(() => {
         const body = document.getElementById('searchBody');
-        if (body) body.scrollTop = entry.scrollTop || 0;
+        if (body) body.scrollTop = prev.scrollTop || 0;
     }, 50);
 }
 
 function _navReset() {
     _navStack.length = 0;
-    _navStack.push({ screen: 'home', data: {}, scrollTop: 0 });
+    _currentScreen = { screen: 'home', data: {} };
     _updateBackBtn();
 }
 
 function _updateBackBtn() {
     const btn = document.getElementById('searchBackBtn');
     if (!btn) return;
-    btn.classList.toggle('hidden', _navStack.length <= 1);
+    btn.classList.toggle('hidden', _navStack.length === 0);
 }
 
 function _renderSearchResultsFromData({ results, query }) {
@@ -409,7 +401,7 @@ async function doSearch() {
 
     if (entityResults.length > 0 || moodResults.length > 0) {
         const allResults = [...entityResults, ...moodResults];
-        _navPush('search', { results: allResults, query });
+        _navNavigate('search', { results: allResults, query });
         _showSearchResults();
         _renderSearchResultsFromData({ results: allResults, query });
     }
@@ -719,7 +711,7 @@ async function _openTrackDetail(track) {
     panel.appendChild(grid);
 
     panel.classList.remove('hidden');
-    _navPush('detail', { track });
+    _navNavigate('detail', { track });
 
     logAction('select_from_search', {
         selected_track_key: track.track_key,
