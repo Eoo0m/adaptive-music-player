@@ -1,62 +1,43 @@
-// ===== Navigation Stack =====
-const _navStack = [];
-
-function _navPush(state) {
-    _navStack.push(state);
-    _updateBackBtn();
-}
+// ===== Back Navigation =====
+// 화면 우선순위: detail패널 > searchResults > searchHome
+// 뒤로 = 현재 보이는 걸 닫고 이전 화면 노출
 
 function _navPop() {
-    if (_navStack.length <= 1) return;
-    _navStack.pop();
-    _updateBackBtn();
-    const prev = _navStack[_navStack.length - 1];
-    if (!prev || prev.type === 'home') {
-        _navClear();
-        _hideDetailPanel();
-        _hideTrackInfo();
+    const panel = document.getElementById('trackDetailPanel');
+    const results = document.getElementById('searchResults');
+
+    if (panel && !panel.classList.contains('hidden')) {
+        // detail 닫기 → 검색결과 or 홈
+        panel.classList.add('hidden');
+        panel.innerHTML = '';
+        if (results && results.children.length > 0) {
+            _showSearchResults();
+        } else {
+            _showSearchHome();
+        }
+        return;
+    }
+
+    if (results && !results.classList.contains('hidden')) {
+        // 검색결과 닫기 → 홈
         _showSearchHome();
-    } else if (prev.type === 'search') {
-        _hideDetailPanel();
-        _hideTrackInfo();
-        _showSearchResults();
-    } else if (prev.type === 'recommend') {
-        _hideDetailPanel();
-        _showTrackInfo();
-        updateTrackDisplayOnly(prev.tracks, prev.currentIndex, true);
+        return;
     }
 }
 
 function _navClear() {
-    _navStack.length = 0;
-    _navStack.push({ type: 'home' });
-    _updateBackBtn();
+    const panel = document.getElementById('trackDetailPanel');
+    if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
 }
 
 function _updateBackBtn() {
     const btn = document.getElementById('searchBackBtn');
     if (!btn) return;
-    const hasBack = _navStack.length > 1;
-    btn.classList.toggle('hidden', !hasBack);
-}
-
-function _hideDetailPanel() {
     const panel = document.getElementById('trackDetailPanel');
-    if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
-}
-
-function _hideTrackInfo() {
-    const el = document.getElementById('trackInfo');
-    if (el) { el.innerHTML = ''; el.classList.add('hidden'); }
-    const si = document.getElementById('initialSongInput');
-    if (si) si.classList.remove('mini');
-}
-
-function _showTrackInfo() {
-    const el = document.getElementById('trackInfo');
-    if (el) el.classList.remove('hidden');
-    const si = document.getElementById('initialSongInput');
-    if (si) { si.classList.add('mini'); si.classList.remove('hidden'); }
+    const results = document.getElementById('searchResults');
+    const hasBack = (panel && !panel.classList.contains('hidden')) ||
+                    (results && !results.classList.contains('hidden'));
+    btn.classList.toggle('hidden', !hasBack);
 }
 
 // ===== Search UI =====
@@ -404,7 +385,7 @@ async function doSearch() {
     }
     // 검색 완료 후 스택에 search 추가 (결과가 있을 때만)
     if (document.getElementById('searchResults')?.children.length > 0) {
-        _navPush({ type: 'search' });
+        _updateBackBtn();
     }
 }
 
@@ -764,7 +745,7 @@ async function _openTrackDetail(track, skipPushState = false) {
 
     panel.classList.remove('hidden');
     if (!skipPushState) {
-        _navPush({ type: 'detail', track });
+        _updateBackBtn();
     }
 
     logAction('select_from_search', {
@@ -811,7 +792,7 @@ function _closeTrackDetail() {
 function updateTrackDisplay(tracks, currentIndex, skipPushState = false) {
     setCurrentCandidates(tracks);
     if (!skipPushState) {
-        _navPush({ type: 'recommend', tracks, currentIndex });
+        _updateBackBtn();
     }
 
     const trackInfoContainer = document.getElementById('trackInfo');
@@ -844,7 +825,3 @@ function updateTrackDisplay(tracks, currentIndex, skipPushState = false) {
     console.log('✅ Track display updated');
 }
 
-// ===== Nav stack init =====
-document.addEventListener('DOMContentLoaded', () => {
-    _navClear();
-});

@@ -90,7 +90,7 @@ async function loadRecommendationsFromTrack(track, trackIndex) {
 function updateTrackDisplayOnly(tracks, currentIndex, skipPushState = false) {
     setCurrentCandidates(tracks);
     if (!skipPushState) {
-        _navPush({ type: 'recommend', tracks, currentIndex });
+        _updateBackBtn();
     }
     console.log('🎨 Updating track display, total tracks:', tracks.length, 'current index:', currentIndex);
 
