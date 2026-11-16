@@ -414,7 +414,7 @@ async function doSearch() {
 
     if (entityResults.length > 0 || moodResults.length > 0) {
         const allResults = [...entityResults, ...moodResults];
-        _currentScreen = { screen: 'search', data: { results: allResults, query } };
+        _navNavigate('search', { results: allResults, query });
         _showSearchResults();
         _renderSearchResultsFromData({ results: allResults, query });
     }
