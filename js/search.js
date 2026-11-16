@@ -1,12 +1,16 @@
-// ===== Back Navigation =====
-// _navStack: ['home', 'search', 'detail', ...] 화면 이름만 쌓음
-const _navStack = ['home'];
+// ===== Navigation Stack =====
+// 각 entry: { screen, data, scrollTop }
+// screen: 'home' | 'search' | 'detail'
+// data: search → { results, query } / detail → { track }
+const _navStack = [];
 
-function _navGo(screen) {
-    // 중복 연속 push 방지
-    if (_navStack[_navStack.length - 1] !== screen) {
-        _navStack.push(screen);
+function _navPush(screen, data = {}) {
+    // 현재 화면 scrollTop 저장
+    const body = document.getElementById('searchBody');
+    if (_navStack.length > 0) {
+        _navStack[_navStack.length - 1].scrollTop = body?.scrollTop || 0;
     }
+    _navStack.push({ screen, data, scrollTop: 0 });
     _updateBackBtn();
 }
 
@@ -14,23 +18,33 @@ function _navPop() {
     if (_navStack.length <= 1) return;
     _navStack.pop();
     _updateBackBtn();
-    const prev = _navStack[_navStack.length - 1];
-    if (prev === 'detail') {
-        // detail → detail: 패널은 이미 열려있으므로 아무것도 안 해도 됨
-        // (연속 detail 클릭 시 스택에 detail이 여러 개 쌓일 수 있으나 각각 다른 트랙)
-        // 여기선 그냥 panel 유지
-    } else if (prev === 'search') {
-        document.getElementById('trackDetailPanel')?.classList.add('hidden');
-        _showSearchResults();
-    } else {
-        document.getElementById('trackDetailPanel')?.classList.add('hidden');
+    const entry = _navStack[_navStack.length - 1];
+    _navRestore(entry);
+}
+
+function _navRestore(entry) {
+    const panel = document.getElementById('trackDetailPanel');
+    if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
+
+    if (entry.screen === 'home') {
         _showSearchHome();
+    } else if (entry.screen === 'search') {
+        _showSearchResults();
+        _renderSearchResultsFromData(entry.data);
+    } else if (entry.screen === 'detail') {
+        _openTrackDetail(entry.data.track);
     }
+
+    // 스크롤 복원
+    setTimeout(() => {
+        const body = document.getElementById('searchBody');
+        if (body) body.scrollTop = entry.scrollTop || 0;
+    }, 50);
 }
 
 function _navReset() {
     _navStack.length = 0;
-    _navStack.push('home');
+    _navStack.push({ screen: 'home', data: {}, scrollTop: 0 });
     _updateBackBtn();
 }
 
@@ -38,6 +52,40 @@ function _updateBackBtn() {
     const btn = document.getElementById('searchBackBtn');
     if (!btn) return;
     btn.classList.toggle('hidden', _navStack.length <= 1);
+}
+
+function _renderSearchResultsFromData({ results, query }) {
+    const div = document.getElementById('searchResults');
+    div.innerHTML = '';
+    window.searchResultsData = [];
+    if (!results?.length) return;
+
+    // entity vs mood 구분 (entity는 title 필드 없이 track 필드)
+    const entityResults = results.filter(r => r._type === 'entity');
+    const moodResults = results.filter(r => r._type === 'mood');
+
+    if (entityResults.length > 0) {
+        const label = document.createElement('div');
+        label.className = 'search-section-label';
+        label.textContent = '검색 결과';
+        div.appendChild(label);
+        const grid = document.createElement('div');
+        grid.className = 'search-entity-grid';
+        entityResults.forEach(r => { window.searchResultsData.push(r); grid.appendChild(_makeTrackCard(r)); });
+        div.appendChild(grid);
+    }
+    if (moodResults.length > 0) {
+        if (entityResults.length > 0) div.appendChild(Object.assign(document.createElement('div'), { className: 'search-results-divider' }));
+        const label = document.createElement('div');
+        label.className = 'search-section-label';
+        label.textContent = `'${query}' 키워드 검색 결과`;
+        div.appendChild(label);
+        const grid = document.createElement('div');
+        grid.className = 'search-mood-grid';
+        moodResults.forEach(r => { window.searchResultsData.push(r); grid.appendChild(_makeTrackCard(r)); });
+        div.appendChild(grid);
+    }
+    window.searchCandidateKeys = results.map(r => r.track_key).filter(Boolean);
 }
 
 // ===== Search UI =====
@@ -351,40 +399,17 @@ async function doSearch() {
     if (_currentSearchQuery !== query) return;
     _hideSearchLoadingDots();
 
-    const entityResults = (smartData?.entity_results || []).map(r => ({ ...r, track: r.track || r.track_name }));
-    if (entityResults.length > 0) {
-        _showSearchResults();
-        _renderEntityResults(entityResults);
-    }
+    const entityResults = (smartData?.entity_results || []).map(r => ({ ...r, track: r.track || r.track_name, _type: 'entity' }));
+    const moodResults = (smartData?.mood_results || []).map(r => ({ ...r, _type: 'mood' }));
 
-    const moodData = smartData;
     if (_currentSearchQuery !== query) return;
     _hideSearchLoadingDots();
-    if (moodData && moodData.mood_results && moodData.mood_results.length > 0) {
-        if (entityResults.length === 0) {
-            // 엔티티 없으면 무드 결과만 단독 표시
-            _showSearchResults();
-            const div = document.getElementById('searchResults');
-            div.innerHTML = '';
-            window.searchResultsData = [];
-            const label = document.createElement('div');
-            label.className = 'search-section-label';
-            label.textContent = `'${query}' 키워드 검색 결과`;
-            div.appendChild(label);
-            const grid = document.createElement('div');
-            grid.className = 'search-mood-grid';
-            moodData.mood_results.forEach(r => {
-                window.searchResultsData.push(r);
-                grid.appendChild(_makeTrackCard(r));
-            });
-            div.appendChild(grid);
-            window.searchCandidateKeys = moodData.mood_results.map(r => r.track_key).filter(Boolean);
-        } else {
-            _appendMoodResults(moodData.mood_results, query);
-        }
-    }
-    if (document.getElementById('searchResults')?.children.length > 0) {
-        _navGo('search');
+
+    if (entityResults.length > 0 || moodResults.length > 0) {
+        const allResults = [...entityResults, ...moodResults];
+        _navPush('search', { results: allResults, query });
+        _showSearchResults();
+        _renderSearchResultsFromData({ results: allResults, query });
     }
 }
 
@@ -419,53 +444,6 @@ function _toggleFavCard(btn, trackKey) {
     toggleFavorite(track, btn);
 }
 
-function _renderEntityResults(entityResults) {
-    const div = document.getElementById('searchResults');
-    div.innerHTML = '';
-    window.searchResultsData = entityResults;
-
-    if (entityResults.length === 0) return;
-
-    const label = document.createElement('div');
-    label.className = 'search-section-label';
-    label.textContent = '검색 결과';
-    div.appendChild(label);
-
-    // 2행 가로 스크롤 그리드
-    const grid = document.createElement('div');
-    grid.className = 'search-entity-grid';
-    entityResults.forEach(r => grid.appendChild(_makeTrackCard(r)));
-    div.appendChild(grid);
-
-    window.searchCandidateKeys = entityResults.map(r => r.track_key).filter(Boolean);
-}
-
-function _appendMoodResults(moodResults, query) {
-    const div = document.getElementById('searchResults');
-
-    const divider = document.createElement('div');
-    divider.className = 'search-results-divider';
-    div.appendChild(divider);
-
-    const label = document.createElement('div');
-    label.className = 'search-section-label';
-    label.textContent = `'${query}' 키워드 검색 결과`;
-    div.appendChild(label);
-
-    // 3열 세로 그리드
-    const grid = document.createElement('div');
-    grid.className = 'search-mood-grid';
-    moodResults.forEach(r => {
-        window.searchResultsData.push(r);
-        grid.appendChild(_makeTrackCard(r));
-    });
-    div.appendChild(grid);
-
-    window.searchCandidateKeys = [
-        ...(window.searchCandidateKeys || []),
-        ...moodResults.map(r => r.track_key).filter(Boolean),
-    ].slice(0, 30);
-}
 
 // ===== Track Search =====
 async function searchByTrack(retryCount = 0) {
@@ -739,7 +717,7 @@ async function _openTrackDetail(track) {
     panel.appendChild(grid);
 
     panel.classList.remove('hidden');
-    _navGo('detail');
+    _navPush('detail', { track });
 
     logAction('select_from_search', {
         selected_track_key: track.track_key,
