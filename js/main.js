@@ -49,7 +49,7 @@ function switchTab(tab) {
     if (tab === 'search') {
         searchInterface.classList.remove('hidden');
         if (searchBody) searchBody.classList.remove('hidden');
-        if (typeof _updateBackBtn === 'function') _updateBackBtn();
+        if (typeof _navReset === 'function') _navReset();
     } else if (tab === 'favorites') {
         favoritesView.classList.remove('hidden');
         loadFavorites();

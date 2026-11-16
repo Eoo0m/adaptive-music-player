@@ -1,43 +1,43 @@
 // ===== Back Navigation =====
-// 화면 우선순위: detail패널 > searchResults > searchHome
-// 뒤로 = 현재 보이는 걸 닫고 이전 화면 노출
+// _navStack: ['home', 'search', 'detail', ...] 화면 이름만 쌓음
+const _navStack = ['home'];
+
+function _navGo(screen) {
+    // 중복 연속 push 방지
+    if (_navStack[_navStack.length - 1] !== screen) {
+        _navStack.push(screen);
+    }
+    _updateBackBtn();
+}
 
 function _navPop() {
-    const panel = document.getElementById('trackDetailPanel');
-    const results = document.getElementById('searchResults');
-
-    if (panel && !panel.classList.contains('hidden')) {
-        // detail 닫기 → 검색결과 or 홈
-        panel.classList.add('hidden');
-        panel.innerHTML = '';
-        if (results && results.children.length > 0) {
-            _showSearchResults();
-        } else {
-            _showSearchHome();
-        }
-        return;
-    }
-
-    if (results && !results.classList.contains('hidden')) {
-        // 검색결과 닫기 → 홈
+    if (_navStack.length <= 1) return;
+    _navStack.pop();
+    _updateBackBtn();
+    const prev = _navStack[_navStack.length - 1];
+    if (prev === 'detail') {
+        // detail → detail: 패널은 이미 열려있으므로 아무것도 안 해도 됨
+        // (연속 detail 클릭 시 스택에 detail이 여러 개 쌓일 수 있으나 각각 다른 트랙)
+        // 여기선 그냥 panel 유지
+    } else if (prev === 'search') {
+        document.getElementById('trackDetailPanel')?.classList.add('hidden');
+        _showSearchResults();
+    } else {
+        document.getElementById('trackDetailPanel')?.classList.add('hidden');
         _showSearchHome();
-        return;
     }
 }
 
-function _navClear() {
-    const panel = document.getElementById('trackDetailPanel');
-    if (panel) { panel.classList.add('hidden'); panel.innerHTML = ''; }
+function _navReset() {
+    _navStack.length = 0;
+    _navStack.push('home');
+    _updateBackBtn();
 }
 
 function _updateBackBtn() {
     const btn = document.getElementById('searchBackBtn');
     if (!btn) return;
-    const panel = document.getElementById('trackDetailPanel');
-    const results = document.getElementById('searchResults');
-    const hasBack = (panel && !panel.classList.contains('hidden')) ||
-                    (results && !results.classList.contains('hidden'));
-    btn.classList.toggle('hidden', !hasBack);
+    btn.classList.toggle('hidden', _navStack.length <= 1);
 }
 
 // ===== Search UI =====
@@ -383,9 +383,8 @@ async function doSearch() {
             _appendMoodResults(moodData.mood_results, query);
         }
     }
-    // 검색 완료 후 스택에 search 추가 (결과가 있을 때만)
     if (document.getElementById('searchResults')?.children.length > 0) {
-        _updateBackBtn();
+        _navGo('search');
     }
 }
 
@@ -740,7 +739,7 @@ async function _openTrackDetail(track) {
     panel.appendChild(grid);
 
     panel.classList.remove('hidden');
-    _updateBackBtn();
+    _navGo('detail');
 
     logAction('select_from_search', {
         selected_track_key: track.track_key,
