@@ -1508,6 +1508,28 @@ body {
     gap: 16px;
 }
 
+.track-grid:not(.track-list) .track-item img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+}
+
+.track-grid:not(.track-list) .track-item-info {
+    width: 100%;
+}
+
+.track-grid:not(.track-list) .track-item-title {
+    font-size: 11px;
+}
+
+.track-grid:not(.track-list) .track-item-artist {
+    font-size: 10px;
+}
+
+.track-grid:not(.track-list) .track-item-meta {
+    font-size: 9px;
+}
+
 .track-display-header {
     display: flex;
     align-items: center;
