@@ -697,7 +697,7 @@ async function _openTrackDetail(track, skipNav = false) {
         <div class="track-detail-selected-info">
             <div class="track-detail-selected-title">${trackName}</div>
             <div class="track-detail-selected-artist">${artistName}</div>
-            ${(track.album || track.release_year) ? `<div class="track-detail-selected-meta">${[track.album, track.release_year].filter(Boolean).join(' · ')}</div>` : ''}
+            ${(track.album || track.release_year) ? `<div class="track-detail-selected-meta">${[track.album, track.release_year].filter(Boolean).join(' | ')}</div>` : ''}
         </div>
     `;
     const playBtn = document.createElement('button');
