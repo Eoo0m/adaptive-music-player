@@ -3273,6 +3273,14 @@ body > .loading-indicator {
     text-overflow: ellipsis;
     margin-top: 1px;
 }
+.search-grid-meta {
+    font-size: 9px;
+    color: rgba(255,255,255,.4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+}
 .search-grid-heart {
     position: absolute;
     top: 6px; right: 6px;
