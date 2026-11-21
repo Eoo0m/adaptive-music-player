@@ -191,6 +191,7 @@ function playerTogglePlayPause() {
     if (!playerCurrentTrack) return;
     if (musicKitInstance) {
         if (playerIsPlaying) {
+            logAction('pause', { selected_track_key: playerCurrentTrack.track_key });
             musicKitInstance.pause();
         } else {
             musicKitInstance.play();
@@ -290,6 +291,7 @@ async function playerNextSimilar() {
     }
 
     if (currentTab !== 'map' || !lastMapData) return;
+    logAction('next_similar', { selected_track_key: playerCurrentTrack.track_key });
     try {
         await _fetchAndPlay('next-track', playerCurrentTrack.track_key);
     } catch (e) {
@@ -300,6 +302,7 @@ async function playerNextSimilar() {
 async function playerDynamicNext() {
     if (!playerCurrentTrack) return;
     if (currentTab !== 'map' || !lastMapData) return;
+    logAction('next_dynamic', { selected_track_key: playerCurrentTrack.track_key });
     try {
         await _fetchAndPlay('dynamic-next', playerCurrentTrack.track_key);
     } catch (e) {

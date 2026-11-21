@@ -92,7 +92,7 @@ async function toggleFavorite(track, btn) {
             });
         }
         if (!res.ok) throw new Error(await res.text());
-        logAction('favorite', { selected_track_key: track.track_key, candidate_track_keys: currentCandidateKeys, extra: isFavorited ? 'remove' : 'add' });
+        logAction(isFavorited ? 'favorite_remove' : 'favorite_add', { selected_track_key: track.track_key, candidate_track_keys: currentCandidateKeys });
     } catch (e) {
         // 롤백
         if (isFavorited) {

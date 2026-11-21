@@ -173,6 +173,7 @@ function _saveRecentSearch(query) {
 }
 
 function _deleteRecentSearch(query) {
+    logAction('delete_recent_search', { search_query: query });
     if (authToken) {
         const encoded = encodeURIComponent(query);
         fetch(`${API_BASE_URL}/recent-searches/${encoded}`, { method: 'DELETE', headers: getAuthHeaders() }).catch(() => {});
@@ -291,7 +292,7 @@ function _triggerAutocomplete(q) {
             const current = document.getElementById('searchInput').value.trim();
             if (current === q) _showAutocomplete(data.suggestions || []);
         } catch {}
-    }, 250);
+    }, 150);
 }
 
 // ===== Input 버튼 헬퍼 =====
