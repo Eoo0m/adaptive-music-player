@@ -1983,6 +1983,15 @@ body {
     margin-top: 4px;
 }
 
+.track-item-meta {
+    font-size: 10px;
+    opacity: 0.45;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 2px;
+}
+
 .album-cover.hidden {
     display: none !important;
 }
@@ -2799,9 +2808,9 @@ body > .loading-indicator {
         bottom: 60px;
     }
     .favorites-list {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 12px !important;
-        padding: 12px !important;
+        grid-template-columns: repeat(5, 1fr) !important;
+        gap: 6px !important;
+        padding: 8px !important;
     }
     .favorites-list:not(.compact-track-list) .track-item img {
         width: 100% !important;

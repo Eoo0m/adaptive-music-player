@@ -165,8 +165,16 @@ function createTrackCard(track, isCurrent, singleAction, options = {}) {
     artistDiv.className = 'track-item-artist';
     artistDiv.textContent = getTrackArtist(track);
 
+    const metaDiv = document.createElement('div');
+    metaDiv.className = 'track-item-meta';
+    const metaParts = [];
+    if (track.album) metaParts.push(track.album);
+    if (track.release_year) metaParts.push(track.release_year);
+    metaDiv.textContent = metaParts.join(' · ');
+
     infoDiv.appendChild(titleDiv);
     infoDiv.appendChild(artistDiv);
+    if (metaParts.length > 0) infoDiv.appendChild(metaDiv);
 
     const imgWrapper = document.createElement('div');
     imgWrapper.className = 'album-cover-wrapper';
