@@ -444,11 +444,15 @@ function _makePlSection(savedPlaylists) {
             apple_music_id: t.apple_music_id,
         }));
 
-        const row = document.createElement('div');
-        row.style.cssText = 'position:relative;width:100%;height:88px;overflow:hidden;border-radius:14px;border:1px solid rgba(255,255,255,.08);margin-bottom:10px;';
+        const PAGE_SIZE = 9;
 
+        // row: 헤더(88px) + 확장 영역 같이 담는 컨테이너
+        const row = document.createElement('div');
+        row.style.cssText = 'position:relative;width:100%;border-radius:14px;border:1px solid rgba(255,255,255,.08);margin-bottom:10px;overflow:hidden;transition:border-color .25s;';
+
+        // 삭제 버튼 (스와이프용, 헤더 뒤에 절대 위치)
         const deleteBtn = document.createElement('div');
-        deleteBtn.style.cssText = 'position:absolute;top:0;right:0;bottom:0;width:80px;background:#e53935;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .15s;';
+        deleteBtn.style.cssText = 'position:absolute;top:0;right:0;height:88px;width:80px;background:#e53935;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .15s;z-index:1;';
         deleteBtn.textContent = '삭제';
         deleteBtn.onclick = async () => {
             try {
@@ -458,8 +462,9 @@ function _makePlSection(savedPlaylists) {
             } catch(e) { console.error('플리 삭제 실패', e); }
         };
 
+        // 헤더 카드 (항상 88px)
         const card = document.createElement('div');
-        card.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;gap:16px;padding:0 20px;background:rgba(255,255,255,.06);border-radius:14px;cursor:pointer;transition:transform .25s ease;box-sizing:border-box;';
+        card.style.cssText = 'position:relative;height:88px;display:flex;align-items:center;gap:16px;padding:0 20px;background:rgba(255,255,255,.06);cursor:pointer;transition:transform .25s ease;box-sizing:border-box;z-index:2;';
 
         const stackWrap = document.createElement('div');
         stackWrap.style.cssText = 'position:relative;height:58px;flex-shrink:0;';
@@ -485,19 +490,77 @@ function _makePlSection(savedPlaylists) {
         info.appendChild(nameEl);
         info.appendChild(countEl);
 
+        // 접힘/펼침 화살표
+        const chevron = document.createElement('div');
+        chevron.style.cssText = 'flex-shrink:0;color:rgba(255,255,255,.35);transition:transform .3s ease;display:flex;align-items:center;';
+        chevron.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+
         card.appendChild(stackWrap);
         card.appendChild(info);
+        card.appendChild(chevron);
+
+        // 확장 영역 (max-height 애니메이션)
+        const expandWrap = document.createElement('div');
+        expandWrap.style.cssText = 'max-height:0;overflow:hidden;transition:max-height .35s cubic-bezier(.4,0,.2,1);background:rgba(255,255,255,.03);';
+
+        const innerPad = document.createElement('div');
+        innerPad.style.cssText = 'padding:12px 14px 14px;';
+        expandWrap.appendChild(innerPad);
+
+        const gridWrap = document.createElement('div');
+        innerPad.appendChild(gridWrap);
+        const pagination = document.createElement('div');
+        pagination.className = 'fav-pagination';
+        innerPad.appendChild(pagination);
+
+        let expanded = false;
+
+        function renderPage(page) {
+            const totalPages = Math.ceil(plTracks.length / PAGE_SIZE);
+            const pageTracks = plTracks.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+            gridWrap.innerHTML = '';
+            const grid = document.createElement('div');
+            grid.className = 'fav-hscroll-recent';
+            pageTracks.forEach(t => grid.appendChild(_makeFavTrackItem(t, (track) => openTrackOnYouTube(track))));
+            gridWrap.appendChild(grid);
+            pagination.innerHTML = '';
+            if (totalPages <= 1) return;
+            for (let i = 0; i < totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.className = `fav-page-btn${i === page ? ' active' : ''}`;
+                btn.textContent = i + 1;
+                btn.onclick = () => renderPage(i);
+                pagination.appendChild(btn);
+            }
+        }
+
+        function toggleExpand() {
+            expanded = !expanded;
+            if (expanded) {
+                renderPage(0);
+                // 실제 높이를 측정해서 max-height 설정
+                expandWrap.style.maxHeight = `${innerPad.scrollHeight + 40}px`;
+                chevron.style.transform = 'rotate(180deg)';
+                row.style.borderColor = 'rgba(255,255,255,.18)';
+            } else {
+                expandWrap.style.maxHeight = '0';
+                chevron.style.transform = 'rotate(0deg)';
+                row.style.borderColor = 'rgba(255,255,255,.08)';
+            }
+        }
+
         row.appendChild(deleteBtn);
         row.appendChild(card);
+        row.appendChild(expandWrap);
 
-        // 클릭 → 곡 목록 펼치기 / 스와이프 → 삭제
-        let startX = 0, moved = false, opened = false;
+        // 스와이프 → 삭제 / 클릭 → 확장
+        let startX = 0, moved = false, swipeOpened = false;
         const showDelete = (show) => { deleteBtn.style.opacity = show ? '1' : '0'; deleteBtn.style.pointerEvents = show ? 'auto' : 'none'; };
         const swipeStart = (x) => { startX = x; moved = false; };
         const swipeMove = (x) => {
             const dx = startX - x;
             if (Math.abs(dx) > 5) moved = true;
-            const val = Math.max(0, Math.min(80, (opened ? 80 : 0) + dx));
+            const val = Math.max(0, Math.min(80, (swipeOpened ? 80 : 0) + dx));
             card.style.transition = 'none';
             card.style.transform = `translateX(-${val}px)`;
             if (val > 0) showDelete(true);
@@ -505,12 +568,12 @@ function _makePlSection(savedPlaylists) {
         const swipeEnd = (x) => {
             const dx = startX - x;
             card.style.transition = 'transform .25s ease';
-            if (!opened && dx > 40) { card.style.transform = 'translateX(-80px)'; opened = true; showDelete(true); }
-            else if (opened && dx < -20) { card.style.transform = 'translateX(0)'; opened = false; showDelete(false); }
-            else { card.style.transform = opened ? 'translateX(-80px)' : 'translateX(0)'; showDelete(opened); }
+            if (!swipeOpened && dx > 40) { card.style.transform = 'translateX(-80px)'; swipeOpened = true; showDelete(true); }
+            else if (swipeOpened && dx < -20) { card.style.transform = 'translateX(0)'; swipeOpened = false; showDelete(false); }
+            else { card.style.transform = swipeOpened ? 'translateX(-80px)' : 'translateX(0)'; showDelete(swipeOpened); }
             if (!moved) {
-                if (opened) { card.style.transform = 'translateX(0)'; opened = false; showDelete(false); }
-                else { _openPlaylistDetail(pl, plTracks, section, listWrap); }
+                if (swipeOpened) { card.style.transform = 'translateX(0)'; swipeOpened = false; showDelete(false); }
+                else { toggleExpand(); }
             }
         };
         card.addEventListener('mousedown', e => swipeStart(e.clientX));
@@ -525,60 +588,6 @@ function _makePlSection(savedPlaylists) {
 
     section.appendChild(listWrap);
     return section;
-}
-
-function _openPlaylistDetail(pl, plTracks, section, listWrap) {
-    const PAGE_SIZE = 9;
-    listWrap.style.display = 'none';
-
-    const detail = document.createElement('div');
-    detail.className = 'pl-detail-wrap';
-
-    // 뒤로가기 + 플리 제목
-    const backRow = document.createElement('div');
-    backRow.className = 'pl-detail-back-row';
-    backRow.innerHTML = `
-        <button class="pl-detail-back-btn">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <span class="pl-detail-title">${pl.name}</span>
-        <span class="pl-detail-count">${plTracks.length}곡</span>
-    `;
-    backRow.querySelector('.pl-detail-back-btn').onclick = () => {
-        detail.remove();
-        listWrap.style.display = '';
-    };
-    detail.appendChild(backRow);
-
-    const gridWrap = document.createElement('div');
-    detail.appendChild(gridWrap);
-
-    const pagination = document.createElement('div');
-    pagination.className = 'fav-pagination';
-    detail.appendChild(pagination);
-
-    function renderPage(page) {
-        const totalPages = Math.ceil(plTracks.length / PAGE_SIZE);
-        const pageTracks = plTracks.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-        gridWrap.innerHTML = '';
-        const scroll = document.createElement('div');
-        scroll.className = 'fav-hscroll-recent';
-        pageTracks.forEach(t => scroll.appendChild(_makeFavTrackItem(t, (track) => openTrackOnYouTube(track))));
-        gridWrap.appendChild(scroll);
-
-        pagination.innerHTML = '';
-        if (totalPages <= 1) return;
-        for (let i = 0; i < totalPages; i++) {
-            const btn = document.createElement('button');
-            btn.className = `fav-page-btn${i === page ? ' active' : ''}`;
-            btn.textContent = i + 1;
-            btn.onclick = () => renderPage(i);
-            pagination.appendChild(btn);
-        }
-    }
-
-    renderPage(0);
-    section.appendChild(detail);
 }
 
 function _makeCommentsSection() {
