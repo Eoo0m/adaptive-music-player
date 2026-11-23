@@ -620,20 +620,43 @@ body {
 .fav-page-btn:hover { background: rgba(255,255,255,.18); color: #fff; }
 .fav-page-btn.active { background: #fff; color: #000; }
 
-.fav-cluster-toggle {
-    font-size: 11px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 20px;
-    border: 1px solid rgba(255,255,255,.25);
-    background: transparent;
-    color: rgba(255,255,255,.5);
+.fav-cluster-toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 7px;
     cursor: pointer;
-    transition: all .15s;
+    flex-shrink: 0;
+    user-select: none;
+}
+.fav-cluster-toggle-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,.5);
+    transition: color .2s;
+}
+.fav-cluster-toggle-wrap:hover .fav-cluster-toggle-label { color: rgba(255,255,255,.8); }
+.fav-cluster-toggle {
+    position: relative;
+    width: 44px;
+    height: 26px;
+    border-radius: 13px;
+    background: rgba(255,255,255,.2);
+    transition: background .25s;
     flex-shrink: 0;
 }
-.fav-cluster-toggle:hover { border-color: rgba(255,255,255,.5); color: #fff; }
-.fav-cluster-toggle.active { background: #fff; color: #000; border-color: #fff; }
+.fav-cluster-toggle.active { background: #4CAFF7; }
+.fav-cluster-toggle-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
+}
+.fav-cluster-toggle.active .fav-cluster-toggle-knob { transform: translateX(18px); }
 
 .fav-cluster-label {
     font-size: 12px;

@@ -244,11 +244,21 @@ function _makeFavPagedSection(title, tracks, onClickTrack) {
     titleEl.textContent = title;
     header.appendChild(titleEl);
 
-    const toggle = document.createElement('button');
+    const toggleWrap = document.createElement('div');
+    toggleWrap.className = 'fav-cluster-toggle-wrap';
+    toggleWrap.title = '취향별 그룹으로 보기';
+
+    const toggleLabel = document.createElement('span');
+    toggleLabel.className = 'fav-cluster-toggle-label';
+    toggleLabel.textContent = '취향 그룹';
+
+    const toggle = document.createElement('div');
     toggle.className = `fav-cluster-toggle${_favClusterMode ? ' active' : ''}`;
-    toggle.textContent = '취향 그룹';
-    toggle.title = '저장곡을 취향별 그룹으로 보기';
-    header.appendChild(toggle);
+    toggle.innerHTML = '<div class="fav-cluster-toggle-knob"></div>';
+
+    toggleWrap.appendChild(toggleLabel);
+    toggleWrap.appendChild(toggle);
+    header.appendChild(toggleWrap);
     section.appendChild(header);
 
     if (!tracks || tracks.length === 0) {
@@ -327,7 +337,7 @@ function _makeFavPagedSection(title, tracks, onClickTrack) {
         renderClusters(_favClusterData, 0);
     }
 
-    toggle.onclick = () => {
+    toggleWrap.onclick = () => {
         _favClusterMode = !_favClusterMode;
         toggle.classList.toggle('active', _favClusterMode);
         if (_favClusterMode) {
