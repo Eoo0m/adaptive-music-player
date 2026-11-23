@@ -1,6 +1,7 @@
 // ===== Favorites =====
 
 async function loadFavorites() {
+    _favClusterData = null; // 찜 목록 새로 로드 시 클러스터 캐시 초기화
     const profileCard = document.getElementById('favProfileCard');
 
     if (currentUser) {
@@ -204,14 +205,50 @@ function _makeRecentSection(title, tracks, onClickTrack) {
     return section;
 }
 
+let _favClusterMode = false;
+let _favClusterData = null;
+
+function _makeFavTrackItem(t, onClickTrack) {
+    const item = document.createElement('div');
+    item.className = 'fav-hscroll-item';
+    item.onclick = () => onClickTrack(t);
+    const img = document.createElement('img');
+    img.src = t.cover_image_url || '';
+    img.className = 'fav-hscroll-cover';
+    img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
+    const name = document.createElement('div');
+    name.className = 'fav-hscroll-title';
+    name.textContent = t.title || t.track_name || t.track || '';
+    const artist = document.createElement('div');
+    artist.className = 'fav-hscroll-artist';
+    artist.textContent = t.artist || '';
+    const dotsBtn = document.createElement('button');
+    dotsBtn.className = 'fav-dots-btn';
+    dotsBtn.innerHTML = '<span></span><span></span><span></span>';
+    dotsBtn.onclick = (e) => { e.stopPropagation(); _openTrackMenu(e, t, dotsBtn, {}); };
+    item.appendChild(img); item.appendChild(dotsBtn); item.appendChild(name); item.appendChild(artist);
+    return item;
+}
+
 function _makeFavPagedSection(title, tracks, onClickTrack) {
     const PAGE_SIZE = 20;
     const section = document.createElement('div');
     section.className = 'fav-section';
 
+    // 헤더 + 클러스터 토글
     const header = document.createElement('div');
     header.className = 'fav-section-title';
-    header.textContent = title;
+    header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;';
+
+    const titleEl = document.createElement('span');
+    titleEl.textContent = title;
+    header.appendChild(titleEl);
+
+    const toggle = document.createElement('button');
+    toggle.className = `fav-cluster-toggle${_favClusterMode ? ' active' : ''}`;
+    toggle.textContent = '취향 그룹';
+    toggle.title = '저장곡을 취향별 그룹으로 보기';
+    header.appendChild(toggle);
     section.appendChild(header);
 
     if (!tracks || tracks.length === 0) {
@@ -222,56 +259,91 @@ function _makeFavPagedSection(title, tracks, onClickTrack) {
         return section;
     }
 
-    const totalPages = Math.ceil(tracks.length / PAGE_SIZE);
     const gridWrap = document.createElement('div');
     section.appendChild(gridWrap);
-
     const pagination = document.createElement('div');
     pagination.className = 'fav-pagination';
     section.appendChild(pagination);
 
-    function renderPage(page) {
-        const start = page * PAGE_SIZE;
-        const pageTracks = tracks.slice(start, start + PAGE_SIZE);
-
+    function renderNormal(page) {
+        const totalPages = Math.ceil(tracks.length / PAGE_SIZE);
+        const pageTracks = tracks.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
         gridWrap.innerHTML = '';
         const scroll = document.createElement('div');
         scroll.className = 'fav-hscroll-recent';
-        pageTracks.forEach(t => {
-            const item = document.createElement('div');
-            item.className = 'fav-hscroll-item';
-            item.onclick = () => onClickTrack(t);
-            const img = document.createElement('img');
-            img.src = t.cover_image_url || '';
-            img.className = 'fav-hscroll-cover';
-            img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
-            const name = document.createElement('div');
-            name.className = 'fav-hscroll-title';
-            name.textContent = t.title || t.track_name || t.track || '';
-            const artist = document.createElement('div');
-            artist.className = 'fav-hscroll-artist';
-            artist.textContent = t.artist || '';
-            const dotsBtn = document.createElement('button');
-            dotsBtn.className = 'fav-dots-btn';
-            dotsBtn.innerHTML = '<span></span><span></span><span></span>';
-            dotsBtn.onclick = (e) => { e.stopPropagation(); _openTrackMenu(e, t, dotsBtn, {}); };
-            item.appendChild(img); item.appendChild(dotsBtn); item.appendChild(name); item.appendChild(artist);
-            scroll.appendChild(item);
-        });
+        pageTracks.forEach(t => scroll.appendChild(_makeFavTrackItem(t, onClickTrack)));
         gridWrap.appendChild(scroll);
-
         pagination.innerHTML = '';
         if (totalPages <= 1) return;
         for (let i = 0; i < totalPages; i++) {
             const btn = document.createElement('button');
             btn.className = `fav-page-btn${i === page ? ' active' : ''}`;
             btn.textContent = i + 1;
-            btn.onclick = () => renderPage(i);
+            btn.onclick = () => renderNormal(i);
             pagination.appendChild(btn);
         }
     }
 
-    renderPage(0);
+    function renderClusters(clusters, page) {
+        gridWrap.innerHTML = '';
+        pagination.innerHTML = '';
+        const totalPages = clusters.length;
+        const cluster = clusters[page];
+        if (!cluster) return;
+
+        const label = document.createElement('div');
+        label.className = 'fav-cluster-label';
+        label.textContent = `그룹 ${page + 1} · ${cluster.tracks.length}곡`;
+        gridWrap.appendChild(label);
+
+        const scroll = document.createElement('div');
+        scroll.className = 'fav-hscroll-recent';
+        cluster.tracks.forEach(t => scroll.appendChild(_makeFavTrackItem(t, onClickTrack)));
+        gridWrap.appendChild(scroll);
+
+        if (totalPages <= 1) return;
+        for (let i = 0; i < totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.className = `fav-page-btn${i === page ? ' active' : ''}`;
+            btn.textContent = i + 1;
+            btn.onclick = () => renderClusters(clusters, i);
+            pagination.appendChild(btn);
+        }
+    }
+
+    async function switchToCluster() {
+        if (!_favClusterData) {
+            gridWrap.innerHTML = '<div class="fav-section-empty">불러오는 중...</div>';
+            pagination.innerHTML = '';
+            try {
+                const res = await fetch(`${API_BASE_URL}/favorites/clustered`, { headers: getAuthHeaders() });
+                if (!res.ok) throw new Error();
+                _favClusterData = (await res.json()).clusters || [];
+            } catch {
+                gridWrap.innerHTML = '<div class="fav-section-empty">클러스터 로드 실패</div>';
+                return;
+            }
+        }
+        renderClusters(_favClusterData, 0);
+    }
+
+    toggle.onclick = () => {
+        _favClusterMode = !_favClusterMode;
+        toggle.classList.toggle('active', _favClusterMode);
+        if (_favClusterMode) {
+            switchToCluster();
+        } else {
+            renderNormal(0);
+        }
+    };
+
+    if (_favClusterMode && _favClusterData) {
+        renderClusters(_favClusterData, 0);
+    } else {
+        _favClusterMode = false;
+        renderNormal(0);
+    }
+
     return section;
 }
 

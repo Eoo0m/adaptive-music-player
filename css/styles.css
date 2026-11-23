@@ -620,6 +620,29 @@ body {
 .fav-page-btn:hover { background: rgba(255,255,255,.18); color: #fff; }
 .fav-page-btn.active { background: #fff; color: #000; }
 
+.fav-cluster-toggle {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,.25);
+    background: transparent;
+    color: rgba(255,255,255,.5);
+    cursor: pointer;
+    transition: all .15s;
+    flex-shrink: 0;
+}
+.fav-cluster-toggle:hover { border-color: rgba(255,255,255,.5); color: #fff; }
+.fav-cluster-toggle.active { background: #fff; color: #000; border-color: #fff; }
+
+.fav-cluster-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,.45);
+    margin-bottom: 10px;
+    letter-spacing: 0.03em;
+}
+
 .fav-list { display: flex; flex-direction: column; width: 100%; }
 .fav-list-item {
     display: flex;
