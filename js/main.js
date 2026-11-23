@@ -257,7 +257,8 @@ function _openTrackMenu(_e, track, anchorEl, options = {}) {
 
     addItem('추천 보기', () => {
         switchTab('search');
-        setTimeout(() => _openTrackDetail(track), 150);
+        const normalized = { ...track, track: track.track || track.title || track.track_name };
+        setTimeout(() => _openTrackDetail(normalized), 150);
     });
 
     addItem('플레이리스트에 추가', () => openPlaylistPickerPanel(track));
