@@ -3664,3 +3664,41 @@ body > .loading-indicator {
     align-items: center;
 }
 .fav-comment-delete:hover { color: rgba(255,255,255,.6); }
+
+/* ===== 플레이리스트 디테일 뷰 ===== */
+.pl-detail-wrap { width: 100%; }
+.pl-detail-back-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+.pl-detail-back-btn {
+    background: rgba(255,255,255,.1);
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,.7);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background .15s;
+}
+.pl-detail-back-btn:hover { background: rgba(255,255,255,.18); color: #fff; }
+.pl-detail-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.pl-detail-count {
+    font-size: 12px;
+    color: rgba(255,255,255,.4);
+    flex-shrink: 0;
+    margin-left: 4px;
+}

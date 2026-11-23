@@ -423,11 +423,14 @@ function _makePlSection(savedPlaylists) {
     header.appendChild(createPlBtn);
     section.appendChild(header);
 
+    const listWrap = document.createElement('div');
+
     if (!savedPlaylists || savedPlaylists.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'fav-section-empty';
         empty.textContent = '없습니다';
-        section.appendChild(empty);
+        listWrap.appendChild(empty);
+        section.appendChild(listWrap);
         return section;
     }
 
@@ -442,7 +445,7 @@ function _makePlSection(savedPlaylists) {
         }));
 
         const row = document.createElement('div');
-        row.style.cssText = 'position:relative;width:100%;max-width:900px;height:72px;overflow:hidden;border-radius:12px;border:1px solid rgba(255,255,255,.08);margin-bottom:8px;';
+        row.style.cssText = 'position:relative;width:100%;max-width:900px;height:88px;overflow:hidden;border-radius:14px;border:1px solid rgba(255,255,255,.08);margin-bottom:10px;';
 
         const deleteBtn = document.createElement('div');
         deleteBtn.style.cssText = 'position:absolute;top:0;right:0;bottom:0;width:80px;background:#e53935;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .15s;';
@@ -456,28 +459,28 @@ function _makePlSection(savedPlaylists) {
         };
 
         const card = document.createElement('div');
-        card.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;gap:14px;padding:0 16px;background:rgba(255,255,255,.06);border-radius:12px;cursor:pointer;transition:transform .25s ease;box-sizing:border-box;';
+        card.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;gap:16px;padding:0 20px;background:rgba(255,255,255,.06);border-radius:14px;cursor:pointer;transition:transform .25s ease;box-sizing:border-box;';
 
         const stackWrap = document.createElement('div');
-        stackWrap.style.cssText = 'position:relative;height:48px;flex-shrink:0;';
+        stackWrap.style.cssText = 'position:relative;height:58px;flex-shrink:0;';
         const previewTracks = (pl.tracks || []).slice(0, 4);
         const total = previewTracks.length;
         previewTracks.forEach((t, i) => {
             const img = document.createElement('img');
             img.src = t.cover_image_url || '';
-            img.style.cssText = `position:absolute;left:${i * 18}px;width:44px;height:44px;border-radius:6px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.5);z-index:${total - i};`;
+            img.style.cssText = `position:absolute;left:${i * 20}px;width:54px;height:54px;border-radius:8px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.5);z-index:${total - i};`;
             img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
             stackWrap.appendChild(img);
         });
-        stackWrap.style.width = `${44 + (total - 1) * 18}px`;
+        stackWrap.style.width = total ? `${54 + (total - 1) * 20}px` : '54px';
 
         const info = document.createElement('div');
         info.style.cssText = 'flex:1;min-width:0;';
         const nameEl = document.createElement('div');
-        nameEl.style.cssText = 'font-size:14px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+        nameEl.style.cssText = 'font-size:15px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
         nameEl.textContent = pl.name;
         const countEl = document.createElement('div');
-        countEl.style.cssText = 'font-size:12px;color:rgba(255,255,255,.45);margin-top:2px;';
+        countEl.style.cssText = 'font-size:12px;color:rgba(255,255,255,.45);margin-top:3px;';
         countEl.textContent = `${(pl.tracks || []).length}곡`;
         info.appendChild(nameEl);
         info.appendChild(countEl);
@@ -487,6 +490,7 @@ function _makePlSection(savedPlaylists) {
         row.appendChild(deleteBtn);
         row.appendChild(card);
 
+        // 클릭 → 곡 목록 펼치기 / 스와이프 → 삭제
         let startX = 0, moved = false, opened = false;
         const showDelete = (show) => { deleteBtn.style.opacity = show ? '1' : '0'; deleteBtn.style.pointerEvents = show ? 'auto' : 'none'; };
         const swipeStart = (x) => { startX = x; moved = false; };
@@ -506,7 +510,7 @@ function _makePlSection(savedPlaylists) {
             else { card.style.transform = opened ? 'translateX(-80px)' : 'translateX(0)'; showDelete(opened); }
             if (!moved) {
                 if (opened) { card.style.transform = 'translateX(0)'; opened = false; showDelete(false); }
-                else { playPlaylist(plTracks); }
+                else { _openPlaylistDetail(pl, plTracks, section, listWrap); }
             }
         };
         card.addEventListener('mousedown', e => swipeStart(e.clientX));
@@ -516,10 +520,65 @@ function _makePlSection(savedPlaylists) {
         card.addEventListener('touchmove', e => swipeMove(e.touches[0].clientX), { passive: true });
         card.addEventListener('touchend', e => swipeEnd(e.changedTouches[0].clientX));
 
-        section.appendChild(row);
+        listWrap.appendChild(row);
     });
 
+    section.appendChild(listWrap);
     return section;
+}
+
+function _openPlaylistDetail(pl, plTracks, section, listWrap) {
+    const PAGE_SIZE = 20;
+    listWrap.style.display = 'none';
+
+    const detail = document.createElement('div');
+    detail.className = 'pl-detail-wrap';
+
+    // 뒤로가기 + 플리 제목
+    const backRow = document.createElement('div');
+    backRow.className = 'pl-detail-back-row';
+    backRow.innerHTML = `
+        <button class="pl-detail-back-btn">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span class="pl-detail-title">${pl.name}</span>
+        <span class="pl-detail-count">${plTracks.length}곡</span>
+    `;
+    backRow.querySelector('.pl-detail-back-btn').onclick = () => {
+        detail.remove();
+        listWrap.style.display = '';
+    };
+    detail.appendChild(backRow);
+
+    const gridWrap = document.createElement('div');
+    detail.appendChild(gridWrap);
+
+    const pagination = document.createElement('div');
+    pagination.className = 'fav-pagination';
+    detail.appendChild(pagination);
+
+    function renderPage(page) {
+        const totalPages = Math.ceil(plTracks.length / PAGE_SIZE);
+        const pageTracks = plTracks.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+        gridWrap.innerHTML = '';
+        const scroll = document.createElement('div');
+        scroll.className = 'fav-hscroll-recent';
+        pageTracks.forEach(t => scroll.appendChild(_makeFavTrackItem(t, (track) => openTrackOnYouTube(track))));
+        gridWrap.appendChild(scroll);
+
+        pagination.innerHTML = '';
+        if (totalPages <= 1) return;
+        for (let i = 0; i < totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.className = `fav-page-btn${i === page ? ' active' : ''}`;
+            btn.textContent = i + 1;
+            btn.onclick = () => renderPage(i);
+            pagination.appendChild(btn);
+        }
+    }
+
+    renderPage(0);
+    section.appendChild(detail);
 }
 
 function _makeCommentsSection() {
