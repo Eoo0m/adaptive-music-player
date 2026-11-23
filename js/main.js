@@ -242,16 +242,28 @@ function _openTrackMenu(_e, track, anchorEl, options = {}) {
     const menu = document.createElement('div');
     menu.className = 'track-dots-menu';
 
-    const item = document.createElement('button');
-    item.className = 'track-dots-menu-item';
-    item.textContent = isFav ? '저장 취소' : '저장하기';
-    item.onclick = async (ev) => {
-        ev.stopPropagation();
-        _closeTrackMenu();
+    function addItem(label, fn) {
+        const btn = document.createElement('button');
+        btn.className = 'track-dots-menu-item';
+        btn.textContent = label;
+        btn.onclick = async (ev) => { ev.stopPropagation(); _closeTrackMenu(); await fn(); };
+        menu.appendChild(btn);
+    }
+
+    addItem(isFav ? '저장 취소' : '저장하기', async () => {
         await toggleFavorite(track, null);
         if (options.onFavoriteChange) options.onFavoriteChange(null, track);
-    };
-    menu.appendChild(item);
+    });
+
+    addItem('추천 보기', () => {
+        // 검색탭으로 이동 후 해당 트랙 detail 열기
+        switchTab('search');
+        setTimeout(() => openTrackDetail(track), 100);
+    });
+
+    addItem('플레이리스트에 추가', () => openPlaylistPickerPanel(track));
+
+    addItem('코멘트 달기', () => openCommentPanel(track));
 
     document.body.appendChild(menu);
     _trackMenuEl = menu;
@@ -260,13 +272,179 @@ function _openTrackMenu(_e, track, anchorEl, options = {}) {
     let top = rect.bottom + 4;
     let left = rect.right - menu.offsetWidth;
     if (left < 4) left = 4;
-    if (top + 48 > window.innerHeight) top = rect.top - 48;
+    if (top + menu.offsetHeight > window.innerHeight) top = rect.top - menu.offsetHeight - 4;
     menu.style.top = top + 'px';
     menu.style.left = left + 'px';
 
     setTimeout(() => {
         document.addEventListener('click', _closeTrackMenu, { once: true });
     }, 0);
+}
+
+// ===== 플레이리스트 선택 패널 (빌드1) =====
+function openPlaylistPickerPanel(track) {
+    _closePanelOverlay();
+    if (!authToken) { alert('로그인 후 이용할 수 있습니다.'); return; }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'panel-overlay';
+    overlay.id = 'playlistPickerOverlay';
+
+    const panel = document.createElement('div');
+    panel.className = 'panel-sheet';
+
+    const header = document.createElement('div');
+    header.className = 'panel-sheet-header';
+    header.innerHTML = `<span>플레이리스트에 추가</span>`;
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'panel-sheet-close';
+    closeBtn.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+    closeBtn.onclick = _closePanelOverlay;
+    header.appendChild(closeBtn);
+    panel.appendChild(header);
+
+    // 새 플리 생성 행
+    const createRow = document.createElement('div');
+    createRow.className = 'pl-picker-create-row';
+    const nameInput = document.createElement('input');
+    nameInput.className = 'pl-picker-name-input';
+    nameInput.type = 'text';
+    nameInput.placeholder = '새 플레이리스트 이름';
+    const addBtn = document.createElement('button');
+    addBtn.className = 'pl-picker-add-btn';
+    addBtn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+    addBtn.onclick = async () => {
+        const name = nameInput.value.trim();
+        if (!name) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/playlist-builder/playlist/create`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                body: JSON.stringify({ name })
+            });
+            const d = await res.json();
+            if (d.success) {
+                // 새 플리에 곡 바로 추가
+                await _addTrackToPlaylist(d.playlist_id, track.track_key);
+                lastSavedPlaylists = lastSavedPlaylists || [];
+                lastSavedPlaylists.unshift({ id: d.playlist_id, name, tracks: [], created_at: d.created_at });
+                _closePanelOverlay();
+            }
+        } catch(e) { console.error(e); }
+    };
+    createRow.appendChild(nameInput);
+    createRow.appendChild(addBtn);
+    panel.appendChild(createRow);
+
+    // 기존 플리 목록
+    const list = document.createElement('div');
+    list.className = 'pl-picker-list';
+    (lastSavedPlaylists || []).forEach(pl => {
+        const row = document.createElement('button');
+        row.className = 'pl-picker-item';
+        const coverSrc = pl.tracks?.[0]?.cover_image_url || '';
+        row.innerHTML = `
+            ${coverSrc ? `<img src="${coverSrc}" width="40" height="40" style="border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<div style="width:40px;height:40px;border-radius:6px;background:rgba(255,255,255,.1);flex-shrink:0;"></div>'}
+            <div class="pl-picker-item-info"><div class="pl-picker-item-name">${pl.name}</div><div class="pl-picker-item-count">${pl.tracks?.length || 0}곡</div></div>
+        `;
+        row.onclick = async () => {
+            await _addTrackToPlaylist(pl.id, track.track_key);
+            _closePanelOverlay();
+        };
+        list.appendChild(row);
+    });
+    if (!lastSavedPlaylists?.length) {
+        list.innerHTML = '<div style="color:rgba(255,255,255,.35);font-size:13px;padding:16px 0;">플레이리스트가 없습니다</div>';
+    }
+    panel.appendChild(list);
+
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+    overlay.onclick = (e) => { if (e.target === overlay) _closePanelOverlay(); };
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+}
+
+async function _addTrackToPlaylist(playlistId, trackKey) {
+    try {
+        await fetch(`${API_BASE_URL}/playlist-builder/playlist/${playlistId}/add-track`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify({ track_key: trackKey })
+        });
+        // lastSavedPlaylists 동기화
+        const pl = (lastSavedPlaylists || []).find(p => p.id === playlistId);
+        if (pl && !pl.tracks.find(t => t.track_key === trackKey)) pl.tracks.push({ track_key: trackKey });
+    } catch(e) { console.error('플리 추가 실패', e); }
+}
+
+// ===== 코멘트 패널 =====
+function openCommentPanel(track) {
+    _closePanelOverlay();
+    if (!authToken) { alert('로그인 후 이용할 수 있습니다.'); return; }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'panel-overlay';
+    overlay.id = 'commentPanelOverlay';
+
+    const panel = document.createElement('div');
+    panel.className = 'panel-sheet';
+
+    const header = document.createElement('div');
+    header.className = 'panel-sheet-header';
+    header.innerHTML = `<span>코멘트</span>`;
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'panel-sheet-close';
+    closeBtn.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+    closeBtn.onclick = _closePanelOverlay;
+    header.appendChild(closeBtn);
+    panel.appendChild(header);
+
+    // 히어로 카드
+    const hero = document.createElement('div');
+    hero.className = 'comment-panel-hero';
+    hero.innerHTML = `
+        <img src="${track.cover_image_url || ''}" alt="" class="comment-panel-cover">
+        <div class="comment-panel-info">
+            <div class="comment-panel-title">${track.title || track.track || ''}</div>
+            <div class="comment-panel-artist">${track.artist || ''}</div>
+        </div>
+    `;
+    panel.appendChild(hero);
+
+    // 댓글 입력
+    const inputRow = document.createElement('div');
+    inputRow.className = 'comment-panel-input-row';
+    const textarea = document.createElement('textarea');
+    textarea.className = 'comment-panel-textarea';
+    textarea.placeholder = '이 곡에 대한 생각을 남겨보세요...';
+    textarea.rows = 3;
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'comment-panel-submit';
+    submitBtn.textContent = '저장';
+    submitBtn.onclick = async () => {
+        const text = textarea.value.trim();
+        if (!text) return;
+        submitBtn.disabled = true;
+        try {
+            const res = await fetch(`${API_BASE_URL}/comments`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                body: JSON.stringify({ track_key: track.track_key, text })
+            });
+            if (res.ok) { _closePanelOverlay(); }
+        } catch(e) { console.error(e); }
+        submitBtn.disabled = false;
+    };
+    inputRow.appendChild(textarea);
+    inputRow.appendChild(submitBtn);
+    panel.appendChild(inputRow);
+
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+    overlay.onclick = (e) => { if (e.target === overlay) _closePanelOverlay(); };
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+}
+
+function _closePanelOverlay() {
+    const el = document.getElementById('playlistPickerOverlay') || document.getElementById('commentPanelOverlay');
+    if (el) el.remove();
 }
 
 function _closeTrackMenu() {

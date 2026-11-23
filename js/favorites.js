@@ -411,7 +411,16 @@ function _makePlSection(savedPlaylists) {
 
     const header = document.createElement('div');
     header.className = 'fav-section-title';
-    header.textContent = '플레이리스트';
+    header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;';
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = '플레이리스트';
+    header.appendChild(titleSpan);
+    const createPlBtn = document.createElement('button');
+    createPlBtn.className = 'pl-create-btn';
+    createPlBtn.title = '새 플레이리스트 만들기';
+    createPlBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+    createPlBtn.onclick = () => openPlaylistBuilderPanel();
+    header.appendChild(createPlBtn);
     section.appendChild(header);
 
     if (!savedPlaylists || savedPlaylists.length === 0) {
@@ -513,6 +522,61 @@ function _makePlSection(savedPlaylists) {
     return section;
 }
 
+function _makeCommentsSection() {
+    const section = document.createElement('div');
+    section.className = 'fav-section';
+    section.id = 'favCommentsSection';
+
+    const header = document.createElement('div');
+    header.className = 'fav-section-title';
+    header.textContent = '내 코멘트';
+    section.appendChild(header);
+
+    const list = document.createElement('div');
+    list.className = 'fav-comments-list';
+    list.innerHTML = '<div class="fav-section-empty">불러오는 중...</div>';
+    section.appendChild(list);
+
+    if (!authToken) {
+        list.innerHTML = '<div class="fav-section-empty">로그인 후 이용할 수 있습니다.</div>';
+        return section;
+    }
+
+    fetch(`${API_BASE_URL}/comments/my`, { headers: getAuthHeaders() })
+        .then(r => r.json())
+        .then(d => {
+            const comments = d.comments || [];
+            list.innerHTML = '';
+            if (!comments.length) {
+                list.innerHTML = '<div class="fav-section-empty">남긴 코멘트가 없습니다.</div>';
+                return;
+            }
+            comments.forEach(c => {
+                const item = document.createElement('div');
+                item.className = 'fav-comment-item';
+                item.innerHTML = `
+                    <img src="${c.cover_image_url || ''}" alt="" class="fav-comment-cover">
+                    <div class="fav-comment-body">
+                        <div class="fav-comment-track">${c.title} · ${c.artist}</div>
+                        <div class="fav-comment-text">${c.text}</div>
+                    </div>
+                    <button class="fav-comment-delete" data-id="${c.id}" title="삭제">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                `;
+                item.querySelector('.fav-comment-delete').onclick = async (e) => {
+                    e.stopPropagation();
+                    await fetch(`${API_BASE_URL}/comments/${c.id}`, { method: 'DELETE', headers: getAuthHeaders() });
+                    item.remove();
+                };
+                list.appendChild(item);
+            });
+        })
+        .catch(() => { list.innerHTML = '<div class="fav-section-empty">불러오기 실패</div>'; });
+
+    return section;
+}
+
 function renderFavorites(favorites, savedPlaylists = [], recentTracks = []) {
     const container = document.getElementById('favoritesView');
     container.querySelectorAll('.fav-section, .fav-playlists-section, .fav-songs-card').forEach(el => el.remove());
@@ -525,6 +589,132 @@ function renderFavorites(favorites, savedPlaylists = [], recentTracks = []) {
     container.appendChild(_makeRecentSection('최근 재생', recentTracks.slice(0, 10), onClickTrack));
     container.appendChild(_makeFavPagedSection('저장된 곡', favorites.map(f => ({ ...f, title: f.title || f.track_name })), onClickTrack));
     container.appendChild(_makePlSection(savedPlaylists));
+    container.appendChild(_makeCommentsSection());
+}
+
+// ===== 플레이리스트 빌드2 패널 (저장탭 + 버튼) =====
+function openPlaylistBuilderPanel() {
+    _closePanelOverlay();
+    if (!authToken) { alert('로그인 후 이용할 수 있습니다.'); return; }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'panel-overlay';
+    overlay.id = 'playlistPickerOverlay';
+
+    const panel = document.createElement('div');
+    panel.className = 'panel-sheet panel-sheet--large';
+
+    const header = document.createElement('div');
+    header.className = 'panel-sheet-header';
+    const titleInput = document.createElement('input');
+    titleInput.className = 'pl-builder-title-input';
+    titleInput.type = 'text';
+    titleInput.placeholder = '플레이리스트 이름';
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'panel-sheet-close';
+    closeBtn.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+    closeBtn.onclick = _closePanelOverlay;
+    header.appendChild(titleInput);
+    header.appendChild(closeBtn);
+    panel.appendChild(header);
+
+    // 선택된 곡 박스
+    const selectedBox = document.createElement('div');
+    selectedBox.className = 'pl-builder-selected-box';
+    const selectedLabel = document.createElement('div');
+    selectedLabel.className = 'pl-builder-box-label';
+    selectedLabel.textContent = '담은 곡';
+    const selectedGrid = document.createElement('div');
+    selectedGrid.className = 'pl-builder-selected-grid';
+    selectedGrid.innerHTML = '<div class="pl-builder-empty">곡을 선택하세요</div>';
+    selectedBox.appendChild(selectedLabel);
+    selectedBox.appendChild(selectedGrid);
+    panel.appendChild(selectedBox);
+
+    // 저장된 곡 박스
+    const favLabel = document.createElement('div');
+    favLabel.className = 'pl-builder-box-label';
+    favLabel.style.marginTop = '16px';
+    favLabel.textContent = '저장된 곡';
+    panel.appendChild(favLabel);
+
+    const favGrid = document.createElement('div');
+    favGrid.className = 'pl-builder-fav-grid';
+    panel.appendChild(favGrid);
+
+    const selectedKeys = new Set();
+
+    function renderFavGrid() {
+        favGrid.innerHTML = '';
+        (lastFavorites || []).forEach(f => {
+            const card = document.createElement('div');
+            card.className = `pl-builder-fav-card${selectedKeys.has(f.track_key) ? ' selected' : ''}`;
+            card.innerHTML = `<img src="${f.cover_image_url || ''}" alt="">`;
+            card.onclick = () => {
+                if (selectedKeys.has(f.track_key)) {
+                    selectedKeys.delete(f.track_key);
+                } else {
+                    selectedKeys.add(f.track_key);
+                }
+                renderSelected();
+                renderFavGrid();
+            };
+            favGrid.appendChild(card);
+        });
+    }
+
+    function renderSelected() {
+        selectedGrid.innerHTML = '';
+        const sel = (lastFavorites || []).filter(f => selectedKeys.has(f.track_key));
+        if (!sel.length) {
+            selectedGrid.innerHTML = '<div class="pl-builder-empty">곡을 선택하세요</div>';
+            return;
+        }
+        sel.forEach(f => {
+            const card = document.createElement('div');
+            card.className = 'pl-builder-selected-card';
+            card.innerHTML = `<img src="${f.cover_image_url || ''}" alt=""><button class="pl-builder-remove-btn">×</button>`;
+            card.querySelector('.pl-builder-remove-btn').onclick = (e) => {
+                e.stopPropagation();
+                selectedKeys.delete(f.track_key);
+                renderSelected();
+                renderFavGrid();
+            };
+            selectedGrid.appendChild(card);
+        });
+    }
+
+    renderFavGrid();
+
+    // 저장 버튼
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'pl-builder-save-btn';
+    saveBtn.textContent = '플레이리스트 저장';
+    saveBtn.onclick = async () => {
+        const name = titleInput.value.trim();
+        if (!name) { titleInput.focus(); return; }
+        if (!selectedKeys.size) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/playlist-builder/save`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                body: JSON.stringify({ name, track_keys: [...selectedKeys] })
+            });
+            const d = await res.json();
+            if (d.success) {
+                lastSavedPlaylists = lastSavedPlaylists || [];
+                const newPl = { id: d.playlist_id, name, tracks: (lastFavorites || []).filter(f => selectedKeys.has(f.track_key)), created_at: d.created_at };
+                lastSavedPlaylists.unshift(newPl);
+                _closePanelOverlay();
+                loadFavorites();
+            }
+        } catch(e) { console.error(e); }
+    };
+    panel.appendChild(saveBtn);
+
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+    overlay.onclick = (e) => { if (e.target === overlay) _closePanelOverlay(); };
+    requestAnimationFrame(() => overlay.classList.add('visible'));
 }
 
 function openSavedPlaylist(playlistId) {
