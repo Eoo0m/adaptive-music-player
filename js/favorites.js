@@ -231,7 +231,7 @@ function _makeFavTrackItem(t, onClickTrack) {
 }
 
 function _makeFavPagedSection(title, tracks, onClickTrack) {
-    const PAGE_SIZE = 20;
+    const PAGE_SIZE = 9;
     const section = document.createElement('div');
     section.className = 'fav-section';
 
@@ -445,7 +445,7 @@ function _makePlSection(savedPlaylists) {
         }));
 
         const row = document.createElement('div');
-        row.style.cssText = 'position:relative;width:100%;max-width:900px;height:88px;overflow:hidden;border-radius:14px;border:1px solid rgba(255,255,255,.08);margin-bottom:10px;';
+        row.style.cssText = 'position:relative;width:100%;height:88px;overflow:hidden;border-radius:14px;border:1px solid rgba(255,255,255,.08);margin-bottom:10px;';
 
         const deleteBtn = document.createElement('div');
         deleteBtn.style.cssText = 'position:absolute;top:0;right:0;bottom:0;width:80px;background:#e53935;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .15s;';
@@ -528,7 +528,7 @@ function _makePlSection(savedPlaylists) {
 }
 
 function _openPlaylistDetail(pl, plTracks, section, listWrap) {
-    const PAGE_SIZE = 20;
+    const PAGE_SIZE = 9;
     listWrap.style.display = 'none';
 
     const detail = document.createElement('div');
@@ -645,7 +645,7 @@ function renderFavorites(favorites, savedPlaylists = [], recentTracks = []) {
         openTrackOnYouTube(track);
     };
 
-    container.appendChild(_makeRecentSection('최근 재생', recentTracks.slice(0, 10), onClickTrack));
+    container.appendChild(_makeRecentSection('최근 재생', recentTracks.slice(0, 9), onClickTrack));
     container.appendChild(_makeFavPagedSection('저장된 곡', favorites.map(f => ({ ...f, title: f.title || f.track_name })), onClickTrack));
     container.appendChild(_makePlSection(savedPlaylists));
     container.appendChild(_makeCommentsSection());
