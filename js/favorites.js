@@ -446,28 +446,15 @@ function _makePlSection(savedPlaylists) {
 
         const PAGE_SIZE = 9;
 
-        // row: 헤더(88px) + 확장 영역 같이 담는 컨테이너
         const row = document.createElement('div');
-        row.style.cssText = 'position:relative;width:100%;border-radius:14px;border:1px solid rgba(255,255,255,.08);margin-bottom:10px;overflow:hidden;transition:border-color .25s;';
+        row.style.cssText = 'width:100%;border-radius:14px;border:1px solid rgba(255,255,255,.08);margin-bottom:10px;overflow:hidden;transition:border-color .25s;';
 
-        // 삭제 버튼 (스와이프용, 헤더 뒤에 절대 위치)
-        const deleteBtn = document.createElement('div');
-        deleteBtn.style.cssText = 'position:absolute;top:0;right:0;height:88px;width:80px;background:#e53935;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .15s;z-index:1;';
-        deleteBtn.textContent = '삭제';
-        deleteBtn.onclick = async () => {
-            try {
-                await fetch(`${API_BASE_URL}/playlist-builder/playlist/${pl.id}`, { method: 'DELETE', headers: getAuthHeaders() });
-                row.remove();
-                lastSavedPlaylists = lastSavedPlaylists.filter(p => p.id !== pl.id);
-            } catch(e) { console.error('플리 삭제 실패', e); }
-        };
-
-        // 헤더 카드 (항상 88px)
+        // 헤더 카드
         const card = document.createElement('div');
-        card.style.cssText = 'position:relative;height:88px;display:flex;align-items:center;gap:16px;padding:0 20px;background:rgba(255,255,255,.06);cursor:pointer;transition:transform .25s ease;box-sizing:border-box;z-index:2;';
+        card.style.cssText = 'height:88px;display:flex;align-items:center;gap:16px;padding:0 14px 0 20px;background:rgba(255,255,255,.06);box-sizing:border-box;';
 
         const stackWrap = document.createElement('div');
-        stackWrap.style.cssText = 'position:relative;height:58px;flex-shrink:0;';
+        stackWrap.style.cssText = 'position:relative;height:58px;flex-shrink:0;cursor:pointer;';
         const previewTracks = (pl.tracks || []).slice(0, 4);
         const total = previewTracks.length;
         previewTracks.forEach((t, i) => {
@@ -480,7 +467,7 @@ function _makePlSection(savedPlaylists) {
         stackWrap.style.width = total ? `${54 + (total - 1) * 20}px` : '54px';
 
         const info = document.createElement('div');
-        info.style.cssText = 'flex:1;min-width:0;';
+        info.style.cssText = 'flex:1;min-width:0;cursor:pointer;';
         const nameEl = document.createElement('div');
         nameEl.style.cssText = 'font-size:15px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
         nameEl.textContent = pl.name;
@@ -490,28 +477,58 @@ function _makePlSection(savedPlaylists) {
         info.appendChild(nameEl);
         info.appendChild(countEl);
 
-        // 접힘/펼침 화살표
-        const chevron = document.createElement('div');
-        chevron.style.cssText = 'flex-shrink:0;color:rgba(255,255,255,.35);transition:transform .3s ease;display:flex;align-items:center;';
-        chevron.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+        // 버튼 그룹: ▶ 재생 / × 삭제 / ∨ 확장
+        const btnGroup = document.createElement('div');
+        btnGroup.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
+
+        function _plBtn(svgStr, title) {
+            const b = document.createElement('button');
+            b.title = title;
+            b.style.cssText = 'background:none;border:none;color:rgba(255,255,255,.45);width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:color .15s,background .15s;';
+            b.innerHTML = svgStr;
+            b.addEventListener('mouseenter', () => { b.style.color='#fff'; b.style.background='rgba(255,255,255,.08)'; });
+            b.addEventListener('mouseleave', () => { b.style.color='rgba(255,255,255,.45)'; b.style.background='none'; });
+            return b;
+        }
+
+        const playBtn = _plBtn(`<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>`, '재생');
+        playBtn.onclick = (e) => { e.stopPropagation(); playPlaylist(plTracks); };
+
+        const delBtn = _plBtn(`<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`, '삭제');
+        delBtn.onclick = async (e) => {
+            e.stopPropagation();
+            if (!confirm(`"${pl.name}" 플레이리스트를 삭제할까요?`)) return;
+            try {
+                await fetch(`${API_BASE_URL}/playlist-builder/playlist/${pl.id}`, { method: 'DELETE', headers: getAuthHeaders() });
+                row.remove();
+                lastSavedPlaylists = lastSavedPlaylists.filter(p => p.id !== pl.id);
+            } catch(e) { console.error('플리 삭제 실패', e); }
+        };
+
+        const chevron = _plBtn(`<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>`, '펼치기');
+        chevron.style.transition = 'color .15s,background .15s';
+        const chevronSvg = chevron.querySelector('svg');
+        chevronSvg.style.transition = 'transform .3s ease';
+
+        btnGroup.appendChild(playBtn);
+        btnGroup.appendChild(delBtn);
+        btnGroup.appendChild(chevron);
 
         card.appendChild(stackWrap);
         card.appendChild(info);
-        card.appendChild(chevron);
+        card.appendChild(btnGroup);
 
-        // 확장 영역 (max-height 애니메이션)
+        // 확장 영역
         const expandWrap = document.createElement('div');
         expandWrap.style.cssText = 'max-height:0;overflow:hidden;transition:max-height .35s cubic-bezier(.4,0,.2,1);background:rgba(255,255,255,.03);';
-
         const innerPad = document.createElement('div');
         innerPad.style.cssText = 'padding:12px 14px 14px;';
         expandWrap.appendChild(innerPad);
-
         const gridWrap = document.createElement('div');
         innerPad.appendChild(gridWrap);
-        const pagination = document.createElement('div');
-        pagination.className = 'fav-pagination';
-        innerPad.appendChild(pagination);
+        const paginationEl = document.createElement('div');
+        paginationEl.className = 'fav-pagination';
+        innerPad.appendChild(paginationEl);
 
         let expanded = false;
 
@@ -523,65 +540,41 @@ function _makePlSection(savedPlaylists) {
             grid.className = 'fav-hscroll-recent';
             pageTracks.forEach(t => grid.appendChild(_makeFavTrackItem(t, (track) => openTrackOnYouTube(track))));
             gridWrap.appendChild(grid);
-            pagination.innerHTML = '';
+            paginationEl.innerHTML = '';
             if (totalPages <= 1) return;
             for (let i = 0; i < totalPages; i++) {
                 const btn = document.createElement('button');
                 btn.className = `fav-page-btn${i === page ? ' active' : ''}`;
                 btn.textContent = i + 1;
                 btn.onclick = () => renderPage(i);
-                pagination.appendChild(btn);
+                paginationEl.appendChild(btn);
             }
         }
 
-        function toggleExpand() {
+        function toggleExpand(e) {
+            if (e) e.stopPropagation();
             expanded = !expanded;
             if (expanded) {
                 renderPage(0);
-                // 실제 높이를 측정해서 max-height 설정
-                expandWrap.style.maxHeight = `${innerPad.scrollHeight + 40}px`;
-                chevron.style.transform = 'rotate(180deg)';
+                requestAnimationFrame(() => {
+                    expandWrap.style.maxHeight = `${innerPad.scrollHeight + 40}px`;
+                });
+                chevronSvg.style.transform = 'rotate(180deg)';
                 row.style.borderColor = 'rgba(255,255,255,.18)';
             } else {
                 expandWrap.style.maxHeight = '0';
-                chevron.style.transform = 'rotate(0deg)';
+                chevronSvg.style.transform = 'rotate(0deg)';
                 row.style.borderColor = 'rgba(255,255,255,.08)';
             }
         }
 
-        row.appendChild(deleteBtn);
+        chevron.onclick = toggleExpand;
+        // 커버/제목 클릭도 확장
+        stackWrap.onclick = toggleExpand;
+        info.onclick = toggleExpand;
+
         row.appendChild(card);
         row.appendChild(expandWrap);
-
-        // 스와이프 → 삭제 / 클릭 → 확장
-        let startX = 0, moved = false, swipeOpened = false;
-        const showDelete = (show) => { deleteBtn.style.opacity = show ? '1' : '0'; deleteBtn.style.pointerEvents = show ? 'auto' : 'none'; };
-        const swipeStart = (x) => { startX = x; moved = false; };
-        const swipeMove = (x) => {
-            const dx = startX - x;
-            if (Math.abs(dx) > 5) moved = true;
-            const val = Math.max(0, Math.min(80, (swipeOpened ? 80 : 0) + dx));
-            card.style.transition = 'none';
-            card.style.transform = `translateX(-${val}px)`;
-            if (val > 0) showDelete(true);
-        };
-        const swipeEnd = (x) => {
-            const dx = startX - x;
-            card.style.transition = 'transform .25s ease';
-            if (!swipeOpened && dx > 40) { card.style.transform = 'translateX(-80px)'; swipeOpened = true; showDelete(true); }
-            else if (swipeOpened && dx < -20) { card.style.transform = 'translateX(0)'; swipeOpened = false; showDelete(false); }
-            else { card.style.transform = swipeOpened ? 'translateX(-80px)' : 'translateX(0)'; showDelete(swipeOpened); }
-            if (!moved) {
-                if (swipeOpened) { card.style.transform = 'translateX(0)'; swipeOpened = false; showDelete(false); }
-                else { toggleExpand(); }
-            }
-        };
-        card.addEventListener('mousedown', e => swipeStart(e.clientX));
-        window.addEventListener('mousemove', e => { if (startX) swipeMove(e.clientX); });
-        window.addEventListener('mouseup', e => { if (startX) { swipeEnd(e.clientX); startX = 0; } });
-        card.addEventListener('touchstart', e => swipeStart(e.touches[0].clientX), { passive: true });
-        card.addEventListener('touchmove', e => swipeMove(e.touches[0].clientX), { passive: true });
-        card.addEventListener('touchend', e => swipeEnd(e.changedTouches[0].clientX));
 
         listWrap.appendChild(row);
     });
