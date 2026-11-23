@@ -2664,7 +2664,7 @@ body > .loading-indicator {
 }
 .track-detail-similar-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 160px));
+    grid-template-columns: repeat(7, 1fr);
     gap: 10px;
 }
 .search-result-row {
@@ -3261,17 +3261,17 @@ body > .loading-indicator {
     margin: 8px 0 4px;
 }
 
-/* Entity grid — 5열 */
+/* Entity grid — 7열 */
 .search-entity-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 160px));
+    grid-template-columns: repeat(7, 1fr);
     gap: 10px;
 }
 
 /* Mood grid */
 .search-mood-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 160px));
+    grid-template-columns: repeat(7, 1fr);
     gap: 10px;
 }
 
