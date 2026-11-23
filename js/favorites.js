@@ -561,19 +561,6 @@ function _makePlSection(savedPlaylists) {
         innerPad.style.cssText = 'padding:12px 14px 14px;';
         expandWrap.appendChild(innerPad);
 
-        // 확장 영역 상단 오른쪽 + 버튼
-        const expandHeader = document.createElement('div');
-        expandHeader.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:10px;';
-        const addBtn = document.createElement('button');
-        addBtn.title = '곡 추가';
-        addBtn.style.cssText = 'background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;';
-        addBtn.innerHTML = '+';
-        addBtn.addEventListener('mouseenter', () => { addBtn.style.background = 'rgba(255,255,255,.2)'; });
-        addBtn.addEventListener('mouseleave', () => { addBtn.style.background = 'rgba(255,255,255,.1)'; });
-        addBtn.onclick = (e) => { e.stopPropagation(); openPlaylistBuilderPanel(pl); };
-        expandHeader.appendChild(addBtn);
-        innerPad.appendChild(expandHeader);
-
         const gridWrap = document.createElement('div');
         innerPad.appendChild(gridWrap);
         const paginationEl = document.createElement('div');
@@ -611,6 +598,21 @@ function _makePlSection(savedPlaylists) {
                 const extra = [{ label: '플레이리스트에서 삭제', fn: () => removeTrackFromPlaylist(trackKey) }];
                 grid.appendChild(_makeFavTrackItem(t, (track) => openTrackOnYouTube(track), extra));
             });
+            // 마지막 페이지에만 + 아이템 추가
+            if (page === totalPages - 1 || totalPages === 0) {
+                const addItem = document.createElement('div');
+                addItem.className = 'fav-hscroll-item';
+                addItem.style.cursor = 'pointer';
+                addItem.title = '곡 추가';
+                addItem.onclick = (e) => { e.stopPropagation(); openPlaylistBuilderPanel(pl); };
+                const addCover = document.createElement('div');
+                addCover.style.cssText = 'width:100%;aspect-ratio:1;border-radius:8px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:28px;color:rgba(255,255,255,.5);transition:background .15s;';
+                addCover.textContent = '+';
+                addItem.addEventListener('mouseenter', () => { addCover.style.background = 'rgba(255,255,255,.18)'; addCover.style.color = '#fff'; });
+                addItem.addEventListener('mouseleave', () => { addCover.style.background = 'rgba(255,255,255,.1)'; addCover.style.color = 'rgba(255,255,255,.5)'; });
+                addItem.appendChild(addCover);
+                grid.appendChild(addItem);
+            }
             gridWrap.appendChild(grid);
             paginationEl.innerHTML = '';
             if (totalPages <= 1) return;
