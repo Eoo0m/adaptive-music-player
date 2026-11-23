@@ -265,6 +265,10 @@ function _openTrackMenu(_e, track, anchorEl, options = {}) {
 
     addItem('코멘트 달기', () => openCommentPanel(track));
 
+    if (options.extraItems && options.extraItems.length) {
+        options.extraItems.forEach(({ label, fn }) => addItem(label, fn));
+    }
+
     document.body.appendChild(menu);
     _trackMenuEl = menu;
 

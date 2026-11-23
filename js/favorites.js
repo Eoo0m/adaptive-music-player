@@ -208,7 +208,7 @@ function _makeRecentSection(title, tracks, onClickTrack) {
 let _favClusterMode = false;
 let _favClusterData = null;
 
-function _makeFavTrackItem(t, onClickTrack) {
+function _makeFavTrackItem(t, onClickTrack, extraMenuItems = []) {
     const item = document.createElement('div');
     item.className = 'fav-hscroll-item';
     item.onclick = () => onClickTrack(t);
@@ -225,7 +225,7 @@ function _makeFavTrackItem(t, onClickTrack) {
     const dotsBtn = document.createElement('button');
     dotsBtn.className = 'fav-dots-btn';
     dotsBtn.innerHTML = '<span></span><span></span><span></span>';
-    dotsBtn.onclick = (e) => { e.stopPropagation(); _openTrackMenu(e, t, dotsBtn, {}); };
+    dotsBtn.onclick = (e) => { e.stopPropagation(); _openTrackMenu(e, t, dotsBtn, { extraItems: extraMenuItems }); };
     item.appendChild(img); item.appendChild(dotsBtn); item.appendChild(name); item.appendChild(artist);
     return item;
 }
@@ -477,6 +477,39 @@ function _makePlSection(savedPlaylists) {
         info.appendChild(nameEl);
         info.appendChild(countEl);
 
+        // 더블클릭 → 제목 인라인 편집
+        nameEl.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            const input = document.createElement('input');
+            input.value = pl.name;
+            input.style.cssText = 'font-size:15px;font-weight:600;color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:2px 8px;width:100%;box-sizing:border-box;outline:none;';
+            nameEl.replaceWith(input);
+            input.focus();
+            input.select();
+            async function commitRename() {
+                const newName = input.value.trim();
+                if (newName && newName !== pl.name) {
+                    try {
+                        await fetch(`${API_BASE_URL}/playlist-builder/playlist/${pl.id}`, {
+                            method: 'PATCH',
+                            headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name: newName })
+                        });
+                        pl.name = newName;
+                        const updated = lastSavedPlaylists.find(p => p.id === pl.id);
+                        if (updated) updated.name = newName;
+                    } catch(err) { console.error('플리 이름 변경 실패', err); }
+                }
+                nameEl.textContent = pl.name;
+                input.replaceWith(nameEl);
+            }
+            input.addEventListener('blur', commitRename);
+            input.addEventListener('keydown', (ke) => {
+                if (ke.key === 'Enter') { ke.preventDefault(); input.blur(); }
+                if (ke.key === 'Escape') { input.value = pl.name; input.blur(); }
+            });
+        });
+
         // 버튼 그룹: ▶ 재생 / × 삭제 / ∨ 확장
         const btnGroup = document.createElement('div');
         btnGroup.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
@@ -532,13 +565,35 @@ function _makePlSection(savedPlaylists) {
 
         let expanded = false;
 
+        async function removeTrackFromPlaylist(trackKey) {
+            const idx = plTracks.findIndex(t => (t.track_key || t.id) === trackKey);
+            if (idx === -1) return;
+            plTracks.splice(idx, 1);
+            const updatedPlEntry = lastSavedPlaylists.find(p => p.id === pl.id);
+            if (updatedPlEntry) updatedPlEntry.tracks = [...plTracks];
+            countEl.textContent = `${plTracks.length}곡`;
+            try {
+                await fetch(`${API_BASE_URL}/playlist-builder/playlist/${pl.id}/remove-track`, {
+                    method: 'POST',
+                    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ track_key: trackKey })
+                });
+            } catch(err) { console.error('트랙 제거 실패', err); }
+            renderPage(0);
+            requestAnimationFrame(() => { expandWrap.style.maxHeight = `${innerPad.scrollHeight + 40}px`; });
+        }
+
         function renderPage(page) {
             const totalPages = Math.ceil(plTracks.length / PAGE_SIZE);
             const pageTracks = plTracks.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
             gridWrap.innerHTML = '';
             const grid = document.createElement('div');
             grid.className = 'fav-hscroll-recent';
-            pageTracks.forEach(t => grid.appendChild(_makeFavTrackItem(t, (track) => openTrackOnYouTube(track))));
+            pageTracks.forEach(t => {
+                const trackKey = t.track_key || t.id;
+                const extra = [{ label: '플레이리스트에서 삭제', fn: () => removeTrackFromPlaylist(trackKey) }];
+                grid.appendChild(_makeFavTrackItem(t, (track) => openTrackOnYouTube(track), extra));
+            });
             gridWrap.appendChild(grid);
             paginationEl.innerHTML = '';
             if (totalPages <= 1) return;
