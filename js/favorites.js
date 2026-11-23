@@ -194,11 +194,14 @@ function _makeRecentSection(title, tracks, onClickTrack) {
         const name = document.createElement('div');
         name.className = 'fav-hscroll-title';
         name.textContent = t.title || t.track_name || t.track || '';
+        const artist = document.createElement('div');
+        artist.className = 'fav-hscroll-artist';
+        artist.textContent = t.artist || '';
         const dotsBtn = document.createElement('button');
         dotsBtn.className = 'fav-dots-btn';
         dotsBtn.innerHTML = '<span></span><span></span><span></span>';
         dotsBtn.onclick = (e) => { e.stopPropagation(); _openTrackMenu(e, t, dotsBtn, {}); };
-        item.appendChild(img); item.appendChild(dotsBtn); item.appendChild(name);
+        item.appendChild(img); item.appendChild(dotsBtn); item.appendChild(name); item.appendChild(artist);
         grid.appendChild(item);
     });
     section.appendChild(grid);
@@ -557,6 +560,20 @@ function _makePlSection(savedPlaylists) {
         const innerPad = document.createElement('div');
         innerPad.style.cssText = 'padding:12px 14px 14px;';
         expandWrap.appendChild(innerPad);
+
+        // 확장 영역 상단 오른쪽 + 버튼
+        const expandHeader = document.createElement('div');
+        expandHeader.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:10px;';
+        const addBtn = document.createElement('button');
+        addBtn.title = '곡 추가';
+        addBtn.style.cssText = 'background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;';
+        addBtn.innerHTML = '+';
+        addBtn.addEventListener('mouseenter', () => { addBtn.style.background = 'rgba(255,255,255,.2)'; });
+        addBtn.addEventListener('mouseleave', () => { addBtn.style.background = 'rgba(255,255,255,.1)'; });
+        addBtn.onclick = (e) => { e.stopPropagation(); openPlaylistBuilderPanel(pl); };
+        expandHeader.appendChild(addBtn);
+        innerPad.appendChild(expandHeader);
+
         const gridWrap = document.createElement('div');
         innerPad.appendChild(gridWrap);
         const paginationEl = document.createElement('div');
@@ -709,9 +726,13 @@ function renderFavorites(favorites, savedPlaylists = [], recentTracks = []) {
 }
 
 // ===== 플레이리스트 빌드2 패널 (저장탭 + 버튼) =====
-function openPlaylistBuilderPanel() {
+// pl: 기존 플리에 곡 추가 모드 (있으면 제목 고정 + add-track API)
+function openPlaylistBuilderPanel(pl = null) {
     _closePanelOverlay();
     if (!authToken) { alert('로그인 후 이용할 수 있습니다.'); return; }
+
+    const addMode = !!pl;  // 기존 플리에 추가 모드
+    const existingKeys = new Set((pl && pl.tracks || []).map(t => t.track_key));
 
     const overlay = document.createElement('div');
     overlay.className = 'panel-overlay';
@@ -722,15 +743,23 @@ function openPlaylistBuilderPanel() {
 
     const header = document.createElement('div');
     header.className = 'panel-sheet-header';
-    const titleInput = document.createElement('input');
-    titleInput.className = 'pl-builder-title-input';
-    titleInput.type = 'text';
-    titleInput.placeholder = '플레이리스트 이름';
+    let titleInput = null;
+    if (addMode) {
+        const titleEl = document.createElement('div');
+        titleEl.style.cssText = 'flex:1;font-size:16px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+        titleEl.textContent = pl.name + '에 곡 추가';
+        header.appendChild(titleEl);
+    } else {
+        titleInput = document.createElement('input');
+        titleInput.className = 'pl-builder-title-input';
+        titleInput.type = 'text';
+        titleInput.placeholder = '플레이리스트 이름';
+        header.appendChild(titleInput);
+    }
     const closeBtn = document.createElement('button');
     closeBtn.className = 'panel-sheet-close';
     closeBtn.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
     closeBtn.onclick = _closePanelOverlay;
-    header.appendChild(titleInput);
     header.appendChild(closeBtn);
     panel.appendChild(header);
 
@@ -763,10 +792,13 @@ function openPlaylistBuilderPanel() {
     function renderFavGrid() {
         favGrid.innerHTML = '';
         (lastFavorites || []).forEach(f => {
+            const alreadyIn = existingKeys.has(f.track_key);
             const card = document.createElement('div');
-            card.className = `pl-builder-fav-card${selectedKeys.has(f.track_key) ? ' selected' : ''}`;
+            card.className = `pl-builder-fav-card${(selectedKeys.has(f.track_key) || alreadyIn) ? ' selected' : ''}`;
+            if (alreadyIn) card.style.opacity = '0.4';
             card.innerHTML = `<img src="${f.cover_image_url || ''}" alt="">`;
             card.onclick = () => {
+                if (alreadyIn) return;
                 if (selectedKeys.has(f.track_key)) {
                     selectedKeys.delete(f.track_key);
                 } else {
@@ -805,25 +837,41 @@ function openPlaylistBuilderPanel() {
     // 저장 버튼
     const saveBtn = document.createElement('button');
     saveBtn.className = 'pl-builder-save-btn';
-    saveBtn.textContent = '플레이리스트 저장';
+    saveBtn.textContent = addMode ? '곡 추가' : '플레이리스트 저장';
     saveBtn.onclick = async () => {
-        const name = titleInput.value.trim();
-        if (!name) { titleInput.focus(); return; }
         if (!selectedKeys.size) return;
-        try {
-            const res = await fetch(`${API_BASE_URL}/playlist-builder/save`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-                body: JSON.stringify({ name, track_keys: [...selectedKeys] })
-            });
-            const d = await res.json();
-            if (d.success) {
-                lastSavedPlaylists = lastSavedPlaylists || [];
-                const newPl = { id: d.playlist_id, name, tracks: (lastFavorites || []).filter(f => selectedKeys.has(f.track_key)), created_at: d.created_at };
-                lastSavedPlaylists.unshift(newPl);
+        if (addMode) {
+            try {
+                for (const key of selectedKeys) {
+                    await fetch(`${API_BASE_URL}/playlist-builder/playlist/${pl.id}/add-track`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                        body: JSON.stringify({ track_key: key })
+                    });
+                    existingKeys.add(key);
+                    const trackData = (lastFavorites || []).find(f => f.track_key === key);
+                    if (trackData) pl.tracks.push(trackData);
+                }
                 _closePanelOverlay();
                 loadFavorites();
-            }
-        } catch(e) { console.error(e); }
+            } catch(e) { console.error(e); }
+        } else {
+            const name = titleInput.value.trim();
+            if (!name) { titleInput.focus(); return; }
+            try {
+                const res = await fetch(`${API_BASE_URL}/playlist-builder/save`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                    body: JSON.stringify({ name, track_keys: [...selectedKeys] })
+                });
+                const d = await res.json();
+                if (d.success) {
+                    lastSavedPlaylists = lastSavedPlaylists || [];
+                    const newPl = { id: d.playlist_id, name, tracks: (lastFavorites || []).filter(f => selectedKeys.has(f.track_key)), created_at: d.created_at };
+                    lastSavedPlaylists.unshift(newPl);
+                    _closePanelOverlay();
+                    loadFavorites();
+                }
+            } catch(e) { console.error(e); }
+        }
     };
     panel.appendChild(saveBtn);
 
