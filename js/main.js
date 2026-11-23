@@ -256,9 +256,8 @@ function _openTrackMenu(_e, track, anchorEl, options = {}) {
     });
 
     addItem('추천 보기', () => {
-        // 검색탭으로 이동 후 해당 트랙 detail 열기
         switchTab('search');
-        setTimeout(() => openTrackDetail(track), 100);
+        setTimeout(() => _openTrackDetail(track), 150);
     });
 
     addItem('플레이리스트에 추가', () => openPlaylistPickerPanel(track));

@@ -702,31 +702,35 @@ async function _openTrackDetail(track, skipNav = false) {
     `;
     // 버튼 그룹
     const btnGroup = document.createElement('div');
-    btnGroup.style.cssText = 'display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0;';
+    btnGroup.style.cssText = 'display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0;position:relative;';
+    // search-grid-heart는 기본 position:absolute라 여기선 static으로 덮어야 함
+    const _btnStyle = 'position:static!important;top:auto!important;right:auto!important;';
 
     const playBtn = document.createElement('button');
     playBtn.className = 'search-grid-heart';
+    playBtn.style.cssText = _btnStyle;
     playBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>`;
     playBtn.addEventListener('click', e => { e.stopPropagation(); openTrackOnYouTube(track); });
     btnGroup.appendChild(playBtn);
 
     const heartBtn = document.createElement('button');
     heartBtn.className = `search-grid-heart ${isFav ? 'favorited' : ''}`;
+    heartBtn.style.cssText = _btnStyle;
     heartBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
     heartBtn.addEventListener('click', e => { e.stopPropagation(); _toggleFavCard(heartBtn, track.track_key); });
     btnGroup.appendChild(heartBtn);
 
-    // + 플레이리스트 추가 버튼
     const plBtn = document.createElement('button');
     plBtn.className = 'search-grid-heart';
+    plBtn.style.cssText = _btnStyle;
     plBtn.title = '플레이리스트에 추가';
     plBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
     plBtn.addEventListener('click', e => { e.stopPropagation(); openPlaylistPickerPanel(track); });
     btnGroup.appendChild(plBtn);
 
-    // 말풍선 코멘트 버튼
     const commentBtn = document.createElement('button');
     commentBtn.className = 'search-grid-heart';
+    commentBtn.style.cssText = _btnStyle;
     commentBtn.title = '코멘트 달기';
     commentBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
     commentBtn.addEventListener('click', e => { e.stopPropagation(); openCommentPanel(track); });
