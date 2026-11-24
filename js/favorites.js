@@ -454,20 +454,11 @@ function _makePlSection(savedPlaylists) {
 
         // 헤더 카드
         const card = document.createElement('div');
-        card.style.cssText = 'height:88px;display:flex;align-items:center;gap:16px;padding:0 14px 0 20px;background:rgba(255,255,255,.06);box-sizing:border-box;';
+        card.style.cssText = 'display:flex;flex-direction:column;gap:10px;padding:12px 14px 12px 16px;background:rgba(255,255,255,.06);box-sizing:border-box;';
 
-        const stackWrap = document.createElement('div');
-        stackWrap.style.cssText = 'position:relative;height:58px;flex-shrink:0;cursor:pointer;';
-        const previewTracks = (pl.tracks || []).slice(0, 4);
-        const total = previewTracks.length;
-        previewTracks.forEach((t, i) => {
-            const img = document.createElement('img');
-            img.src = t.cover_image_url || '';
-            img.style.cssText = `position:absolute;left:${i * 20}px;width:54px;height:54px;border-radius:8px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.5);z-index:${total - i};`;
-            img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
-            stackWrap.appendChild(img);
-        });
-        stackWrap.style.width = total ? `${54 + (total - 1) * 20}px` : '54px';
+        // 상단 행: 이름/곡수 + 버튼들
+        const topRow = document.createElement('div');
+        topRow.style.cssText = 'display:flex;align-items:center;gap:0;';
 
         const info = document.createElement('div');
         info.style.cssText = 'flex:1;min-width:0;cursor:pointer;';
@@ -479,6 +470,22 @@ function _makePlSection(savedPlaylists) {
         countEl.textContent = `${(pl.tracks || []).length}곡`;
         info.appendChild(nameEl);
         info.appendChild(countEl);
+
+        // 커버 가로스크롤
+        const coverScroll = document.createElement('div');
+        coverScroll.style.cssText = 'display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;cursor:pointer;';
+        coverScroll.style.setProperty('-ms-overflow-style', 'none');
+        const styleTag = document.createElement('style');
+        styleTag.textContent = '.pl-cover-scroll::-webkit-scrollbar{display:none}';
+        document.head.appendChild(styleTag);
+        coverScroll.className = 'pl-cover-scroll';
+        (pl.tracks || []).forEach(t => {
+            const img = document.createElement('img');
+            img.src = t.cover_image_url || '';
+            img.style.cssText = 'width:52px;height:52px;border-radius:7px;object-fit:cover;flex-shrink:0;';
+            img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
+            coverScroll.appendChild(img);
+        });
 
         // 더블클릭 → 제목 인라인 편집
         nameEl.addEventListener('dblclick', (e) => {
@@ -550,9 +557,10 @@ function _makePlSection(savedPlaylists) {
         btnGroup.appendChild(delBtn);
         btnGroup.appendChild(chevron);
 
-        card.appendChild(stackWrap);
-        card.appendChild(info);
-        card.appendChild(btnGroup);
+        topRow.appendChild(info);
+        topRow.appendChild(btnGroup);
+        card.appendChild(topRow);
+        if ((pl.tracks || []).length > 0) card.appendChild(coverScroll);
 
         // 확장 영역
         const expandWrap = document.createElement('div');
@@ -643,9 +651,9 @@ function _makePlSection(savedPlaylists) {
         }
 
         chevron.onclick = toggleExpand;
-        // 커버/제목 클릭도 확장
-        stackWrap.onclick = toggleExpand;
+        // 제목/커버스크롤 클릭도 확장
         info.onclick = toggleExpand;
+        coverScroll.onclick = toggleExpand;
 
         row.appendChild(card);
         row.appendChild(expandWrap);
