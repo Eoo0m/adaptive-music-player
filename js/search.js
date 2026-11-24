@@ -739,6 +739,26 @@ async function _openTrackDetail(track, skipNav = false) {
     selectedDiv.appendChild(btnGroup);
     panel.appendChild(selectedDiv);
 
+    // 코멘트 입력 행 (히어로 카드 바로 아래)
+    const commentRow = document.createElement('div');
+    commentRow.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px 12px;';
+    const commentInput = document.createElement('input');
+    commentInput.type = 'text';
+    commentInput.placeholder = '코멘트 달기';
+    commentInput.style.cssText = 'flex:1;background:rgba(255,255,255,.1);border:none;border-radius:20px;padding:9px 14px;color:#fff;font-size:13px;outline:none;';
+    commentInput.addEventListener('keydown', async e => {
+        if (e.key !== 'Enter') return;
+        const text = commentInput.value.trim();
+        if (!text || !authToken) return;
+        await fetch(`${API_BASE_URL}/comments`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify({ track_key: track.track_key, text })
+        }).catch(() => {});
+        commentInput.value = '';
+    });
+    commentRow.appendChild(commentInput);
+    panel.appendChild(commentRow);
+
     // 유사한 곡 레이블 + 그리드
     const label = document.createElement('div');
     label.className = 'track-detail-similar-label';
