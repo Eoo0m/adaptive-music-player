@@ -471,21 +471,20 @@ function _makePlSection(savedPlaylists) {
         info.appendChild(nameEl);
         info.appendChild(countEl);
 
-        // 커버 가로스크롤
+        // 커버 겹치기
         const coverScroll = document.createElement('div');
-        coverScroll.style.cssText = 'display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;cursor:pointer;';
-        coverScroll.style.setProperty('-ms-overflow-style', 'none');
-        const styleTag = document.createElement('style');
-        styleTag.textContent = '.pl-cover-scroll::-webkit-scrollbar{display:none}';
-        document.head.appendChild(styleTag);
         coverScroll.className = 'pl-cover-scroll';
-        (pl.tracks || []).forEach(t => {
+        coverScroll.style.cssText = 'position:relative;display:flex;cursor:pointer;height:52px;';
+        const previewTracks = (pl.tracks || []).slice(0, 5);
+        previewTracks.forEach((t, i) => {
             const img = document.createElement('img');
             img.src = t.cover_image_url || '';
-            img.style.cssText = 'width:52px;height:52px;border-radius:7px;object-fit:cover;flex-shrink:0;';
+            img.style.cssText = `width:52px;height:52px;border-radius:7px;object-fit:cover;flex-shrink:0;position:absolute;left:${i * 20}px;box-shadow:-2px 0 4px rgba(0,0,0,.4);`;
             img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
             coverScroll.appendChild(img);
         });
+        const totalWidth = previewTracks.length > 0 ? 52 + (previewTracks.length - 1) * 20 : 0;
+        coverScroll.style.width = totalWidth + 'px';
 
         // 더블클릭 → 제목 인라인 편집
         nameEl.addEventListener('dblclick', (e) => {
