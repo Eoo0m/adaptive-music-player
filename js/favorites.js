@@ -548,14 +548,8 @@ function _makePlSection(savedPlaylists) {
             } catch(e) { console.error('플리 삭제 실패', e); }
         };
 
-        const chevron = _plBtn(`<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>`, '펼치기');
-        chevron.style.transition = 'color .15s,background .15s';
-        const chevronSvg = chevron.querySelector('svg');
-        chevronSvg.style.transition = 'transform .3s ease';
-
         btnGroup.appendChild(playBtn);
         btnGroup.appendChild(delBtn);
-        btnGroup.appendChild(chevron);
 
         topRow.appendChild(info);
         topRow.appendChild(btnGroup);
@@ -641,17 +635,13 @@ function _makePlSection(savedPlaylists) {
                 requestAnimationFrame(() => {
                     expandWrap.style.maxHeight = `${innerPad.scrollHeight + 40}px`;
                 });
-                chevronSvg.style.transform = 'rotate(180deg)';
                 row.style.borderColor = 'rgba(255,255,255,.18)';
             } else {
                 expandWrap.style.maxHeight = '0';
-                chevronSvg.style.transform = 'rotate(0deg)';
                 row.style.borderColor = 'rgba(255,255,255,.08)';
             }
         }
 
-        chevron.onclick = toggleExpand;
-        // 제목/커버스크롤 클릭도 확장
         info.onclick = toggleExpand;
         coverScroll.onclick = toggleExpand;
 
