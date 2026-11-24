@@ -728,13 +728,6 @@ async function _openTrackDetail(track, skipNav = false) {
     plBtn.addEventListener('click', e => { e.stopPropagation(); openPlaylistPickerPanel(track); });
     btnGroup.appendChild(plBtn);
 
-    const commentBtn = document.createElement('button');
-    commentBtn.className = 'search-grid-heart';
-    commentBtn.style.cssText = _btnStyle;
-    commentBtn.title = '코멘트 달기';
-    commentBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
-    commentBtn.addEventListener('click', e => { e.stopPropagation(); openCommentPanel(track); });
-    btnGroup.appendChild(commentBtn);
 
     selectedDiv.appendChild(btnGroup);
     panel.appendChild(selectedDiv);
