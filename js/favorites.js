@@ -45,8 +45,10 @@ async function loadFavorites() {
 
         // 찜 로드 완료 → 홈화면 query-suggest 섹션 트리거
         const home = document.getElementById('searchHome');
+        console.log('[QS] loadFavorites done. home:', !!home, 'lastFavorites:', lastFavorites?.length, 'alreadyHas:', !!home?.querySelector('.query-suggest-section'), 'fn:', typeof _renderQuerySuggestSection);
         if (home && !home.querySelector('.query-suggest-section')) {
             const favKeys = (lastFavorites || []).map(f => f.track_key).filter(Boolean);
+            console.log('[QS] favKeys:', favKeys.length);
             if (favKeys.length > 0 && typeof _renderQuerySuggestSection === 'function') {
                 _renderQuerySuggestSection(home, favKeys);
             }
