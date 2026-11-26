@@ -158,7 +158,6 @@ function _renderSearchHomeGrid() {
 }
 
 async function _renderQuerySuggestSection(home, favKeys) {
-    console.log('[QS] _renderQuerySuggestSection called, favKeys:', favKeys.length);
     const section = document.createElement('div');
     section.className = 'query-suggest-section';
 
@@ -173,7 +172,6 @@ async function _renderQuerySuggestSection(home, favKeys) {
     section.appendChild(cards);
 
     home.insertBefore(section, home.firstChild);
-    console.log('[QS] section inserted, calling API...');
 
     try {
         const trackKeys = favKeys.slice(0, 40);
@@ -182,10 +180,8 @@ async function _renderQuerySuggestSection(home, favKeys) {
             headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
             body: JSON.stringify({ track_keys: trackKeys, max_queries: 3 })
         });
-        console.log('[QS] API res:', res.status);
-        if (!res.ok) throw new Error(`status ${res.status}`);
+        if (!res.ok) throw new Error();
         const data = await res.json();
-        console.log('[QS] data:', data);
         const suggestions = data.suggestions || [];
 
         cards.innerHTML = '';
@@ -231,7 +227,6 @@ async function _renderQuerySuggestSection(home, favKeys) {
             cards.appendChild(card);
         });
     } catch (e) {
-        console.error('[QS] fetch error:', e);
         section.remove();
     }
 }
