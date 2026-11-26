@@ -189,23 +189,27 @@ async function _renderQuerySuggestSection(home, favKeys) {
             const card = document.createElement('div');
             card.className = 'query-suggest-card';
 
+            // 커버 스택 (최대 5개, 겹치기)
+            const stack = document.createElement('div');
+            stack.className = 'query-suggest-cover-stack';
+            const stackTracks = tracks.slice(0, 5);
+            const totalWidth = 52 + (stackTracks.length - 1) * 20;
+            stack.style.width = totalWidth + 'px';
+            stackTracks.forEach((t, i) => {
+                const img = document.createElement('img');
+                img.src = t.cover_image_url || '';
+                img.alt = '';
+                img.style.left = (i * 20) + 'px';
+                img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
+                stack.appendChild(img);
+            });
+            card.appendChild(stack);
+
             // 쿼리 텍스트
             const queryEl = document.createElement('div');
             queryEl.className = 'query-suggest-query';
             queryEl.textContent = query;
             card.appendChild(queryEl);
-
-            // 커버 그리드 (최대 9개, 3×3)
-            const coverGrid = document.createElement('div');
-            coverGrid.className = 'query-suggest-cover-grid';
-            tracks.slice(0, 9).forEach(t => {
-                const img = document.createElement('img');
-                img.src = t.cover_image_url || '';
-                img.alt = '';
-                img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
-                coverGrid.appendChild(img);
-            });
-            card.appendChild(coverGrid);
 
             // 클릭 → 해당 쿼리 검색 결과 바로 로드 (tracks 재활용)
             card.addEventListener('click', () => {
