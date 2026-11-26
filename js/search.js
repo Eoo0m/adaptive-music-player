@@ -110,28 +110,24 @@ function _renderSearchHomeGrid() {
     if (!mapData?.tracks?.length) {
         const dots = document.getElementById('searchLoadingDots');
         if (typeof authToken !== 'undefined' && authToken) {
-            // 로그인 상태 — 데이터 로딩 중
             if (dots) dots.classList.remove('hidden');
         } else {
-            // 게스트 — 로딩 없이 안내 텍스트만
             if (dots) dots.classList.add('hidden');
         }
         return;
     }
 
-    // 데이터 왔으면 dots 숨기기
     const dots = document.getElementById('searchLoadingDots');
     if (dots) dots.classList.add('hidden');
 
-    // 70개 랜덤 샘플 (7×10)
-    const pool = [...mapData.tracks];
-    const sampled = [];
-    while (sampled.length < 70 && pool.length > 0) {
-        const idx = Math.floor(Math.random() * pool.length);
-        sampled.push(pool.splice(idx, 1)[0]);
+    home.querySelector('.search-guide-text')?.remove();
+
+    // ── query-suggest 섹션 (찜 기반 쿼리 추천) ──
+    if (authToken && !home.querySelector('.query-suggest-section')) {
+        _renderQuerySuggestSection(home, mapData.tracks);
     }
 
-    // 헤더 — 유저 이름 가져오기
+    // ── 취향 기반 추천 그리드 ──
     const userName = (typeof currentUser !== 'undefined' && currentUser)
         ? (currentUser.display_name || currentUser.email?.split('@')[0] || '')
         : '';
@@ -142,16 +138,96 @@ function _renderSearchHomeGrid() {
     const grid = document.createElement('div');
     grid.className = 'search-home-grid';
 
+    const pool = [...mapData.tracks];
+    const sampled = [];
+    while (sampled.length < 70 && pool.length > 0) {
+        const idx = Math.floor(Math.random() * pool.length);
+        sampled.push(pool.splice(idx, 1)[0]);
+    }
     sampled.forEach(t => {
-        // _makeTrackCard와 동일한 형식으로 렌더
         const r = { ...t, track: t.title || t.track_name || '', track_name: t.title || t.track_name || '' };
         const card = _makeTrackCard(r);
         grid.appendChild(card);
     });
 
-    home.querySelector('.search-guide-text')?.remove();
     home.appendChild(label);
     home.appendChild(grid);
+}
+
+async function _renderQuerySuggestSection(home, mapTracks) {
+    // placeholder 먼저 삽입
+    const section = document.createElement('div');
+    section.className = 'query-suggest-section';
+
+    const secLabel = document.createElement('div');
+    secLabel.className = 'search-section-label search-home-label';
+    secLabel.textContent = '지금 이런 음악 어때요?';
+    section.appendChild(secLabel);
+
+    const cards = document.createElement('div');
+    cards.className = 'query-suggest-cards';
+    // 로딩 dots
+    cards.innerHTML = '<div class="query-suggest-loading"><span></span><span></span><span></span></div>';
+    section.appendChild(cards);
+
+    home.insertBefore(section, home.firstChild);
+
+    try {
+        const trackKeys = mapTracks.slice(0, 40).map(t => t.track_key).filter(Boolean);
+        const res = await fetch(`${API_BASE_URL}/query-suggest`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify({ track_keys: trackKeys, max_queries: 3 })
+        });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const suggestions = data.suggestions || [];
+
+        cards.innerHTML = '';
+        suggestions.forEach(({ query, tracks }) => {
+            const card = document.createElement('div');
+            card.className = 'query-suggest-card';
+
+            // 쿼리 텍스트
+            const queryEl = document.createElement('div');
+            queryEl.className = 'query-suggest-query';
+            queryEl.textContent = query;
+            card.appendChild(queryEl);
+
+            // 커버 그리드 (최대 9개, 3×3)
+            const coverGrid = document.createElement('div');
+            coverGrid.className = 'query-suggest-cover-grid';
+            tracks.slice(0, 9).forEach(t => {
+                const img = document.createElement('img');
+                img.src = t.cover_image_url || '';
+                img.alt = '';
+                img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
+                coverGrid.appendChild(img);
+            });
+            card.appendChild(coverGrid);
+
+            // 클릭 → 해당 쿼리 검색 결과 바로 로드 (tracks 재활용)
+            card.addEventListener('click', () => {
+                _navReset();
+                _currentSearchQuery = query;
+                document.getElementById('searchInput').value = query;
+                document.getElementById('searchClearBtn')?.classList.remove('hidden');
+
+                const allResults = tracks.map(t => ({
+                    ...t, track: t.track || t.track_name, _type: 'mood'
+                }));
+                window.searchResultsData = allResults;
+                window.searchCandidateKeys = allResults.map(r => r.track_key);
+                _navNavigate('search', { results: allResults, query });
+                _showSearchResults();
+                _renderSearchResultsFromData({ results: allResults, query });
+            });
+
+            cards.appendChild(card);
+        });
+    } catch (e) {
+        section.remove();
+    }
 }
 
 function _showSearchResults() {
