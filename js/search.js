@@ -552,16 +552,14 @@ async function doSearch() {
     if (_currentSearchQuery !== query) return;
     _hideSearchLoadingDots();
 
-    if (entityResults.length > 0 || moodResults.length > 0) {
-        const allResults = [...entityResults, ...moodResults];
+    const querySuggestions = smartData?.query_suggestions || [];
+    const allResults = [...entityResults, ...moodResults];
+
+    if (querySuggestions.length > 0 || allResults.length > 0) {
         _navNavigate('search', { results: allResults, query });
         _showSearchResults();
-        _renderSearchResultsFromData({ results: allResults, query });
-    }
-
-    const querySuggestions = smartData?.query_suggestions || [];
-    if (querySuggestions.length > 0) {
-        _renderQuerySuggestInResults(querySuggestions);
+        if (querySuggestions.length > 0) _renderQuerySuggestInResults(querySuggestions);
+        if (allResults.length > 0) _renderSearchResultsFromData({ results: allResults, query });
     }
 }
 
