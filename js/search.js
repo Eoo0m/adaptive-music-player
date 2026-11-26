@@ -178,7 +178,7 @@ async function _renderQuerySuggestSection(home, favKeys) {
         const res = await fetch(`${API_BASE_URL}/query-suggest`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            body: JSON.stringify({ track_keys: trackKeys, max_queries: 3 })
+            body: JSON.stringify({ track_keys: trackKeys, max_queries: 3, user_id: currentUser?.user_id || null })
         });
         if (!res.ok) throw new Error();
         const data = await res.json();
