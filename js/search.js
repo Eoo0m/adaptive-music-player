@@ -256,13 +256,10 @@ function _renderQuerySuggestInResults(suggestions) {
 
         const stack = document.createElement('div');
         stack.className = 'query-suggest-cover-stack';
-        const stackTracks = tracks.slice(0, 5);
-        stack.style.width = (52 + (stackTracks.length - 1) * 20) + 'px';
-        stackTracks.forEach((t, i) => {
+        tracks.slice(0, 4).forEach(t => {
             const img = document.createElement('img');
             img.src = t.cover_image_url || '';
             img.alt = '';
-            img.style.left = (i * 20) + 'px';
             img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
             stack.appendChild(img);
         });
