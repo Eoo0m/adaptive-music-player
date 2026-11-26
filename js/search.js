@@ -104,6 +104,17 @@ function _renderSearchHomeGrid() {
     const home = document.getElementById('searchHome');
     if (!home) return;
 
+    home.querySelector('.search-guide-text')?.remove();
+
+    // ── query-suggest 섹션: lastFavorites 있으면 바로 호출 ──
+    if (authToken && !home.querySelector('.query-suggest-section')) {
+        const favKeys = (lastFavorites || []).map(f => f.track_key).filter(Boolean);
+        if (favKeys.length > 0) {
+            _renderQuerySuggestSection(home, favKeys);
+        }
+    }
+
+    // ── 취향 기반 추천 그리드 ──
     if (home.querySelector('.search-home-grid')) return;
 
     const mapData = window.lastMapData;
@@ -120,14 +131,6 @@ function _renderSearchHomeGrid() {
     const dots = document.getElementById('searchLoadingDots');
     if (dots) dots.classList.add('hidden');
 
-    home.querySelector('.search-guide-text')?.remove();
-
-    // ── query-suggest 섹션 (찜 기반 쿼리 추천) ──
-    if (authToken && !home.querySelector('.query-suggest-section')) {
-        _renderQuerySuggestSection(home, mapData.tracks);
-    }
-
-    // ── 취향 기반 추천 그리드 ──
     const userName = (typeof currentUser !== 'undefined' && currentUser)
         ? (currentUser.display_name || currentUser.email?.split('@')[0] || '')
         : '';
@@ -154,8 +157,7 @@ function _renderSearchHomeGrid() {
     home.appendChild(grid);
 }
 
-async function _renderQuerySuggestSection(home, mapTracks) {
-    // placeholder 먼저 삽입
+async function _renderQuerySuggestSection(home, favKeys) {
     const section = document.createElement('div');
     section.className = 'query-suggest-section';
 
@@ -166,14 +168,13 @@ async function _renderQuerySuggestSection(home, mapTracks) {
 
     const cards = document.createElement('div');
     cards.className = 'query-suggest-cards';
-    // 로딩 dots
     cards.innerHTML = '<div class="query-suggest-loading"><span></span><span></span><span></span></div>';
     section.appendChild(cards);
 
     home.insertBefore(section, home.firstChild);
 
     try {
-        const trackKeys = mapTracks.slice(0, 40).map(t => t.track_key).filter(Boolean);
+        const trackKeys = favKeys.slice(0, 40);
         const res = await fetch(`${API_BASE_URL}/query-suggest`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
