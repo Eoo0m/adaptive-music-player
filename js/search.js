@@ -235,6 +235,64 @@ async function _renderQuerySuggestSection(home, favKeys) {
     }
 }
 
+function _renderQuerySuggestInResults(suggestions) {
+    const div = document.getElementById('searchResults');
+    div.querySelector('.query-suggest-section')?.remove();
+
+    const section = document.createElement('div');
+    section.className = 'query-suggest-section';
+
+    const label = document.createElement('div');
+    label.className = 'search-section-label';
+    label.textContent = '이런 음악도 찾아보세요';
+    section.appendChild(label);
+
+    const cards = document.createElement('div');
+    cards.className = 'query-suggest-cards';
+
+    suggestions.forEach(({ query, tracks }) => {
+        const card = document.createElement('div');
+        card.className = 'query-suggest-card';
+
+        const stack = document.createElement('div');
+        stack.className = 'query-suggest-cover-stack';
+        const stackTracks = tracks.slice(0, 5);
+        stack.style.width = (52 + (stackTracks.length - 1) * 20) + 'px';
+        stackTracks.forEach((t, i) => {
+            const img = document.createElement('img');
+            img.src = t.cover_image_url || '';
+            img.alt = '';
+            img.style.left = (i * 20) + 'px';
+            img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
+            stack.appendChild(img);
+        });
+        card.appendChild(stack);
+
+        const queryEl = document.createElement('div');
+        queryEl.className = 'query-suggest-query';
+        queryEl.textContent = query;
+        card.appendChild(queryEl);
+
+        card.addEventListener('click', () => {
+            _navReset();
+            _currentSearchQuery = query;
+            document.getElementById('searchInput').value = query;
+            document.getElementById('searchClearBtn')?.classList.remove('hidden');
+            const allResults = tracks.map(t => ({ ...t, track: t.track || t.track_name, _type: 'mood' }));
+            window.searchResultsData = allResults;
+            window.searchCandidateKeys = allResults.map(r => r.track_key);
+            _navNavigate('search', { results: allResults, query });
+            _showSearchResults();
+            _renderSearchResultsFromData({ results: allResults, query });
+        });
+
+        cards.appendChild(card);
+    });
+
+    section.appendChild(cards);
+    div.appendChild(section);
+}
+
 function _showSearchResults() {
     const body = document.getElementById('searchBody');
     if (body) body.classList.remove('hidden');
@@ -482,7 +540,7 @@ async function doSearch() {
     const smartData = await fetch(`${API_BASE_URL}/smart-search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, entity_limit: 10, mood_top_k: 40, mood_candidates: 100 }),
+        body: JSON.stringify({ query, entity_limit: 10, mood_top_k: 40, mood_candidates: 100, user_id: currentUser?.user_id || null }),
     }).then(r => r.ok ? r.json() : null).catch(() => null);
 
     if (_currentSearchQuery !== query) return;
@@ -499,6 +557,11 @@ async function doSearch() {
         _navNavigate('search', { results: allResults, query });
         _showSearchResults();
         _renderSearchResultsFromData({ results: allResults, query });
+    }
+
+    const querySuggestions = smartData?.query_suggestions || [];
+    if (querySuggestions.length > 0) {
+        _renderQuerySuggestInResults(querySuggestions);
     }
 }
 
