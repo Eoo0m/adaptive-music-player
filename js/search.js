@@ -189,17 +189,12 @@ async function _renderQuerySuggestSection(home, favKeys) {
             const card = document.createElement('div');
             card.className = 'query-suggest-card';
 
-            // 커버 스택 (최대 5개, 겹치기)
             const stack = document.createElement('div');
             stack.className = 'query-suggest-cover-stack';
-            const stackTracks = tracks.slice(0, 5);
-            const totalWidth = 52 + (stackTracks.length - 1) * 20;
-            stack.style.width = totalWidth + 'px';
-            stackTracks.forEach((t, i) => {
+            tracks.slice(0, 4).forEach(t => {
                 const img = document.createElement('img');
                 img.src = t.cover_image_url || '';
                 img.alt = '';
-                img.style.left = (i * 20) + 'px';
                 img.onerror = () => { img.style.background = '#1a1a24'; img.src = ''; };
                 stack.appendChild(img);
             });
