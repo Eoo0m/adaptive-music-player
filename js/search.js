@@ -107,7 +107,7 @@ function _renderSearchHomeGrid() {
     home.querySelector('.search-guide-text')?.remove();
 
     // ── query-suggest 섹션: lastFavorites 있으면 바로 호출 ──
-    if (authToken && !home.querySelector('.query-suggest-section')) {
+    if (!home.querySelector('.query-suggest-section')) {
         const favKeys = (lastFavorites || []).map(f => f.track_key).filter(Boolean);
         if (favKeys.length > 0) {
             _renderQuerySuggestSection(home, favKeys);
