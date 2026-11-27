@@ -2986,6 +2986,7 @@ body > .loading-indicator {
 
     #searchBody {
         left: 0 !important;
+        right: 0 !important;
         bottom: 60px !important;
         padding: 0 12px;
         overflow-y: auto !important;
