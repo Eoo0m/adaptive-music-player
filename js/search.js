@@ -206,21 +206,10 @@ async function _renderQuerySuggestSection(home, favKeys) {
             queryEl.textContent = query;
             card.appendChild(queryEl);
 
-            // 클릭 → 해당 쿼리 검색 결과 바로 로드 (tracks 재활용)
             card.addEventListener('click', () => {
-                _navReset();
-                _currentSearchQuery = query;
                 document.getElementById('searchInput').value = query;
                 document.getElementById('searchClearBtn')?.classList.remove('hidden');
-
-                const allResults = tracks.map(t => ({
-                    ...t, track: t.track || t.track_name, _type: 'mood'
-                }));
-                window.searchResultsData = allResults;
-                window.searchCandidateKeys = allResults.map(r => r.track_key);
-                _navNavigate('search', { results: allResults, query });
-                _showSearchResults();
-                _renderSearchResultsFromData({ results: allResults, query });
+                doSearch();
             });
 
             cards.appendChild(card);
@@ -266,16 +255,9 @@ function _renderQuerySuggestInResults(suggestions) {
         card.appendChild(queryEl);
 
         card.addEventListener('click', () => {
-            _navReset();
-            _currentSearchQuery = query;
             document.getElementById('searchInput').value = query;
             document.getElementById('searchClearBtn')?.classList.remove('hidden');
-            const allResults = tracks.map(t => ({ ...t, track: t.track || t.track_name, _type: 'mood' }));
-            window.searchResultsData = allResults;
-            window.searchCandidateKeys = allResults.map(r => r.track_key);
-            _navNavigate('search', { results: allResults, query });
-            _showSearchResults();
-            _renderSearchResultsFromData({ results: allResults, query });
+            doSearch();
         });
 
         cards.appendChild(card);
