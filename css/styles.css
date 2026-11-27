@@ -2988,13 +2988,27 @@ body > .loading-indicator {
         left: 0 !important;
         right: 0 !important;
         bottom: 60px !important;
-        padding: 0 12px;
+        padding: 0;
         overflow-y: auto !important;
+    }
+
+    #searchHome {
+        padding: 24px 12px 100px !important;
     }
 
     #searchResults {
         padding: 16px 0 100px !important;
         max-height: none !important;
+    }
+
+    .search-section-label,
+    .query-suggest-section {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .query-suggest-card {
+        border-radius: 0 !important;
     }
 
     .favorites-view {
