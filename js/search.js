@@ -264,7 +264,7 @@ function _renderQuerySuggestInResults(suggestions) {
     });
 
     section.appendChild(cards);
-    div.appendChild(section);
+    div.insertBefore(section, div.firstChild);
 }
 
 function _showSearchResults() {
