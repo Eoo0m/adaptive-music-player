@@ -191,7 +191,7 @@ async function _renderQuerySuggestSection(home, favKeys) {
 
             const stack = document.createElement('div');
             stack.className = 'query-suggest-cover-stack';
-            tracks.slice(0, 4).forEach(t => {
+            tracks.slice(0, 8).forEach(t => {
                 const img = document.createElement('img');
                 img.src = t.cover_image_url || '';
                 img.alt = '';
@@ -240,7 +240,7 @@ function _renderQuerySuggestInResults(suggestions) {
 
         const stack = document.createElement('div');
         stack.className = 'query-suggest-cover-stack';
-        tracks.slice(0, 4).forEach(t => {
+        tracks.slice(0, 8).forEach(t => {
             const img = document.createElement('img');
             img.src = t.cover_image_url || '';
             img.alt = '';
