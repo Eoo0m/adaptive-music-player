@@ -532,8 +532,8 @@ async function doSearch() {
     if (querySuggestions.length > 0 || allResults.length > 0) {
         _navNavigate('search', { results: allResults, query });
         _showSearchResults();
-        if (querySuggestions.length > 0) _renderQuerySuggestInResults(querySuggestions);
         if (allResults.length > 0) _renderSearchResultsFromData({ results: allResults, query });
+        if (querySuggestions.length > 0) _renderQuerySuggestInResults(querySuggestions);
     }
 }
 
