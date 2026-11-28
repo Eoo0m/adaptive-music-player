@@ -548,6 +548,7 @@ function _makeTrackCard(r) {
 
     const card = document.createElement('div');
     card.className = 'search-grid-card';
+    card.dataset.trackJson = JSON.stringify(r);
     card.innerHTML = `
         <div class="search-grid-cover">
             ${coverSrc ? `<img src="${coverSrc}" alt="">` : '<div class="search-grid-cover-placeholder"></div>'}

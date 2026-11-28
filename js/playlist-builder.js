@@ -500,21 +500,28 @@ function fpbClose() {
 
 function _fpbConvertBtn(btn) {
     if (btn.dataset.fpbConverted) return; // 이미 변환됨
-    const onclick = btn.getAttribute('onclick') || '';
-    const match = onclick.match(/'([^']+)'\)/);
-    const trackKey = match ? match[1] : (btn.dataset.trackKey || null);
-    btn.dataset.origOnclick = onclick;
+    // 카드 dataset.trackJson 우선, 없으면 onclick에서 track_key만 추출
+    const card = btn.closest('[data-track-json]');
+    let track = null;
+    if (card?.dataset.trackJson) {
+        try { track = JSON.parse(card.dataset.trackJson); } catch (_) {}
+    }
+    if (!track) {
+        const onclick = btn.getAttribute('onclick') || '';
+        const match = onclick.match(/'([^']+)'\)/);
+        const trackKey = match ? match[1] : null;
+        track = (window.searchResultsData || []).find(t => t.track_key === trackKey)
+            || (window.lastMapData?.tracks || []).find(t => t.track_key === trackKey)
+            || (trackKey ? { track_key: trackKey } : null);
+    }
+    if (!track) return;
+
+    btn.dataset.origOnclick = btn.getAttribute('onclick') || '';
     btn.dataset.origHtml = btn.innerHTML;
     btn.dataset.fpbConverted = '1';
     btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
     btn.removeAttribute('onclick');
-    btn.onclick = e => {
-        e.stopPropagation();
-        const r = (window.searchResultsData || []).find(t => t.track_key === trackKey)
-            || (window.lastMapData?.tracks || []).find(t => t.track_key === trackKey)
-            || { track_key: trackKey };
-        fpbAddTrack(r);
-    };
+    btn.onclick = e => { e.stopPropagation(); fpbAddTrack(track); };
 }
 
 function _fpbRestoreBtn(btn) {
@@ -563,16 +570,16 @@ function fpbRender() {
         <input class="fpb-title-input" placeholder="플레이리스트 제목" value="${titleVal.replace(/"/g, '&quot;')}">
         <div class="fpb-tracks">
             ${fpb.tracks.length === 0
-                ? `<div class="fpb-empty">트랙 상세에서 + 로 추가하세요</div>`
-                : fpb.tracks.map(t => `
-                    <div class="fpb-track-item" title="${(t.title || t.track || '').replace(/"/g, '')}">
-                        <img src="${t.cover_image_url || ''}" width="36" height="36" style="border-radius:4px;object-fit:cover;flex-shrink:0;">
-                        <div class="fpb-track-info">
-                            <div class="fpb-track-title">${t.title || t.track || ''}</div>
-                            <div class="fpb-track-artist">${t.artist || ''}</div>
+                ? `<div class="fpb-empty">카드의 + 버튼으로 추가하세요</div>`
+                : `<div class="fpb-cover-grid">${fpb.tracks.map(t => `
+                    <div class="fpb-cover-item" title="${(t.title || t.track || '').replace(/"/g, '')}">
+                        <div class="fpb-cover-wrap">
+                            ${t.cover_image_url ? `<img src="${t.cover_image_url}" alt="">` : '<div class="fpb-cover-placeholder"></div>'}
+                            <button class="fpb-cover-remove" onclick="fpbRemoveTrack('${t.track_key}')">✕</button>
                         </div>
-                        <button class="fpb-remove-btn" onclick="fpbRemoveTrack('${t.track_key}')">✕</button>
-                    </div>`).join('')
+                        <div class="fpb-cover-title">${t.title || t.track || ''}</div>
+                    </div>`).join('')}
+                </div>`
             }
         </div>
         <button class="fpb-save-btn" onclick="fpbSave(this)" ${fpb.tracks.length === 0 ? 'disabled' : ''}>저장</button>
