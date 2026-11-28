@@ -846,7 +846,7 @@ async function _openTrackDetail(track, skipNav = false) {
     plBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
     plBtn.addEventListener('click', e => {
         e.stopPropagation();
-        if (window.fpb?.open) fpbAddTrack(track);
+        if (typeof fpb !== 'undefined' && fpb.open) fpbAddTrack(track);
         else openPlaylistPickerPanel(track);
     });
     btnGroup.appendChild(plBtn);
