@@ -838,18 +838,13 @@ async function _openTrackDetail(track, skipNav = false) {
     heartBtn.addEventListener('click', e => { e.stopPropagation(); _toggleFavCard(heartBtn, track.track_key); });
     btnGroup.appendChild(heartBtn);
 
-    const fpbBtn = document.createElement('button');
-    fpbBtn.className = 'search-grid-heart';
-    fpbBtn.style.cssText = _btnStyle;
-    fpbBtn.title = '플리 빌더에 추가';
-    fpbBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
-    fpbBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        if (typeof fpb === 'undefined') return;
-        if (!fpb.open) fpbOpen();
-        fpbAddTrack(track);
-    });
-    btnGroup.appendChild(fpbBtn);
+    const plBtn = document.createElement('button');
+    plBtn.className = 'search-grid-heart';
+    plBtn.style.cssText = _btnStyle;
+    plBtn.title = '플레이리스트에 추가';
+    plBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+    plBtn.addEventListener('click', e => { e.stopPropagation(); openPlaylistPickerPanel(track); });
+    btnGroup.appendChild(plBtn);
 
 
     selectedDiv.appendChild(btnGroup);

@@ -3457,6 +3457,24 @@ body > .loading-indicator {
 }
 .search-clear-btn:hover { color: rgba(255,255,255,.8); }
 .search-clear-btn.hidden { display: none; }
+.fpb-toggle-btn {
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: rgba(255,255,255,.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 6px;
+    transition: color .15s, background .15s;
+}
+.fpb-toggle-btn:hover { color: #fff; background: rgba(255,255,255,.08); }
+.fpb-toggle-btn.active { color: #1db954; }
 .search-cancel-btn {
     background: none;
     border: none;

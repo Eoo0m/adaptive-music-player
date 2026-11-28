@@ -462,8 +462,7 @@ function fpbOpen() {
     if (!authToken) { alert('로그인 후 이용할 수 있습니다.'); return; }
     fpb.open = true;
     fpbRender();
-    // trackDetailPanel이 열려있으면 + 버튼 갱신
-    _fpbRefreshDetailBtn();
+    document.getElementById('fpbToggleBtn')?.classList.add('active');
 }
 
 function fpbClose() {
@@ -471,7 +470,7 @@ function fpbClose() {
     fpb.tracks = [];
     const el = document.getElementById('fpbWidget');
     if (el) el.remove();
-    _fpbRefreshDetailBtn();
+    document.getElementById('fpbToggleBtn')?.classList.remove('active');
 }
 
 function fpbAddTrack(track) {
