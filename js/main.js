@@ -265,6 +265,19 @@ function _openTrackMenu(_e, track, anchorEl, options = {}) {
 
     addItem('코멘트 달기', () => openCommentPanel(track));
 
+    if (typeof fpb !== 'undefined' && currentTab === 'search') {
+        if (!fpb.open) {
+            addItem('플리 빌더 열기', () => fpbOpen());
+        } else {
+            const inBuilder = fpb.tracks.find(t => t.track_key === track.track_key);
+            addItem(inBuilder ? '빌더에서 제거' : '플리 빌더에 추가', () => {
+                if (inBuilder) fpbRemoveTrack(track.track_key);
+                else fpbAddTrack(track);
+                _fpbRefreshDetailBtn();
+            });
+        }
+    }
+
     if (options.extraItems && options.extraItems.length) {
         options.extraItems.forEach(({ label, fn }) => addItem(label, fn));
     }

@@ -3071,6 +3071,122 @@ body > .loading-indicator {
     }
 }
 
+/* ===== 플로팅 플리 빌더 위젯 ===== */
+.fpb-widget {
+    position: fixed;
+    right: 20px;
+    top: 80px;
+    width: 260px;
+    max-height: 70vh;
+    background: rgba(18, 18, 28, 0.97);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    backdrop-filter: blur(16px);
+    z-index: 600;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.fpb-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px 8px;
+    flex-shrink: 0;
+}
+.fpb-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1db954;
+    letter-spacing: 0.3px;
+}
+.fpb-close-btn {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.4);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 4px;
+    line-height: 1;
+}
+.fpb-close-btn:hover { color: #fff; }
+.fpb-title-input {
+    margin: 0 12px 8px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 13px;
+    padding: 7px 10px;
+    outline: none;
+    flex-shrink: 0;
+}
+.fpb-title-input:focus { border-color: rgba(29,185,84,0.5); }
+.fpb-tracks {
+    overflow-y: auto;
+    flex: 1;
+    padding: 0 8px;
+}
+.fpb-empty {
+    color: rgba(255,255,255,0.35);
+    font-size: 12px;
+    text-align: center;
+    padding: 20px 8px;
+    line-height: 1.6;
+}
+.fpb-track-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 4px;
+    border-radius: 8px;
+}
+.fpb-track-item:hover { background: rgba(255,255,255,0.05); }
+.fpb-track-info {
+    flex: 1;
+    min-width: 0;
+}
+.fpb-track-title {
+    font-size: 12px;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fpb-track-artist {
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fpb-remove-btn {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.3);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 2px 4px;
+    flex-shrink: 0;
+}
+.fpb-remove-btn:hover { color: #fff; }
+.fpb-save-btn {
+    margin: 8px 12px 12px;
+    background: #1db954;
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background .15s;
+}
+.fpb-save-btn:hover:not(:disabled) { background: #1ed760; }
+.fpb-save-btn:disabled { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.3); cursor: default; }
+
 /* ===== 지도 검색 오버레이 ===== */
 .map-search-overlay {
     position: fixed;

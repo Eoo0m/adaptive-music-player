@@ -451,6 +451,131 @@ function renderPlaylistBuilder() {
     }
 }
 
+// ===== 플로팅 플리 빌더 위젯 =====
+
+const fpb = {
+    tracks: [],   // { track_key, title, artist, cover_image_url }
+    open: false,
+};
+
+function fpbOpen() {
+    if (!authToken) { alert('로그인 후 이용할 수 있습니다.'); return; }
+    fpb.open = true;
+    fpbRender();
+    // trackDetailPanel이 열려있으면 + 버튼 갱신
+    _fpbRefreshDetailBtn();
+}
+
+function fpbClose() {
+    fpb.open = false;
+    fpb.tracks = [];
+    const el = document.getElementById('fpbWidget');
+    if (el) el.remove();
+    _fpbRefreshDetailBtn();
+}
+
+function fpbAddTrack(track) {
+    if (fpb.tracks.find(t => t.track_key === track.track_key)) return;
+    fpb.tracks.push(track);
+    fpbRender();
+}
+
+function fpbRemoveTrack(track_key) {
+    fpb.tracks = fpb.tracks.filter(t => t.track_key !== track_key);
+    fpbRender();
+}
+
+function fpbRender() {
+    let widget = document.getElementById('fpbWidget');
+    if (!widget) {
+        widget = document.createElement('div');
+        widget.id = 'fpbWidget';
+        widget.className = 'fpb-widget';
+        document.body.appendChild(widget);
+    }
+
+    const titleVal = widget.querySelector('.fpb-title-input')?.value || '';
+
+    widget.innerHTML = `
+        <div class="fpb-header">
+            <span class="fpb-label">플리 빌더</span>
+            <button class="fpb-close-btn" onclick="fpbClose()">✕</button>
+        </div>
+        <input class="fpb-title-input" placeholder="플레이리스트 제목" value="${titleVal.replace(/"/g, '&quot;')}">
+        <div class="fpb-tracks">
+            ${fpb.tracks.length === 0
+                ? `<div class="fpb-empty">트랙 상세에서 + 로 추가하세요</div>`
+                : fpb.tracks.map(t => `
+                    <div class="fpb-track-item" title="${(t.title || t.track || '').replace(/"/g, '')}">
+                        <img src="${t.cover_image_url || ''}" width="36" height="36" style="border-radius:4px;object-fit:cover;flex-shrink:0;">
+                        <div class="fpb-track-info">
+                            <div class="fpb-track-title">${t.title || t.track || ''}</div>
+                            <div class="fpb-track-artist">${t.artist || ''}</div>
+                        </div>
+                        <button class="fpb-remove-btn" onclick="fpbRemoveTrack('${t.track_key}')">✕</button>
+                    </div>`).join('')
+            }
+        </div>
+        <button class="fpb-save-btn" onclick="fpbSave(this)" ${fpb.tracks.length === 0 ? 'disabled' : ''}>저장</button>
+    `;
+}
+
+async function fpbSave(btn) {
+    const titleInput = document.querySelector('#fpbWidget .fpb-title-input');
+    const name = titleInput?.value.trim() || '내 플레이리스트';
+    if (fpb.tracks.length === 0) return;
+
+    btn.disabled = true;
+    btn.textContent = '저장 중...';
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/playlist-builder/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+            body: JSON.stringify({ name, track_keys: fpb.tracks.map(t => t.track_key) }),
+        });
+        if (!res.ok) throw new Error('save failed');
+        btn.textContent = '저장됨 ♥';
+        btn.style.background = 'rgba(29,185,84,0.3)';
+        setTimeout(() => fpbClose(), 1200);
+        lastSavedPlaylists = [];
+    } catch (e) {
+        btn.disabled = false;
+        btn.textContent = '저장 실패. 다시 시도';
+    }
+}
+
+// trackDetailPanel의 + 버튼 갱신 (빌더 열림/닫힘 시)
+function _fpbRefreshDetailBtn() {
+    const container = document.getElementById('fpbDetailBtnSlot');
+    if (!container) return;
+    container.innerHTML = '';
+    if (!fpb.open) return;
+    const btn = _fpbMakeAddBtn(container._track);
+    container.appendChild(btn);
+}
+
+function _fpbMakeAddBtn(track) {
+    const btn = document.createElement('button');
+    const already = fpb.tracks.find(t => t.track_key === track.track_key);
+    btn.className = `search-grid-heart${already ? ' favorited' : ''}`;
+    btn.style.cssText = 'position:static!important;top:auto!important;right:auto!important;';
+    btn.title = already ? '빌더에서 제거' : '플리 빌더에 추가';
+    btn.innerHTML = already
+        ? `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>`
+        : `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+    btn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (fpb.tracks.find(t => t.track_key === track.track_key)) {
+            fpbRemoveTrack(track.track_key);
+        } else {
+            fpbAddTrack(track);
+        }
+        _fpbRefreshDetailBtn();
+    });
+    return btn;
+}
+
 function playPlaylist(tracks) {
     if (!tracks || tracks.length === 0) return;
     currentPlaylistQueue = tracks;
