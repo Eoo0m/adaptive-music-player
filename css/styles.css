@@ -3653,7 +3653,12 @@ body > .loading-indicator {
 }
 .panel-overlay.visible { opacity: 1; }
 .panel-sheet {
-    background: #1a1a1a;
+    background: rgba(20, 20, 32, 0.6);
+    backdrop-filter: blur(28px) saturate(1.6);
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-bottom: none;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
     border-radius: 20px 20px 0 0;
     width: 100%;
     max-width: 600px;
@@ -3676,7 +3681,7 @@ body > .loading-indicator {
     border-bottom: 1px solid rgba(255,255,255,.08);
     position: sticky;
     top: 0;
-    background: #1a1a1a;
+    background: transparent;
     z-index: 1;
 }
 .panel-sheet-close {
