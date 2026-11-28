@@ -838,13 +838,18 @@ async function _openTrackDetail(track, skipNav = false) {
     heartBtn.addEventListener('click', e => { e.stopPropagation(); _toggleFavCard(heartBtn, track.track_key); });
     btnGroup.appendChild(heartBtn);
 
-    const dotsBtn = document.createElement('button');
-    dotsBtn.className = 'search-grid-heart';
-    dotsBtn.style.cssText = _btnStyle;
-    dotsBtn.title = '더보기';
-    dotsBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>`;
-    dotsBtn.addEventListener('click', e => { e.stopPropagation(); _openTrackMenu(e, track, dotsBtn); });
-    btnGroup.appendChild(dotsBtn);
+    const fpbBtn = document.createElement('button');
+    fpbBtn.className = 'search-grid-heart';
+    fpbBtn.style.cssText = _btnStyle;
+    fpbBtn.title = '플리 빌더에 추가';
+    fpbBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+    fpbBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (typeof fpb === 'undefined') return;
+        if (!fpb.open) fpbOpen();
+        fpbAddTrack(track);
+    });
+    btnGroup.appendChild(fpbBtn);
 
 
     selectedDiv.appendChild(btnGroup);
