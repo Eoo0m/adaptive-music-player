@@ -1551,8 +1551,8 @@ body {
 
 .track-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
 }
 
 .track-grid:not(.track-list) .track-item img {
@@ -2673,7 +2673,7 @@ body > .loading-indicator {
     top: 0; left: 0; right: 0; bottom: 0;
     background: #000;
     overflow-y: auto;
-    padding: 24px 110px 100px 40px;
+    padding: 24px 40px 100px;
     box-sizing: border-box;
     z-index: 10;
     -ms-overflow-style: none;
@@ -2741,8 +2741,8 @@ body > .loading-indicator {
 }
 .track-detail-similar-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
 }
 .search-result-row {
     display: flex;
