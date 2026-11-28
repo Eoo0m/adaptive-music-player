@@ -3504,23 +3504,25 @@ body > .loading-indicator {
 .search-clear-btn.hidden { display: none; }
 .fpb-toggle-btn {
     position: fixed;
-    top: 18px;
-    right: 116px;
+    top: 12px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
     background: rgba(255,255,255,0.07);
     border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 8px;
+    border-radius: 50%;
     color: rgba(255,255,255,.5);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 6px 8px;
+    padding: 0;
     z-index: 200;
     transition: color .15s, background .15s, border-color .15s;
 }
 .fpb-toggle-btn.hidden { display: none; }
 .fpb-toggle-btn:hover { color: #fff; background: rgba(255,255,255,.12); }
-.fpb-toggle-btn.active { color: #1db954; border-color: rgba(29,185,84,0.4); background: rgba(29,185,84,0.1); }
+.fpb-toggle-btn.active { color: #1db954; border-color: rgba(29,185,84,0.5); background: rgba(29,185,84,0.12); }
 .search-cancel-btn {
     background: none;
     border: none;
