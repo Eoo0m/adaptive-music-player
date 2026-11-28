@@ -838,14 +838,13 @@ async function _openTrackDetail(track, skipNav = false) {
     heartBtn.addEventListener('click', e => { e.stopPropagation(); _toggleFavCard(heartBtn, track.track_key); });
     btnGroup.appendChild(heartBtn);
 
-    // 플리 빌더 슬롯 — 빌더가 열려있을 때만 + 버튼 표시
-    const fpbSlot = document.createElement('div');
-    fpbSlot.id = 'fpbDetailBtnSlot';
-    fpbSlot._track = track;
-    if (typeof fpb !== 'undefined' && fpb.open) {
-        fpbSlot.appendChild(_fpbMakeAddBtn(track));
-    }
-    btnGroup.appendChild(fpbSlot);
+    const dotsBtn = document.createElement('button');
+    dotsBtn.className = 'search-grid-heart';
+    dotsBtn.style.cssText = _btnStyle;
+    dotsBtn.title = '더보기';
+    dotsBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>`;
+    dotsBtn.addEventListener('click', e => { e.stopPropagation(); _openTrackMenu(e, track, dotsBtn); });
+    btnGroup.appendChild(dotsBtn);
 
 
     selectedDiv.appendChild(btnGroup);
