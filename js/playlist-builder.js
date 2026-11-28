@@ -458,6 +458,29 @@ const fpb = {
     open: false,
 };
 
+// fpb가 열려 있을 때 새로 추가된 카드 하트도 자동으로 + 버튼으로 교체
+(function _fpbObserver() {
+    const observer = new MutationObserver(mutations => {
+        if (!fpb.open) return;
+        for (const m of mutations) {
+            for (const node of m.addedNodes) {
+                if (!(node instanceof Element)) continue;
+                // 새로 추가된 노드 안의 search-grid-card 하트 버튼들 교체
+                const btns = node.querySelectorAll ? node.querySelectorAll('.search-grid-card .search-grid-heart') : [];
+                btns.forEach(btn => _fpbConvertBtn(btn));
+                // 노드 자체가 search-grid-card인 경우
+                if (node.classList?.contains('search-grid-card')) {
+                    const btn = node.querySelector('.search-grid-heart');
+                    if (btn) _fpbConvertBtn(btn);
+                }
+            }
+        }
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+        observer.observe(document.body, { childList: true, subtree: true });
+    });
+})();
+
 function fpbOpen() {
     if (!authToken) { alert('로그인 후 이용할 수 있습니다.'); return; }
     fpb.open = true;
@@ -475,38 +498,39 @@ function fpbClose() {
     _fpbToggleCardHearts(false);
 }
 
-function _fpbToggleCardHearts(builderOpen) {
-    // search-home-grid, search-entity-grid, search-mood-grid 카드들의 하트 버튼 토글
-    document.querySelectorAll('.search-grid-card .search-grid-heart').forEach(btn => {
-        const card = btn.closest('.search-grid-card');
-        if (!card) return;
-        // track_key는 onclick에서 추출
-        const onclick = btn.getAttribute('onclick') || '';
-        const match = onclick.match(/'([^']+)'\)/);
-        const trackKey = match ? match[1] : null;
+function _fpbConvertBtn(btn) {
+    if (btn.dataset.fpbConverted) return; // 이미 변환됨
+    const onclick = btn.getAttribute('onclick') || '';
+    const match = onclick.match(/'([^']+)'\)/);
+    const trackKey = match ? match[1] : (btn.dataset.trackKey || null);
+    btn.dataset.origOnclick = onclick;
+    btn.dataset.origHtml = btn.innerHTML;
+    btn.dataset.fpbConverted = '1';
+    btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+    btn.removeAttribute('onclick');
+    btn.onclick = e => {
+        e.stopPropagation();
+        const r = (window.searchResultsData || []).find(t => t.track_key === trackKey)
+            || (window.lastMapData?.tracks || []).find(t => t.track_key === trackKey)
+            || { track_key: trackKey };
+        fpbAddTrack(r);
+    };
+}
 
-        if (builderOpen) {
-            // + 아이콘으로 교체, 클릭 시 빌더에 추가
-            btn.dataset.origOnclick = onclick;
-            btn.dataset.origHtml = btn.innerHTML;
-            btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
-            btn.removeAttribute('onclick');
-            btn.onclick = e => {
-                e.stopPropagation();
-                // 카드 데이터 가져오기
-                const r = (window.searchResultsData || []).find(t => t.track_key === trackKey)
-                    || (window.lastMapData?.tracks || []).find(t => t.track_key === trackKey)
-                    || { track_key: trackKey };
-                fpbAddTrack(r);
-            };
-        } else {
-            // 원래대로 복구
-            if (btn.dataset.origHtml) btn.innerHTML = btn.dataset.origHtml;
-            if (btn.dataset.origOnclick) btn.setAttribute('onclick', btn.dataset.origOnclick);
-            btn.onclick = null;
-            delete btn.dataset.origHtml;
-            delete btn.dataset.origOnclick;
-        }
+function _fpbRestoreBtn(btn) {
+    if (!btn.dataset.fpbConverted) return;
+    if (btn.dataset.origHtml) btn.innerHTML = btn.dataset.origHtml;
+    if (btn.dataset.origOnclick) btn.setAttribute('onclick', btn.dataset.origOnclick);
+    btn.onclick = null;
+    delete btn.dataset.origHtml;
+    delete btn.dataset.origOnclick;
+    delete btn.dataset.fpbConverted;
+}
+
+function _fpbToggleCardHearts(builderOpen) {
+    document.querySelectorAll('.search-grid-card .search-grid-heart').forEach(btn => {
+        if (builderOpen) _fpbConvertBtn(btn);
+        else _fpbRestoreBtn(btn);
     });
 }
 
