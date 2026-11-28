@@ -3505,7 +3505,7 @@ body > .loading-indicator {
 .fpb-toggle-btn {
     position: fixed;
     top: 12px;
-    right: 156px;
+    right: 120px;
     width: 36px;
     height: 36px;
     background: rgba(255,255,255,0.07);
