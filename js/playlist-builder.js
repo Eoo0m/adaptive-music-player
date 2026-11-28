@@ -554,6 +554,10 @@ function fpbRemoveTrack(track_key) {
 
 function fpbRender() {
     let widget = document.getElementById('fpbWidget');
+    const wasPositioned = widget && widget.style.transform === 'none';
+    const savedLeft = wasPositioned ? widget.style.left : null;
+    const savedTop  = wasPositioned ? widget.style.top  : null;
+
     if (!widget) {
         widget = document.createElement('div');
         widget.id = 'fpbWidget';
@@ -564,6 +568,7 @@ function fpbRender() {
     const titleVal = widget.querySelector('.fpb-title-input')?.value || '';
 
     widget.innerHTML = `
+        <div class="fpb-drag-bar" id="fpbDragBar"><div class="fpb-drag-handle"></div></div>
         <div class="fpb-header">
             <button class="fpb-close-btn" onclick="fpbClose()">✕</button>
         </div>
@@ -586,6 +591,66 @@ function fpbRender() {
         </div>
         <button class="fpb-save-btn" onclick="fpbSave(this)" ${fpb.tracks.length === 0 ? 'disabled' : ''}>저장</button>
     `;
+
+    // 드래그 후 위치 복원
+    if (savedLeft && savedTop) {
+        widget.style.left = savedLeft;
+        widget.style.top = savedTop;
+        widget.style.bottom = 'auto';
+        widget.style.transform = 'none';
+    }
+
+    // 드래그 이동
+    _fpbInitDrag(widget);
+}
+
+function _fpbInitDrag(widget) {
+    const bar = widget.querySelector('#fpbDragBar');
+    if (!bar) return;
+
+    let startX, startY, origLeft, origTop;
+
+    bar.addEventListener('mousedown', onDown);
+    bar.addEventListener('touchstart', onDown, { passive: true });
+
+    function onDown(e) {
+        const pt = e.touches ? e.touches[0] : e;
+        startX = pt.clientX;
+        startY = pt.clientY;
+
+        const rect = widget.getBoundingClientRect();
+        origLeft = rect.left;
+        origTop = rect.top;
+
+        // 절대 위치로 전환 (transform 제거)
+        widget.style.left = origLeft + 'px';
+        widget.style.top = origTop + 'px';
+        widget.style.bottom = 'auto';
+        widget.style.transform = 'none';
+        widget.classList.add('dragging');
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onUp);
+    }
+
+    function onMove(e) {
+        if (e.cancelable) e.preventDefault();
+        const pt = e.touches ? e.touches[0] : e;
+        const dx = pt.clientX - startX;
+        const dy = pt.clientY - startY;
+        widget.style.left = Math.max(0, Math.min(window.innerWidth - widget.offsetWidth, origLeft + dx)) + 'px';
+        widget.style.top = Math.max(0, Math.min(window.innerHeight - widget.offsetHeight, origTop + dy)) + 'px';
+    }
+
+    function onUp() {
+        widget.classList.remove('dragging');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onUp);
+    }
 }
 
 async function fpbSave(btn) {
