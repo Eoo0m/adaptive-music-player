@@ -121,10 +121,8 @@ function openTrackOnYouTube(track, candidateKeys = currentCandidateKeys, keepQue
     if (currentTab === 'map') playerMoveCamToTrack(track.track_key);
     updatePlayerWidget(track, false);
     document.getElementById('playerNextLoading')?.classList.remove('hidden');
-    const isSpotifyUser = currentUser?.login_type === 'spotify';
-    if (isSpotifyUser && track.track_key) {
-        window.open(`https://open.spotify.com/track/${track.track_key}`, '_blank');
-    } else if (window.innerWidth <= 768) {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
         window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(getTrackTitle(track) + ' ' + getTrackArtist(track))}`, '_blank');
     } else {
         playWithAppleMusic(track);
