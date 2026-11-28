@@ -572,12 +572,14 @@ function fpbRender() {
             ${fpb.tracks.length === 0
                 ? `<div class="fpb-empty">카드의 + 버튼으로 추가하세요</div>`
                 : `<div class="fpb-cover-grid">${fpb.tracks.map(t => `
-                    <div class="fpb-cover-item" title="${(t.title || t.track || '').replace(/"/g, '')}">
-                        <div class="fpb-cover-wrap">
-                            ${t.cover_image_url ? `<img src="${t.cover_image_url}" alt="">` : '<div class="fpb-cover-placeholder"></div>'}
-                            <button class="fpb-cover-remove" onclick="fpbRemoveTrack('${t.track_key}')">✕</button>
+                    <div class="fpb-cover-item">
+                        ${t.cover_image_url ? `<img src="${t.cover_image_url}" alt="">` : '<div class="fpb-cover-placeholder"></div>'}
+                        <div class="fpb-cover-gradient"></div>
+                        <div class="fpb-cover-info">
+                            <div class="fpb-cover-title">${(t.title || t.track || '').replace(/</g,'&lt;')}</div>
+                            <div class="fpb-cover-artist">${(t.artist || '').replace(/</g,'&lt;')}</div>
                         </div>
-                        <div class="fpb-cover-title">${t.title || t.track || ''}</div>
+                        <button class="fpb-cover-remove" onclick="fpbRemoveTrack('${t.track_key}')">✕</button>
                     </div>`).join('')}
                 </div>`
             }
