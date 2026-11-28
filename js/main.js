@@ -46,6 +46,9 @@ function switchTab(tab) {
 
     document.getElementById('tabSettings')?.classList.toggle('active', tab === 'settings');
 
+    const fpbToggleBtn = document.getElementById('fpbToggleBtn');
+    if (fpbToggleBtn) fpbToggleBtn.classList.toggle('hidden', tab !== 'search');
+
     if (tab === 'search') {
         searchInterface.classList.remove('hidden');
         if (searchBody) searchBody.classList.remove('hidden');

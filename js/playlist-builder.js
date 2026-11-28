@@ -463,6 +463,7 @@ function fpbOpen() {
     fpb.open = true;
     fpbRender();
     document.getElementById('fpbToggleBtn')?.classList.add('active');
+    _fpbToggleCardHearts(true);
 }
 
 function fpbClose() {
@@ -471,6 +472,42 @@ function fpbClose() {
     const el = document.getElementById('fpbWidget');
     if (el) el.remove();
     document.getElementById('fpbToggleBtn')?.classList.remove('active');
+    _fpbToggleCardHearts(false);
+}
+
+function _fpbToggleCardHearts(builderOpen) {
+    // search-home-grid, search-entity-grid, search-mood-grid 카드들의 하트 버튼 토글
+    document.querySelectorAll('.search-grid-card .search-grid-heart').forEach(btn => {
+        const card = btn.closest('.search-grid-card');
+        if (!card) return;
+        // track_key는 onclick에서 추출
+        const onclick = btn.getAttribute('onclick') || '';
+        const match = onclick.match(/'([^']+)'\)/);
+        const trackKey = match ? match[1] : null;
+
+        if (builderOpen) {
+            // + 아이콘으로 교체, 클릭 시 빌더에 추가
+            btn.dataset.origOnclick = onclick;
+            btn.dataset.origHtml = btn.innerHTML;
+            btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+            btn.removeAttribute('onclick');
+            btn.onclick = e => {
+                e.stopPropagation();
+                // 카드 데이터 가져오기
+                const r = (window.searchResultsData || []).find(t => t.track_key === trackKey)
+                    || (window.lastMapData?.tracks || []).find(t => t.track_key === trackKey)
+                    || { track_key: trackKey };
+                fpbAddTrack(r);
+            };
+        } else {
+            // 원래대로 복구
+            if (btn.dataset.origHtml) btn.innerHTML = btn.dataset.origHtml;
+            if (btn.dataset.origOnclick) btn.setAttribute('onclick', btn.dataset.origOnclick);
+            btn.onclick = null;
+            delete btn.dataset.origHtml;
+            delete btn.dataset.origOnclick;
+        }
+    });
 }
 
 function fpbAddTrack(track) {
@@ -497,7 +534,6 @@ function fpbRender() {
 
     widget.innerHTML = `
         <div class="fpb-header">
-            <span class="fpb-label">플리 빌더</span>
             <button class="fpb-close-btn" onclick="fpbClose()">✕</button>
         </div>
         <input class="fpb-title-input" placeholder="플레이리스트 제목" value="${titleVal.replace(/"/g, '&quot;')}">
