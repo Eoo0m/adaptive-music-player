@@ -524,8 +524,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await checkAuth();
     if (currentUser) {
         document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('initialSongInput').classList.remove('hidden');
         document.getElementById('sideBar')?.classList.remove('hidden');
+        switchTab('search');
         loadFavorites().then(() => prefetchMusicMap());
         const appleMusicBtn = document.getElementById('appleMusicBtn');
         if (appleMusicBtn) appleMusicBtn.style.display = '';

@@ -57,8 +57,8 @@ async function checkAuth() {
 
 function continueAsGuest() {
     document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('initialSongInput').classList.remove('hidden');
     document.getElementById('sideBar')?.classList.remove('hidden');
+    switchTab('search');
 }
 
 function _renderSettingsProfile() {
