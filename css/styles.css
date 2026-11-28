@@ -3407,8 +3407,11 @@ body > .loading-indicator {
 
 /* ===== Search Autocomplete ===== */
 .search-autocomplete {
-    background: #1c1c28;
+    background: rgba(20, 20, 32, 0.6);
+    backdrop-filter: blur(28px) saturate(1.6);
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
     border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07);
     border-radius: 12px;
     margin-top: 6px;
     overflow: hidden;
@@ -3416,8 +3419,11 @@ body > .loading-indicator {
     z-index: 200;
 }
 .search-recent-chips {
-    background: #1c1c28;
+    background: rgba(20, 20, 32, 0.6);
+    backdrop-filter: blur(28px) saturate(1.6);
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
     border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07);
     border-radius: 12px;
     margin-top: 6px;
     padding: 12px 14px;
